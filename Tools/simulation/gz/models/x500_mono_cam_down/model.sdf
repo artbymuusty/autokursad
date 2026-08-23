@@ -70,6 +70,36 @@
   <detach_topic>/payload/detach/blue</detach_topic>
 </plugin>
 
+<!-- ===================== HOOK ATTACH (Görev 3 F3: catch/pickup) =====================
+  Mission Flow V3 F3: Görev 3'ün "alma" adımı ADR-011'in TERSİ bir senaryo:
+  zaten yerde duran (dünya yüklü, yukarıdaki DetachableJoint ile bırakılmış)
+  bir payload'a runtime'da YENİDEN bağlanmak. Stok DetachableJoint sistemi bu
+  iş için kullanılamaz: onun attachRequested bayrağı varsayılan true'dur ve
+  hiç resetlenmez; child model resolve olur olmaz OTOMATİK bağlanır, ki bu
+  payload düşürüldükten uzun süre sonra AÇIK bir "alma" komutuyla bağlanması
+  gereken bu senaryo için yanlış.
+
+  src/modules/simulation/gz_plugins/hook_attach/HookAttachSystem.cc tam bunun
+  için yazılmış ve derlenmiş (build/.../libHookAttachSystem.dylib) ama hiçbir
+  SDF'e bağlanmamıştı; gz_system/gz_payload_actuator.py'nin kendi
+  TODO[GOREV3] yorumu (activate_pickup_mechanism/activate_drop_mechanism)
+  bu eksikliği zaten işaret ediyordu, bu blok onu kapatır.
+
+  Tek instance yeterli: hedef child model adı (payload_red/payload_blue) SDF'de
+  SABİT DEĞİL; /hook/attach mesajının kendi içeriğinde geliyor
+  (HookAttachSystem.cc:108-146), çünkü hangi payload'ın alınacağı mission
+  zamanında (1st_mission etiketine göre) belli oluyor. parent_link burada
+  base_link'e ayarlandı (varsayılan "hook_rope_link" bu modelde yok);
+  yukarıdaki iki DetachableJoint bloğuyla aynı desen.
+-->
+<plugin filename="libHookAttachSystem.dylib" name="hook_attach::HookAttachSystem">
+  <parent_link>base_link</parent_link>
+  <child_link>link</child_link>
+  <attach_topic>/hook/attach</attach_topic>
+  <detach_topic>/hook/detach</detach_topic>
+  <output_topic>/hook/state</output_topic>
+</plugin>
+
 
 
 
