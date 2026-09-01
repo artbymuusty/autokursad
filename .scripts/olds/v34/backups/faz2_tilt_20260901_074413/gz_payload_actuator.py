@@ -60,65 +60,6 @@ HOOK_STATE_TOPIC = "/hook/state"
 HOOK_CONTACT_TOPIC = "/hook/contact"
 
 
-def _tilt_summary(tilt_all, gate_deg=15.0, dwell_samples=6):
-    """Oturma penceresindeki tilt dagiliminin ozeti. SALT OLCUM.
-
-    Amaci tek bir "tilt buyuk" sayisi uretmek DEGIL, iki rejimi ayirmak:
-
-      A) SALINIM -- kanca salliyor. Tilt esigin altina inip cikiyor, yani
-         min dusuk ama gecis sayisi yuksek. Dwell asla dolmuyor cunku
-         ardisik ornek serisi kisa kaliyor.
-      B) SUREKLI -- kanca yatmis. Tilt hic esigin altina inmiyor; min de
-         yuksek, gecis de yok.
-
-    Ayirt edici olcu GECIS sayisidir (esigi asagi->yukari ya da yukari->
-    asagi kesme adedi). Yalnizca ortalama/medyan bakmak ikisini ayni
-    gosterir: %50'si esik ustunde olan bir salinim ile sabit 30 derecelik
-    bir yatma ayni medyani verebilir.
-
-    longest_run_le_15, dwell'in neden dolmadigini dogrudan soyler: oturma
-    0.30 s = 20 Hz'de {dwell_samples} ARDISIK ornek gerektiriyor.
-    """
-    n = len(tilt_all)
-    if n == 0:
-        return {"n": 0, "regime": "veri_yok"}
-    s = sorted(tilt_all)
-
-    def q(f):
-        return round(s[min(n - 1, int(f * n))], 2)
-
-    under = [v <= gate_deg for v in tilt_all]
-    crossings = sum(1 for a, b in zip(under, under[1:]) if a != b)
-    longest = cur = 0
-    for u in under:
-        cur = cur + 1 if u else 0
-        longest = max(longest, cur)
-    n_le = sum(under)
-    pct_le = 100.0 * n_le / n
-
-    # Rejim kurali -- esikler burada, tek yerde ve acikca.
-    if n < 10:
-        regime = "yetersiz_ornek"
-    elif min(s) > gate_deg:
-        regime = "B_surekli"          # esigin altina HIC inmemis
-    elif crossings >= 4:
-        regime = "A_salinim"          # esigi tekrar tekrar kesiyor
-    elif pct_le >= 80.0:
-        regime = "temiz"
-    else:
-        regime = "karisik"
-
-    return {
-        "n": n, "min_deg": round(min(s), 2), "p10_deg": q(0.10),
-        "p50_deg": q(0.50), "p90_deg": q(0.90), "max_deg": round(max(s), 2),
-        "n_le_gate": n_le, "pct_le_gate": round(pct_le, 1),
-        "crossings": crossings, "longest_run_le_gate": longest,
-        "dwell_needs": dwell_samples,
-        "dwell_reachable": longest >= dwell_samples,
-        "regime": regime,
-    }
-
-
 def _lat_summary(lat_all, lat_gate_ok):
     """Oturma penceresindeki yanal ofset dagiliminin ozeti. SALT OLCUM.
 
@@ -892,27 +833,6 @@ class GzPayloadActuator(IPayloadActuator):
         # orneginin yanal degeri toplaniyor ve raporda IKI esige gore birden
         # degerlendiriliyor -- ayni kosudan, ek ucus gerektirmeden.
         lat_all, lat_gate_ok = [], []
-        # SALT OLCUM: tilt, yuva collision'i eklendikten sonra baglayici terim
-        # haline geldi (2026-09-01 FAZ 1: marj sabitken tilt medyani 8.7 ->
-        # 23.1 derece). Ama "tilt buyuk" tek bir olgu DEGIL; en az iki ayri
-        # rejim var ve mevcut olculer (en iyi ornek + ret sayaci) bunlari
-        # AYIRMIYOR:
-        #   A) SALINIM  -- en iyi ornek tilt'i dusuk (0.1-0.5 derece) ama
-        #                  orneklerin cogu reddediliyor; kanca salliyor.
-        #   B) SUREKLI  -- en iyi ornek bile 58.7 derece; kanca yatmis.
-        # Ayirt edici olcu esik GECISI sayisi: A'da cok, B'de ~0. Yaninda
-        # kesintisiz "kapi altinda" serisinin uzunlugu da onemli, cunku
-        # dwell 0.30 s = 20 Hz'de 6 ARDISIK ornek demek.
-        tilt_all = []
-        # SALT OLCUM -- 10 Hz zaman serisi. tilt_dist "hangi rejim" sorusunu
-        # cevapliyor ama "NE ZAMAN basladi" sorusunu cevaplamiyor. B_surekli
-        # (kanca yatmis, tilt esigin altina hic inmiyor) temas ANINDA mi
-        # olusuyor, yoksa temastan SONRA mi gelisiyor? Duzeltmenin yonu buna
-        # bagli: temas aninda ise geometri/yaklasma acisi, sonradan ise ip
-        # dinamigi. Seride ins de var, boylece temas baslangici (ins > 0)
-        # dogrudan okunabiliyor. Dongu 20 Hz, ikide bir alarak 10 Hz.
-        seat_trace, _trace_i = [], 0
-        t_start = time.monotonic()
         last_log = 0.0
 
         while asyncio.get_event_loop().time() < deadline:
@@ -936,14 +856,6 @@ class GzPayloadActuator(IPayloadActuator):
                 fails = geom.failures()
                 try:
                     lat_all.append(geom.lateral_m * 1000.0)
-                    tilt_all.append(math.degrees(geom.tilt_rad))
-                    _trace_i += 1
-                    if _trace_i % 2 == 0 and len(seat_trace) < 400:
-                        seat_trace.append([
-                            round(now - t_start, 2),
-                            round(math.degrees(geom.tilt_rad), 1),
-                            round(geom.lateral_m * 1000.0, 1),
-                            round(geom.insertion_m * 1000.0, 1)])
                     if not [f for f in fails if "lateral" not in f]:
                         lat_gate_ok.append(geom.lateral_m * 1000.0)
                 except Exception:  # noqa: BLE001
@@ -964,9 +876,6 @@ class GzPayloadActuator(IPayloadActuator):
                 self.last_seating_report = {
                     "seated": True, "samples": sample_count,
                     "lateral_dist": _lat_summary(lat_all, lat_gate_ok),
-                    "tilt_dist": _tilt_summary(tilt_all),
-                    "seat_trace": seat_trace,
-                    "seat_trace_cols": ["t_s", "tilt_deg", "lat_mm", "ins_mm"],
                     "capture_candidate_samples": candidate_samples,
                     "gate_rejections": dict(fail_counts),
                     "best_simultaneous": {
@@ -993,9 +902,6 @@ class GzPayloadActuator(IPayloadActuator):
             "seated": False,
             "samples": sample_count,
             "lateral_dist": _lat_summary(lat_all, lat_gate_ok),
-            "tilt_dist": _tilt_summary(tilt_all),
-            "seat_trace": seat_trace,
-            "seat_trace_cols": ["t_s", "tilt_deg", "lat_mm", "ins_mm"],
             "capture_candidate_samples": candidate_samples,
             "gate_rejections": dict(sorted(fail_counts.items(), key=lambda kv: -kv[1])),
             "best_simultaneous": (

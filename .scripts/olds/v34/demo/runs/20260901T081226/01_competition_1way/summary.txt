@@ -1,0 +1,67 @@
+  mission_id : 4a5c12a7e042
+  sure       : 361.2s  (5496 olay)
+  kaynak     : $REPO_ROOT/.scripts/olds/v34/demo/runs/20260901T081226/01_competition_1way/mission_4a5c12a7e042.jsonl
+
+  FAZLAR (29)
+    t+    1.0s  CONNECTING
+    t+    2.7s  ARMING
+    t+    2.7s  TAKEOFF
+    t+    2.7s  CLIMB_TO_ALTITUDE
+    t+   19.3s  CHECKPOINT_SAVE
+    t+   19.3s  MISSION_ROUTE_CONFIRM
+    t+   19.3s  MISSION_START
+    t+   23.9s  SEARCHING
+    t+   34.5s  TARGET_TRACKING
+    t+   34.5s  SWITCH_TO_OFFBOARD
+    t+   34.7s  GOTO_TARGET_CENTERING
+    t+   80.9s  HOVER_CONFIRM
+    t+   82.9s  GPS_SAVE
+    t+  118.6s  SEARCHING
+    t+  131.1s  TARGET_TRACKING
+    t+  131.1s  SWITCH_TO_OFFBOARD
+    t+  131.9s  GOTO_TARGET_CENTERING
+    t+  155.5s  HOVER_CONFIRM
+    t+  157.6s  GPS_SAVE
+    t+  192.0s  SEARCH_COMPLETE
+    t+  192.1s  GOREV2_COMPLETE
+    t+  192.1s  GOREV3_START
+    t+  192.1s  GOREV3_RUNNING
+    t+  299.4s  GOREV3_RUNNING
+    t+  305.2s  GOREV3_RUNNING
+    t+  340.9s  RETURN_TO_CHECKPOINT
+    t+  356.0s  RETURN_TO_CHECKPOINT
+    t+  361.2s  LANDING
+    t+  361.2s  MISSION_COMPLETE
+
+  KILOMETRE TASLARI (26)
+    t+    1.0s  MISSION_STARTED  -- mission_id=4a5c12a7e042
+    t+    1.0s  MISSION_STARTED  -- Gorev 2 starting
+    t+    2.0s  CONNECTED  -- connected to udp://:14540
+    t+    2.7s  ARMED  -- vehicle armed
+    t+   19.3s  CHECKPOINT_SAVED
+    t+   19.3s  MISSION_ROUTE_CONFIRMED  -- 3 items already on vehicle (from QGroundControl)
+    t+   22.8s  MISSION_CURRENT_ITEM_SET  -- start index 1
+    t+   22.9s  MISSION_STARTED_ONBOARD
+    t+   77.8s  CENTERING_CONVERGED  -- MAVI_ALTIGEN
+    t+   89.3s  CENTERING_CONVERGED  -- MAVI_ALTIGEN
+    t+   96.0s  CENTERING_CONVERGED  -- MAVI_ALTIGEN
+    t+  106.9s  PAYLOAD_RELEASE_CONFIRMED  -- MAVI_ALTIGEN
+    t+  106.9s  PAYLOAD_RELEASED  -- PAYLOAD 1 RELEASED @0.50m
+    t+  122.6s  MISSION_CURRENT_ITEM_SET  -- start index 2
+    t+  122.6s  MISSION_STARTED_ONBOARD
+    t+  152.5s  CENTERING_CONVERGED  -- KIRMIZI_UCGEN
+    t+  168.0s  CENTERING_CONVERGED  -- KIRMIZI_UCGEN
+    t+  174.6s  CENTERING_CONVERGED  -- KIRMIZI_UCGEN
+    t+  184.6s  CENTERING_CONVERGED  -- KIRMIZI_UCGEN
+    t+  187.9s  PAYLOAD_RELEASE_CONFIRMED  -- KIRMIZI_UCGEN
+    t+  187.9s  PAYLOAD_RELEASED  -- PAYLOAD 2 RELEASED @0.50m
+    t+  192.0s  SEARCH_COMPLETE
+    t+  192.1s  GOREV2_COMPLETE
+    t+  211.5s  CENTERING_CONVERGED  -- KIRMIZI_DIKDORTGEN
+    t+  356.0s  GOREV3_COMPLETE
+    t+  361.2s  MISSION_COMPLETE
+
+  SORUNLAR (0 WARNING+)
+    (temiz)
+
+  SONUC: MISSION_COMPLETE

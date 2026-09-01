@@ -1,0 +1,140 @@
+===========================================================
+[ORCHESTRATOR] Initializing pre-flight state validation...
+===========================================================
+[ORCHESTRATOR] 1/6 Scrubbing environment variables...
+[ORCHESTRATOR] gz-transport env: GZ_PARTITION=kursad40 GZ_IP=127.0.0.1
+[ORCHESTRATOR] 2/6 Terminating existing/orphaned Gazebo and PX4 processes...
+[ORCHESTRATOR] 3/6 Verifying process null state...
+  -> [OK] Pre-launch invariants met. System is in a clean idle state.
+[ORCHESTRATOR] 4/6 Bootstrapping PX4 SITL natively...
+===========================================================
+[ORCHESTRATOR] 4a/6 Generating competition area layout...
+=== Yarışma alanı (merkez X=0, 30 x 100 m) ===
+  örnekleme sınırları: X[-12, 12]  Y[3, 97]
+  blue_hexagon     x=  10.585  y=  43.693
+  red_triangle     x=  11.926  y=  76.621
+  red_square       x=   5.423  y=  26.740
+  blue_square      x=  -6.373  y=  42.995
+  Altıgen<->Üçgen mesafe: 32.955 m (min 25 m, üst sınır yok)
+  araç spawn (launcher'dan): x=0  y=-25  yaw=1.5707963 rad (90.0 deg)
+
+=== Kısıt kontrolleri ===
+  Tüm kısıtlar sağlanıyor (ihlal yok).
+
+=== Payload pose'ları (spawn'a + yaw'a kilitli) ===
+  payload_red    <pose>0.035000 -25.000000 0.035 0 0 1.5707963268</pose>   (gövde ofseti: sol -0.035 m)
+  payload_blue   <pose>-0.035000 -25.000000 0.035 0 0 1.5707963268</pose>   (gövde ofseti: sol +0.035 m)
+
+=== Kardeş dünyalar (yalnızca payload pose'ları) ===
+  competition_day.sdf          zaten guncel
+  competition_overcast.sdf     zaten guncel
+Eski yedekler budandi: 1 silindi, 5 tutuldu
+
+Yedek: default.sdf.bak.20260901T044816Z
+default.sdf güncellendi: $REPO_ROOT/Tools/simulation/gz/worlds/default.sdf
+[ORCHESTRATOR] 5/6 Handing control to PX4 (make px4_sitl gz_x500_mono_cam_down)...
+ps: stdin: not a terminal
+[1/5] Generating git version header
+[2/5] Building C object src/lib/version/CMakeFiles/version.dir/version.c.o
+[3/5] Linking C static library src/lib/version/libversion.a
+[4/5] Linking CXX executable bin/px4
+ld: warning: ignoring duplicate libraries: '-lm', 'platforms/common/px4_work_queue/libpx4_work_queue.a', 'platforms/common/uORB/libuORB.a', 'platforms/posix/src/px4/common/libpx4_layer.a', 'platforms/posix/src/px4/common/lockstep_scheduler/liblockstep_scheduler.a', 'platforms/posix/src/px4/common/px4_daemon/libpx4_daemon.a', 'src/lib/parameters/libparameters.a', 'src/modules/dataman/libmodules__dataman.a', 'src/modules/navigator/MissionFeasibility/libmission_feasibility_checker.a', 'src/modules/navigator/libmodules__navigator.a'
+[4/5] cd $REPO_ROOT/build/px4_sitl_default/src/modules/simulation/gz_bridge && /opt/homebrew/bin/cmake -E env PX4_SIM_MODEL=gz_x500_mono_cam_down GZ_IP=127.0.0.1 $REPO_ROOT/build/px4_sitl_default/bin/px4
+
+______  __   __    ___ 
+| ___ \ \ \ / /   /   |
+| |_/ /  \ V /   / /| |
+|  __/   /   \  / /_| |
+| |     / /^\ \ \___  |
+\_|     \/   \/     |_/
+
+px4 starting.
+
+INFO  [px4] startup script: /bin/sh etc/init.d-posix/rcS 0
+INFO  [init] found model autostart file as SYS_AUTOSTART=4014
+INFO  [param] selected parameter default file parameters.bson
+INFO  [param] importing from 'parameters.bson'
+INFO  [parameters] BSON document size 557 bytes, decoded 557 bytes (INT32:17, FLOAT:10)
+INFO  [param] selected parameter backup file parameters_backup.bson
+INFO  [dataman] data manager file './dataman' size is 1208528 bytes
+INFO  [init] Gazebo simulator 8.15.0
+INFO  [init] Starting gazebo with world: $REPO_ROOT/Tools/simulation/gz/worlds/default.sdf
+INFO  [init] Starting gz gui
+Error while loading the library [$REPO_ROOT/build/px4_sitl_default/src/modules/simulation/gz_plugins/libOpticalFlowSystem.dylib]: dlopen($REPO_ROOT/build/px4_sitl_default/src/modules/simulation/gz_plugins/libOpticalFlowSystem.dylib, 0x0085): Library not loaded: @rpath/libOpticalFlow.dylib
+  Referenced from: <28BAD4A4-953B-30DD-BAC8-830744FF5EA4> $REPO_ROOT/build/px4_sitl_default/src/modules/simulation/gz_plugins/libOpticalFlowSystem.dylib
+  Reason: tried: '$REPO_ROOT/build/px4_sitl_default/external/Install/lib/libOpticalFlow.dylib' (no such file), '/System/Volumes/Preboot/Cryptexes/OS$REPO_ROOT/build/px4_sitl_default/external/Install/lib/libOpticalFlow.dylib' (no such file), '/opt/homebrew/lib/libOpticalFlow.dylib' (no such file), '/System/Volumes/Preboot/Cryptexes/OS/opt/homebrew/lib/libOpticalFlow.dylib' (no such file), '$REPO_ROOT/build/px4_sitl_default/external/Install/lib/libOpticalFlow.dylib' (no such file), '/System/Volumes/Preboot/Cryptexes/OS$REPO_ROOT/build/px4_sitl_default/external/Install/lib/libOpticalFlow.dylib' (no such file), '/opt/homebrew/lib/libOpticalFlow.dylib' (no such file), '/System/Volumes/Preboot/Cryptexes/OS/opt/homebrew/lib/libOpticalFlow.dylib' (no such file), '/opt/homebrew/Cellar/gz-plugin2/2.0.4/lib/../lib/libOpticalFlow.dylib' (no such file), '/opt/homebrew/Cellar/gz-plugin2/2.0.4/lib/../../../lib/libOpticalFlow.dylib' (no such file)
+[1;31m[Err] [SystemLoader.cc:107] [0m[1;31mFailed to load system plugin: (Reason: No plugins detected in library)
+- Requested plugin name: [custom::OpticalFlowSystem]
+- Requested library name: [libOpticalFlowSystem.so]
+- Resolved library path: [$REPO_ROOT/build/px4_sitl_default/src/modules/simulation/gz_plugins/libOpticalFlowSystem.dylib][0m
+INFO  [init] Waiting for Gazebo world...
+INFO  [init] Gazebo world is ready
+INFO  [init] Gazebo model pose: 0 -25 0 0 0 1.5707963267948966
+INFO  [init] Spawning Gazebo model
+[1;33mWarning [Utils.cc:132][0m [/sdf/model[@name="x500_base"]/link[@name="base_link"]/sensor[@name="air_pressure_sensor"]/gz_frame_id:$REPO_ROOT/Tools/simulation/gz/models/x500_base/model.sdf:L219]: XML Element[gz_frame_id], child of element[sensor], not defined in SDF. Copying[gz_frame_id] as children of [sensor].
+[1;33mWarning [Utils.cc:132][0m [/sdf/model[@name="x500_base"]/link[@name="base_link"]/sensor[@name="magnetometer_sensor"]/gz_frame_id:$REPO_ROOT/Tools/simulation/gz/models/x500_base/model.sdf:L233]: XML Element[gz_frame_id], child of element[sensor], not defined in SDF. Copying[gz_frame_id] as children of [sensor].
+[1;33mWarning [Utils.cc:132][0m [/sdf/model[@name="x500_base"]/link[@name="base_link"]/sensor[@name="imu_sensor"]/gz_frame_id:$REPO_ROOT/Tools/simulation/gz/models/x500_base/model.sdf:L259]: XML Element[gz_frame_id], child of element[sensor], not defined in SDF. Copying[gz_frame_id] as children of [sensor].
+[1;33mWarning [Utils.cc:132][0m [/sdf/model[@name="x500_base"]/link[@name="base_link"]/sensor[@name="navsat_sensor"]/gz_frame_id:$REPO_ROOT/Tools/simulation/gz/models/x500_base/model.sdf:L311]: XML Element[gz_frame_id], child of element[sensor], not defined in SDF. Copying[gz_frame_id] as children of [sensor].
+[1;33mWarning [Utils.cc:132][0m [/sdf/model[@name="mono_cam"]/link[@name="camera_link"]/sensor[@name="camera"]/gz_frame_id:$REPO_ROOT/Tools/simulation/gz/models/mono_cam/model.sdf:L51]: XML Element[gz_frame_id], child of element[sensor], not defined in SDF. Copying[gz_frame_id] as children of [sensor].
+[1;31m[Err] [SystemPaths.cc:426] [0m[1;31mUnable to find file with URI [[0m[1;31mmodel://kursad_hook/meshes/core_lower.stl[0m[1;31m][0m[1;31m[0m
+[1;31m[Err] [SystemPaths.cc:526] [0m[1;31mCould not resolve file [[0m[1;31mmodel://kursad_hook/meshes/core_lower.stl[0m[1;31m][0m[1;31m[0m
+[1;31m[Err] [MeshManager.cc:211] [0m[1;31mUnable to find file[[0m[1;31mmodel://kursad_hook/meshes/core_lower.stl[0m[1;31m][0m
+[1;31m[Err] [SceneManager.cc:426] [0m[1;31mFailed to load geometry for visual: [0m[1;31mhook_core_lower_visual[0m[1;31m[0m
+[1;31m[Err] [SystemPaths.cc:426] [0m[1;31mUnable to find file with URI [[0m[1;31mmodel://kursad_hook/meshes/core_upper.stl[0m[1;31m][0m[1;31m[0m
+[1;31m[Err] [SystemPaths.cc:526] [0m[1;31mCould not resolve file [[0m[1;31mmodel://kursad_hook/meshes/core_upper.stl[0m[1;31m][0m[1;31m[0m
+[1;31m[Err] [MeshManager.cc:211] [0m[1;31mUnable to find file[[0m[1;31mmodel://kursad_hook/meshes/core_upper.stl[0m[1;31m][0m
+[1;31m[Err] [SceneManager.cc:426] [0m[1;31mFailed to load geometry for visual: [0m[1;31mhook_core_upper_visual[0m[1;31m[0m
+[1;31m[Err] [SystemPaths.cc:426] [0m[1;31mUnable to find file with URI [[0m[1;31mmodel://kursad_hook/meshes/servo_cam.stl[0m[1;31m][0m[1;31m[0m
+[1;31m[Err] [SystemPaths.cc:526] [0m[1;31mCould not resolve file [[0m[1;31mmodel://kursad_hook/meshes/servo_cam.stl[0m[1;31m][0m[1;31m[0m
+[1;31m[Err] [MeshManager.cc:211] [0m[1;31mUnable to find file[[0m[1;31mmodel://kursad_hook/meshes/servo_cam.stl[0m[1;31m][0m
+[1;31m[Err] [SceneManager.cc:426] [0m[1;31mFailed to load geometry for visual: [0m[1;31mhook_servo_cam_visual[0m[1;31m[0m
+[1;31m[Err] [SystemPaths.cc:426] [0m[1;31mUnable to find file with URI [[0m[1;31mmodel://kursad_hook/meshes/locking_arm_locked.stl[0m[1;31m][0m[1;31m[0m
+[1;31m[Err] [SystemPaths.cc:526] [0m[1;31mCould not resolve file [[0m[1;31mmodel://kursad_hook/meshes/locking_arm_locked.stl[0m[1;31m][0m[1;31m[0m
+[1;31m[Err] [MeshManager.cc:211] [0m[1;31mUnable to find file[[0m[1;31mmodel://kursad_hook/meshes/locking_arm_locked.stl[0m[1;31m][0m
+[1;31m[Err] [SceneManager.cc:426] [0m[1;31mFailed to load geometry for visual: [0m[1;31mhook_locking_arm_0_visual[0m[1;31m[0m
+[1;31m[Err] [SystemPaths.cc:426] [0m[1;31mUnable to find file with URI [[0m[1;31mmodel://kursad_hook/meshes/locking_arm_locked.stl[0m[1;31m][0m[1;31m[0m
+[1;31m[Err] [SystemPaths.cc:526] [0m[1;31mCould not resolve file [[0m[1;31mmodel://kursad_hook/meshes/locking_arm_locked.stl[0m[1;31m][0m[1;31m[0m
+[1;31m[Err] [MeshManager.cc:211] [0m[1;31mUnable to find file[[0m[1;31mmodel://kursad_hook/meshes/locking_arm_locked.stl[0m[1;31m][0m
+[1;31m[Err] [SceneManager.cc:426] [0m[1;31mFailed to load geometry for visual: [0m[1;31mhook_locking_arm_1_visual[0m[1;31m[0m
+[1;31m[Err] [SystemPaths.cc:426] [0m[1;31mUnable to find file with URI [[0m[1;31mmodel://kursad_hook/meshes/locking_arm_locked.stl[0m[1;31m][0m[1;31m[0m
+[1;31m[Err] [SystemPaths.cc:526] [0m[1;31mCould not resolve file [[0m[1;31mmodel://kursad_hook/meshes/locking_arm_locked.stl[0m[1;31m][0m[1;31m[0m
+[1;31m[Err] [MeshManager.cc:211] [0m[1;31mUnable to find file[[0m[1;31mmodel://kursad_hook/meshes/locking_arm_locked.stl[0m[1;31m][0m
+[1;31m[Err] [SceneManager.cc:426] [0m[1;31mFailed to load geometry for visual: [0m[1;31mhook_locking_arm_2_visual[0m[1;31m[0m
+[1;31m[Err] [SystemPaths.cc:426] [0m[1;31mUnable to find file with URI [[0m[1;31mmodel://kursad_hook/meshes/locking_arm_locked.stl[0m[1;31m][0m[1;31m[0m
+[1;31m[Err] [SystemPaths.cc:526] [0m[1;31mCould not resolve file [[0m[1;31mmodel://kursad_hook/meshes/locking_arm_locked.stl[0m[1;31m][0m[1;31m[0m
+[1;31m[Err] [MeshManager.cc:211] [0m[1;31mUnable to find file[[0m[1;31mmodel://kursad_hook/meshes/locking_arm_locked.stl[0m[1;31m][0m
+[1;31m[Err] [SceneManager.cc:426] [0m[1;31mFailed to load geometry for visual: [0m[1;31mhook_locking_arm_3_visual[0m[1;31m[0m
+INFO  [lockstep_scheduler] setting initial absolute time to 3188000 us
+INFO  [gz_bridge] world: default, model: x500_mono_cam_down_0
+INFO  [commander] LED: open /dev/led0 failed (22)
+WARN  [health_and_arming_checks] Preflight Fail: ekf2 missing data
+WARN  [health_and_arming_checks] Preflight Fail: No connection to the GCS
+INFO  [uxrce_dds_client] init UDP agent IP:127.0.0.1, port:8888
+INFO  [tone_alarm] home set
+INFO  [mavlink] mode: Normal, data rate: 4000000 B/s on udp port 18570 remote port 14550
+INFO  [mavlink] mode: Onboard, data rate: 4000000 B/s on udp port 14580 remote port 14540
+INFO  [mavlink] partner IP: 127.0.0.1
+INFO  [mavlink] mode: Onboard, data rate: 4000 B/s on udp port 14280 remote port 14030
+INFO  [mavlink] mode: Gimbal, data rate: 400000 B/s on udp port 13030 remote port 13280
+INFO  [logger] logger started (mode=all)
+INFO  [logger] Start file log (type: full)
+INFO  [logger] [logger] ./log/2026-09-01/04_48_30.ulg	
+INFO  [logger] Opened full log file: ./log/2026-09-01/04_48_30.ulg
+INFO  [mavlink] partner IP: 127.0.0.1
+INFO  [mavlink] MAVLink only on localhost (set param MAV_{i}_BROADCAST = 1 to enable network)
+INFO  [mavlink] MAVLink only on localhost (set param MAV_{i}_BROADCAST = 1 to enable network)
+INFO  [px4] Startup script returned successfully
+pxh> INFO  [tone_alarm] notify positive
+INFO  [commander] [32mReady for takeoff![0m
+INFO  [tone_alarm] notify positive
+INFO  [commander] Armed by external command	
+INFO  [tone_alarm] arming warning
+INFO  [navigator] Using default takeoff altitude: 15.0 m	
+INFO  [commander] Takeoff detected	
+INFO  [navigator] Executing Mission	
+INFO  [navigator] Executing Mission	
+INFO  [commander] Landing at current position	
+FAILED: [code=137] src/modules/simulation/gz_bridge/CMakeFiles/gz_x500_mono_cam_down $REPO_ROOT/build/px4_sitl_default/src/modules/simulation/gz_bridge/CMakeFiles/gz_x500_mono_cam_down 
+cd $REPO_ROOT/build/px4_sitl_default/src/modules/simulation/gz_bridge && /opt/homebrew/bin/cmake -E env PX4_SIM_MODEL=gz_x500_mono_cam_down GZ_IP=127.0.0.1 $REPO_ROOT/build/px4_sitl_default/bin/px4
+ninja: build stopped: subcommand failed.
+make: *** [px4_sitl] Error 137

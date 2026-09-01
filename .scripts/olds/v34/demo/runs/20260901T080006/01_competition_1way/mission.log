@@ -1,0 +1,617 @@
+2026-09-01 08:00:31,753 [INFO] gz_system.main_gz: gz-transport env: GZ_PARTITION=kursad40 GZ_IP=127.0.0.1
+2026-09-01 08:00:31,755 [INFO] gz_system.gz_camera_source: Gazebo kamera servisi kontrol ediliyor (topic=/world/default/model/x500_mono_cam_down_0/link/camera_link/sensor/camera/image)...
+[CAMERA_SERVICE_MANAGER] Starting camera_service.py (topic=/world/default/model/x500_mono_cam_down_0/link/camera_link/sensor/camera/image, zmq=tcp://127.0.0.1:5555)...
+[CAMERA_SERVICE_MANAGER] gz-transport env for child: GZ_PARTITION=kursad40 GZ_IP=127.0.0.1QGC port check failed, reporting UNKNOWN: (pid=16552)
+
+[CAMERA_SERVICE_MANAGER] Started (PID: 19378).
+[CAMERA_CLIENT] Connecting to ZMQ publisher at tcp://127.0.0.1:5555...2026-09-01 08:00:32,770 [INFO] gz_system.gz_camera_source: Gazebo kamera istemcisi baslatildi.
+
+[CAMERA_CLIENT] Connected. Waiting for frames...
+2026-09-01 08:00:32,773 [INFO] gz_system.gz_pose_monitor: Gazebo poz izleyicisi basladi: /world/default/dynamic_pose/info
+2026-09-01 08:00:32,774 [INFO] core.detection.detection_publisher: [DETECTION_PUB] tespit yayini acik: tcp://127.0.0.1:5556
+2026-09-01 08:00:32,774 [INFO] core.detection.vision_runtime: [VISION] pipeline basladi (mission omru boyunca calisir).
+2026-09-01 08:00:32,774 [INFO] core.mission.master_fsm: MASTER MISSION CONTROLLER BASLATILDI
+2026-09-01 08:00:32,774 [WARNING] core.detection.vision_runtime: Frame grab loop hatasi (art arda 1. hata, mission etkilenmez): Gazebo kameradan kare okunamadi. Henuz kare alinmadi veya baglanti koptu.
+2026-09-01 08:00:32,774 [WARNING] core.detection.vision_runtime: [VISION] detect() basarisiz (art arda 1. hata, mission etkilenmez): Gazebo kameradan kare okunamadi. Henuz kare alinmadi veya baglanti koptu.
+2026-09-01 08:00:32,774 [INFO] core.mission.gorev2_orchestrator: GOREV 2 BASLIYOR
+2026-09-01 08:00:32,774 [INFO] mavsdk_common.mavsdk_backend_base: Drone'a bağlanılıyor: udp://:14540
+Connection using udp:// is deprecated, please use udpin:// or udpout:// (cli_arg.cpp:28)
+2026-09-01 08:00:33,727 [INFO] mavsdk_common.mavsdk_backend_base: Drone bağlantısı bekleniyor...
+2026-09-01 08:00:33,728 [INFO] mavsdk_common.mavsdk_backend_base: Drone bağlandı!
+2026-09-01 08:00:33,756 [INFO] mavsdk_common.mavsdk_backend_base: [TELEMETRY] position rate 10.0 Hz istendi.
+QGC port check failed, reporting UNKNOWN: (pid=16552)
+2026-09-01 08:00:33,776 [INFO] mavsdk_common.mavsdk_backend_base: [TELEMETRY] position_velocity_ned rate 10.0 Hz istendi.
+2026-09-01 08:00:33,808 [INFO] mavsdk_common.mavsdk_backend_base: [TELEMETRY] attitude_euler rate 10.0 Hz istendi.
+2026-09-01 08:00:34,422 [INFO] mavsdk_common.mavsdk_backend_base: Drone arm ediliyor...
+2026-09-01 08:00:34,452 [INFO] mavsdk_common.mavsdk_backend_base: Kalkış yapılıyor (Hedef: 15.0m)...
+QGC port check failed, reporting UNKNOWN: (pid=16552)
+2026-09-01 08:00:35,832 [INFO] core.detection.vision_runtime: [VISION] detect() calisiyor -- bu karede 0 tespit: []
+2026-09-01 08:00:36,771 [INFO] gz_system.main_gz: Dashboard paint loop: 0.0 FPS (main thread)
+QGC port check failed, reporting UNKNOWN: (pid=16552)
+2026-09-01 08:00:38,858 [INFO] core.detection.vision_runtime: [VISION] detect() calisiyor -- bu karede 0 tespit: []
+QGC port check failed, reporting UNKNOWN: (pid=16552)
+QGC port check failed, reporting UNKNOWN: (pid=16552)
+2026-09-01 08:00:41,792 [INFO] gz_system.main_gz: Dashboard paint loop: 0.0 FPS (main thread)
+2026-09-01 08:00:41,889 [INFO] core.detection.vision_runtime: [VISION] detect() calisiyor -- bu karede 0 tespit: []
+QGC port check failed, reporting UNKNOWN: (pid=16552)
+2026-09-01 08:00:44,915 [INFO] core.detection.vision_runtime: [VISION] detect() calisiyor -- bu karede 0 tespit: []
+QGC port check failed, reporting UNKNOWN: (pid=16552)
+2026-09-01 08:00:46,804 [INFO] gz_system.main_gz: Dashboard paint loop: 0.0 FPS (main thread)
+QGC port check failed, reporting UNKNOWN: (pid=16552)
+2026-09-01 08:00:47,947 [INFO] core.detection.vision_runtime: [VISION] detect() calisiyor -- bu karede 0 tespit: []
+QGC port check failed, reporting UNKNOWN: (pid=16552)
+2026-09-01 08:00:50,977 [INFO] core.detection.vision_runtime: [VISION] detect() calisiyor -- bu karede 0 tespit: []
+2026-09-01 08:00:51,011 [INFO] core.mission.gorev2_orchestrator: Start Checkpoint kaydedildi: (47.3977459, 8.5461637, 14.190000534057617)
+2026-09-01 08:00:51,043 [INFO] core.mission.gorev2_orchestrator: [ROUTE_REJOIN] rota ekseni tespit edildi: sabit=lon (lat_span=0.001258, lon_span=0.000000).
+2026-09-01 08:00:51,069 [INFO] core.mission.gorev2_orchestrator: [MISSION_START] Rota dogrulandi (3 item): 0:NAV_TAKEOFF, 1:NAV_WAYPOINT, 2:NAV_WAYPOINT
+2026-09-01 08:00:51,069 [INFO] core.mission.gorev2_orchestrator: [MISSION_START] Baslangic indeksi: 1
+2026-09-01 08:00:51,069 [INFO] core.mission.gorev2_orchestrator: [MISSION_START] 3.0s stabilizasyon bekleniyor...
+QGC port check failed, reporting UNKNOWN: (pid=16552)
+2026-09-01 08:00:51,815 [INFO] gz_system.main_gz: Dashboard paint loop: 0.0 FPS (main thread)
+QGC port check failed, reporting UNKNOWN: (pid=16552)
+2026-09-01 08:00:54,022 [INFO] core.detection.vision_runtime: [VISION] detect() calisiyor -- bu karede 0 tespit: []
+2026-09-01 08:00:54,541 [INFO] core.mission.gorev2_orchestrator: [MISSION_START] PX4 mevcut gorev ogesi 1 olarak ayarlandi (seq0 NAV_TAKEOFF atlandi -- kalkis zaten yapildi).
+2026-09-01 08:00:54,541 [INFO] core.mission.gorev2_orchestrator: [MISSION_START] Yuklu gorev baslatiliyor...
+Received ack for not-existing command: 176! Ignoring... (mavlink_command_sender.cpp:304)
+2026-09-01 08:00:55,559 [INFO] core.mission.gorev2_orchestrator: [MISSION_START] PX4 MISSION moduna gecti -- arama fazi basliyor.
+QGC port check failed, reporting UNKNOWN: (pid=16552)
+2026-09-01 08:00:56,821 [INFO] gz_system.main_gz: Dashboard paint loop: 0.0 FPS (main thread)
+2026-09-01 08:00:57,085 [INFO] core.detection.vision_runtime: [VISION] detect() calisiyor -- bu karede 0 tespit: []
+QGC port check failed, reporting UNKNOWN: (pid=16552)
+QGC port check failed, reporting UNKNOWN: (pid=16552)
+2026-09-01 08:01:00,122 [INFO] core.detection.vision_runtime: [VISION] detect() calisiyor -- bu karede 0 tespit: []
+QGC port check failed, reporting UNKNOWN: (pid=16552)
+2026-09-01 08:01:01,823 [INFO] gz_system.main_gz: Dashboard paint loop: 0.0 FPS (main thread)
+2026-09-01 08:01:03,156 [INFO] core.detection.vision_runtime: [VISION] detect() calisiyor -- bu karede 0 tespit: []
+QGC port check failed, reporting UNKNOWN: (pid=16552)
+QGC port check failed, reporting UNKNOWN: (pid=16552)
+2026-09-01 08:01:06,236 [INFO] core.detection.vision_runtime: [VISION] detect() calisiyor -- bu karede 2 tespit: ['MAVI_ALTIGEN', 'KIRMIZI_DIKDORTGEN']
+2026-09-01 08:01:06,236 [INFO] core.navigation.centering_controller: Mission modu durduruluyor, Offboard'a geciliyor...
+2026-09-01 08:01:06,236 [INFO] mavsdk_common.mavsdk_backend_base: Mission'dan Offboard'a geçiş yapılıyor...
+Received ack for not-existing command: 176! Ignoring... (mavlink_command_sender.cpp:304)
+2026-09-01 08:01:06,249 [INFO] mavsdk_common.mavsdk_backend_base: Offboard başlatılıyor...
+Received ack for not-existing command: 176! Ignoring... (mavlink_command_sender.cpp:304)
+2026-09-01 08:01:06,462 [INFO] core.navigation.centering_controller: MAVI_ALTIGEN hedefine merkezleniyor (irtifa hedefi: 15.0m, irtifa bandi +/-0.30m)...
+2026-09-01 08:01:06,462 [WARNING] core.navigation.centering_controller: [CENTERING] MAVI_ALTIGEN 1/150 hedef kayboldu (feed canli, hedef bu karede yok)
+2026-09-01 08:01:06,837 [INFO] gz_system.main_gz: Dashboard paint loop: 0.0 FPS (main thread)
+2026-09-01 08:01:06,895 [INFO] core.detection.camera_intrinsics: [CAMERA] intrinsics: hfov=1.7400 rad (99.7 deg) 1280x960 -> f=539.9 px (kaynak: ../../../Tools/simulation/gz/models/mono_cam/model.sdf)
+2026-09-01 08:01:07,005 [INFO] core.navigation.centering_controller: [CENTERING] MAVI_ALTIGEN 6/150 dx=+263px dy=+90px d=7.8m ex=+0.4109 ey=+0.1875 (tol +/-0.010) alt_err=+0.15m -> fwd=-0.28 right=+0.30 down=+0.08 m/s
+2026-09-01 08:01:07,551 [INFO] core.navigation.centering_controller: [CENTERING] MAVI_ALTIGEN 11/150 dx=+324px dy=-46px d=9.1m ex=+0.5062 ey=-0.0958 (tol +/-0.010) alt_err=+0.05m -> fwd=+0.15 right=+0.76 down=+0.02 m/s
+QGC port check failed, reporting UNKNOWN: (pid=16552)
+2026-09-01 08:01:08,102 [INFO] core.navigation.centering_controller: [CENTERING] MAVI_ALTIGEN 16/150 dx=+300px dy=-154px d=9.4m ex=+0.4688 ey=-0.3208 (tol +/-0.010) alt_err=+0.02m -> fwd=+0.48 right=+0.70 down=+0.01 m/s
+2026-09-01 08:01:08,670 [INFO] core.navigation.centering_controller: [CENTERING] MAVI_ALTIGEN 21/150 dx=+255px dy=-142px d=8.1m ex=+0.3984 ey=-0.2958 (tol +/-0.010) alt_err=+0.02m -> fwd=+0.44 right=+0.60 down=+0.01 m/s
+2026-09-01 08:01:09,222 [INFO] core.navigation.centering_controller: [CENTERING] MAVI_ALTIGEN 26/150 dx=+239px dy=-112px d=7.3m ex=+0.3734 ey=-0.2333 (tol +/-0.010) alt_err=+0.02m -> fwd=+0.35 right=+0.56 down=+0.01 m/s
+2026-09-01 08:01:09,330 [INFO] core.detection.vision_runtime: [VISION] detect() calisiyor -- bu karede 2 tespit: ['MAVI_ALTIGEN', 'KIRMIZI_DIKDORTGEN']
+2026-09-01 08:01:09,769 [INFO] core.navigation.centering_controller: [CENTERING] MAVI_ALTIGEN 31/150 dx=+228px dy=-104px d=7.0m ex=+0.3563 ey=-0.2167 (tol +/-0.010) alt_err=+0.01m -> fwd=+0.33 right=+0.53 down=+0.01 m/s
+QGC port check failed, reporting UNKNOWN: (pid=16552)
+2026-09-01 08:01:10,337 [INFO] core.navigation.centering_controller: [CENTERING] MAVI_ALTIGEN 36/150 dx=+216px dy=-105px d=6.7m ex=+0.3375 ey=-0.2188 (tol +/-0.010) alt_err=-0.00m -> fwd=+0.33 right=+0.51 down=-0.00 m/s
+2026-09-01 08:01:10,888 [INFO] core.navigation.centering_controller: [CENTERING] MAVI_ALTIGEN 41/150 dx=+203px dy=-104px d=6.3m ex=+0.3172 ey=-0.2167 (tol +/-0.010) alt_err=-0.02m -> fwd=+0.33 right=+0.48 down=-0.01 m/s
+2026-09-01 08:01:11,439 [INFO] core.navigation.centering_controller: [CENTERING] MAVI_ALTIGEN 46/150 dx=+193px dy=-100px d=6.0m ex=+0.3016 ey=-0.2083 (tol +/-0.010) alt_err=-0.03m -> fwd=+0.31 right=+0.45 down=-0.01 m/s
+QGC port check failed, reporting UNKNOWN: (pid=16552)
+2026-09-01 08:01:11,849 [INFO] gz_system.main_gz: Dashboard paint loop: 0.0 FPS (main thread)
+2026-09-01 08:01:11,987 [INFO] core.navigation.centering_controller: [CENTERING] MAVI_ALTIGEN 51/150 dx=+180px dy=-98px d=5.7m ex=+0.2812 ey=-0.2042 (tol +/-0.010) alt_err=-0.03m -> fwd=+0.31 right=+0.42 down=-0.02 m/s
+2026-09-01 08:01:12,430 [INFO] core.detection.vision_runtime: [VISION] detect() calisiyor -- bu karede 2 tespit: ['MAVI_ALTIGEN', 'KIRMIZI_DIKDORTGEN']
+2026-09-01 08:01:12,543 [INFO] core.navigation.centering_controller: [CENTERING] MAVI_ALTIGEN 56/150 dx=+172px dy=-95px d=5.5m ex=+0.2687 ey=-0.1979 (tol +/-0.010) alt_err=-0.02m -> fwd=+0.30 right=+0.40 down=-0.01 m/s
+2026-09-01 08:01:13,093 [INFO] core.navigation.centering_controller: [CENTERING] MAVI_ALTIGEN 61/150 dx=+163px dy=-94px d=5.2m ex=+0.2547 ey=-0.1958 (tol +/-0.010) alt_err=-0.01m -> fwd=+0.29 right=+0.38 down=-0.00 m/s
+2026-09-01 08:01:13,644 [INFO] core.navigation.centering_controller: [CENTERING] MAVI_ALTIGEN 66/150 dx=+153px dy=-92px d=5.0m ex=+0.2391 ey=-0.1917 (tol +/-0.010) alt_err=-0.01m -> fwd=+0.29 right=+0.36 down=-0.00 m/s
+QGC port check failed, reporting UNKNOWN: (pid=16552)
+2026-09-01 08:01:14,194 [INFO] core.navigation.centering_controller: [CENTERING] MAVI_ALTIGEN 71/150 dx=+146px dy=-88px d=4.7m ex=+0.2281 ey=-0.1833 (tol +/-0.010) alt_err=-0.01m -> fwd=+0.27 right=+0.34 down=-0.00 m/s
+2026-09-01 08:01:14,743 [INFO] core.navigation.centering_controller: [CENTERING] MAVI_ALTIGEN 76/150 dx=+139px dy=-86px d=4.5m ex=+0.2172 ey=-0.1792 (tol +/-0.010) alt_err=-0.01m -> fwd=+0.27 right=+0.33 down=-0.00 m/s
+2026-09-01 08:01:15,300 [INFO] core.navigation.centering_controller: [CENTERING] MAVI_ALTIGEN 81/150 dx=+133px dy=-83px d=4.4m ex=+0.2078 ey=-0.1729 (tol +/-0.010) alt_err=-0.01m -> fwd=+0.26 right=+0.31 down=-0.01 m/s
+2026-09-01 08:01:15,518 [INFO] core.detection.vision_runtime: [VISION] detect() calisiyor -- bu karede 2 tespit: ['MAVI_ALTIGEN', 'KIRMIZI_DIKDORTGEN']
+QGC port check failed, reporting UNKNOWN: (pid=16552)
+2026-09-01 08:01:15,849 [INFO] core.navigation.centering_controller: [CENTERING] MAVI_ALTIGEN 86/150 dx=+126px dy=-81px d=4.2m ex=+0.1969 ey=-0.1688 (tol +/-0.010) alt_err=-0.02m -> fwd=+0.25 right=+0.30 down=-0.01 m/s
+2026-09-01 08:01:16,398 [INFO] core.navigation.centering_controller: [CENTERING] MAVI_ALTIGEN 91/150 dx=+119px dy=-78px d=3.9m ex=+0.1859 ey=-0.1625 (tol +/-0.010) alt_err=-0.02m -> fwd=+0.24 right=+0.28 down=-0.01 m/s
+2026-09-01 08:01:16,865 [INFO] gz_system.main_gz: Dashboard paint loop: 0.0 FPS (main thread)
+2026-09-01 08:01:16,951 [INFO] core.navigation.centering_controller: [CENTERING] MAVI_ALTIGEN 96/150 dx=+112px dy=-73px d=3.7m ex=+0.1750 ey=-0.1521 (tol +/-0.010) alt_err=-0.01m -> fwd=+0.23 right=+0.26 down=-0.00 m/s
+2026-09-01 08:01:17,502 [INFO] core.navigation.centering_controller: [CENTERING] MAVI_ALTIGEN 101/150 dx=+107px dy=-69px d=3.5m ex=+0.1672 ey=-0.1437 (tol +/-0.010) alt_err=-0.01m -> fwd=+0.22 right=+0.25 down=-0.00 m/s
+QGC port check failed, reporting UNKNOWN: (pid=16552)
+2026-09-01 08:01:18,053 [INFO] core.navigation.centering_controller: [CENTERING] MAVI_ALTIGEN 106/150 dx=+101px dy=-66px d=3.4m ex=+0.1578 ey=-0.1375 (tol +/-0.010) alt_err=-0.00m -> fwd=+0.21 right=+0.24 down=-0.00 m/s
+2026-09-01 08:01:18,605 [INFO] core.detection.vision_runtime: [VISION] detect() calisiyor -- bu karede 2 tespit: ['MAVI_ALTIGEN', 'KIRMIZI_DIKDORTGEN']
+2026-09-01 08:01:18,606 [INFO] core.navigation.centering_controller: [CENTERING] MAVI_ALTIGEN 111/150 dx=+95px dy=-63px d=3.2m ex=+0.1484 ey=-0.1313 (tol +/-0.010) alt_err=-0.00m -> fwd=+0.20 right=+0.22 down=-0.00 m/s
+2026-09-01 08:01:19,156 [INFO] core.navigation.centering_controller: [CENTERING] MAVI_ALTIGEN 116/150 dx=+92px dy=-59px d=3.0m ex=+0.1437 ey=-0.1229 (tol +/-0.010) alt_err=-0.00m -> fwd=+0.18 right=+0.22 down=-0.00 m/s
+2026-09-01 08:01:19,708 [INFO] core.navigation.centering_controller: [CENTERING] MAVI_ALTIGEN 121/150 dx=+89px dy=-55px d=2.9m ex=+0.1391 ey=-0.1146 (tol +/-0.010) alt_err=-0.01m -> fwd=+0.17 right=+0.21 down=-0.00 m/s
+QGC port check failed, reporting UNKNOWN: (pid=16552)
+2026-09-01 08:01:20,255 [INFO] core.navigation.centering_controller: [CENTERING] MAVI_ALTIGEN 126/150 dx=+85px dy=-53px d=2.8m ex=+0.1328 ey=-0.1104 (tol +/-0.010) alt_err=-0.01m -> fwd=+0.17 right=+0.20 down=-0.00 m/s
+2026-09-01 08:01:20,809 [INFO] core.navigation.centering_controller: [CENTERING] MAVI_ALTIGEN 131/150 dx=+81px dy=-49px d=2.6m ex=+0.1266 ey=-0.1021 (tol +/-0.010) alt_err=-0.01m -> fwd=+0.15 right=+0.19 down=-0.00 m/s
+2026-09-01 08:01:21,356 [INFO] core.navigation.centering_controller: [CENTERING] MAVI_ALTIGEN 136/150 dx=+77px dy=-46px d=2.5m ex=+0.1203 ey=-0.0958 (tol +/-0.010) alt_err=-0.01m -> fwd=+0.15 right=+0.18 down=-0.00 m/s
+2026-09-01 08:01:21,686 [INFO] core.detection.vision_runtime: [VISION] detect() calisiyor -- bu karede 2 tespit: ['MAVI_ALTIGEN', 'KIRMIZI_DIKDORTGEN']
+QGC port check failed, reporting UNKNOWN: (pid=16552)
+2026-09-01 08:01:21,888 [INFO] gz_system.main_gz: Dashboard paint loop: 0.0 FPS (main thread)
+2026-09-01 08:01:21,908 [INFO] core.navigation.centering_controller: [CENTERING] MAVI_ALTIGEN 141/150 dx=+74px dy=-45px d=2.4m ex=+0.1156 ey=-0.0938 (tol +/-0.010) alt_err=-0.00m -> fwd=+0.15 right=+0.17 down=-0.00 m/s
+2026-09-01 08:01:22,462 [INFO] core.navigation.centering_controller: [CENTERING] MAVI_ALTIGEN 146/150 dx=+70px dy=-42px d=2.3m ex=+0.1094 ey=-0.0875 (tol +/-0.010) alt_err=-0.01m -> fwd=+0.15 right=+0.16 down=-0.01 m/s
+2026-09-01 08:01:23,015 [ERROR] core.navigation.centering_controller: Merkezleme zaman asimina ugradi! (150 deneme / 15.0s butcesi doldu)
+2026-09-01 08:01:23,015 [WARNING] core.mission.gorev2_orchestrator: [RETRY_IN_PLACE] MAVI_ALTIGEN 1/3 merkezlenemedi -- 5s yerinde beklenip tekrar denenecek (hedef goruniyor, d=2.15m).
+QGC port check failed, reporting UNKNOWN: (pid=16552)
+2026-09-01 08:01:24,775 [INFO] core.detection.vision_runtime: [VISION] detect() calisiyor -- bu karede 2 tespit: ['MAVI_ALTIGEN', 'KIRMIZI_DIKDORTGEN']
+QGC port check failed, reporting UNKNOWN: (pid=16552)
+2026-09-01 08:01:26,893 [INFO] gz_system.main_gz: Dashboard paint loop: 0.0 FPS (main thread)
+QGC port check failed, reporting UNKNOWN: (pid=16552)
+2026-09-01 08:01:27,856 [INFO] core.detection.vision_runtime: [VISION] detect() calisiyor -- bu karede 2 tespit: ['MAVI_ALTIGEN', 'KIRMIZI_DIKDORTGEN']
+2026-09-01 08:01:28,076 [INFO] core.navigation.centering_controller: MAVI_ALTIGEN hedefine merkezleniyor (irtifa hedefi: 15.0m, irtifa bandi +/-0.30m)...
+2026-09-01 08:01:28,077 [INFO] core.navigation.centering_controller: [CENTERING] MAVI_ALTIGEN 1/150 dx=+65px dy=-36px d=2.1m ex=+0.1016 ey=-0.0750 (tol +/-0.010) alt_err=-0.04m -> fwd=+0.15 right=+0.15 down=-0.02 m/s
+2026-09-01 08:01:28,629 [INFO] core.navigation.centering_controller: [CENTERING] MAVI_ALTIGEN 6/150 dx=+79px dy=-47px d=2.5m ex=+0.1234 ey=-0.0979 (tol +/-0.010) alt_err=-0.03m -> fwd=+0.15 right=+0.19 down=-0.02 m/s
+2026-09-01 08:01:29,175 [INFO] core.navigation.centering_controller: [CENTERING] MAVI_ALTIGEN 11/150 dx=+69px dy=-38px d=2.2m ex=+0.1078 ey=-0.0792 (tol +/-0.010) alt_err=-0.02m -> fwd=+0.15 right=+0.16 down=-0.01 m/s
+2026-09-01 08:01:29,725 [INFO] core.navigation.centering_controller: [CENTERING] MAVI_ALTIGEN 16/150 dx=+62px dy=-33px d=1.9m ex=+0.0969 ey=-0.0688 (tol +/-0.010) alt_err=-0.02m -> fwd=+0.15 right=+0.15 down=-0.01 m/s
+QGC port check failed, reporting UNKNOWN: (pid=16552)
+2026-09-01 08:01:30,278 [INFO] core.navigation.centering_controller: [CENTERING] MAVI_ALTIGEN 21/150 dx=+60px dy=-30px d=1.9m ex=+0.0938 ey=-0.0625 (tol +/-0.010) alt_err=-0.02m -> fwd=+0.15 right=+0.15 down=-0.01 m/s
+2026-09-01 08:01:30,832 [INFO] core.navigation.centering_controller: [CENTERING] MAVI_ALTIGEN 26/150 dx=+58px dy=-27px d=1.8m ex=+0.0906 ey=-0.0563 (tol +/-0.010) alt_err=-0.02m -> fwd=+0.15 right=+0.15 down=-0.01 m/s
+2026-09-01 08:01:30,942 [INFO] core.detection.vision_runtime: [VISION] detect() calisiyor -- bu karede 2 tespit: ['MAVI_ALTIGEN', 'KIRMIZI_DIKDORTGEN']
+2026-09-01 08:01:31,384 [INFO] core.navigation.centering_controller: [CENTERING] MAVI_ALTIGEN 31/150 dx=+54px dy=-24px d=1.6m ex=+0.0844 ey=-0.0500 (tol +/-0.010) alt_err=-0.01m -> fwd=+0.15 right=+0.15 down=-0.01 m/s
+QGC port check failed, reporting UNKNOWN: (pid=16552)
+2026-09-01 08:01:31,926 [INFO] gz_system.main_gz: Dashboard paint loop: 0.0 FPS (main thread)
+2026-09-01 08:01:31,935 [INFO] core.navigation.centering_controller: [CENTERING] MAVI_ALTIGEN 36/150 dx=+50px dy=-20px d=1.5m ex=+0.0781 ey=-0.0417 (tol +/-0.010) alt_err=-0.00m -> fwd=+0.15 right=+0.15 down=-0.00 m/s
+2026-09-01 08:01:32,487 [INFO] core.navigation.centering_controller: [CENTERING] MAVI_ALTIGEN 41/150 dx=+47px dy=-16px d=1.4m ex=+0.0734 ey=-0.0333 (tol +/-0.010) alt_err=-0.01m -> fwd=+0.15 right=+0.15 down=-0.00 m/s
+2026-09-01 08:01:33,036 [INFO] core.navigation.centering_controller: [CENTERING] MAVI_ALTIGEN 46/150 dx=+44px dy=-14px d=1.3m ex=+0.0688 ey=-0.0292 (tol +/-0.010) alt_err=-0.01m -> fwd=+0.15 right=+0.15 down=-0.00 m/s
+2026-09-01 08:01:33,589 [INFO] core.navigation.centering_controller: [CENTERING] MAVI_ALTIGEN 51/150 dx=+41px dy=-9px d=1.2m ex=+0.0641 ey=-0.0187 (tol +/-0.010) alt_err=+0.01m -> fwd=+0.15 right=+0.15 down=+0.00 m/s
+QGC port check failed, reporting UNKNOWN: (pid=16552)
+2026-09-01 08:01:34,027 [INFO] core.detection.vision_runtime: [VISION] detect() calisiyor -- bu karede 2 tespit: ['MAVI_ALTIGEN', 'KIRMIZI_DIKDORTGEN']
+2026-09-01 08:01:34,141 [INFO] core.navigation.centering_controller: [CENTERING] MAVI_ALTIGEN 56/150 dx=+38px dy=-7px d=1.1m ex=+0.0594 ey=-0.0146 (tol +/-0.010) alt_err=+0.01m -> fwd=+0.15 right=+0.15 down=+0.00 m/s
+2026-09-01 08:01:34,693 [INFO] core.navigation.centering_controller: [CENTERING] MAVI_ALTIGEN 61/150 dx=+35px dy=-2px d=1.0m ex=+0.0547 ey=-0.0042 (tol +/-0.010) alt_err=+0.00m -> fwd=+0.00 right=+0.15 down=+0.00 m/s
+2026-09-01 08:01:35,244 [INFO] core.navigation.centering_controller: [CENTERING] MAVI_ALTIGEN 66/150 dx=+30px dy=+18px d=1.0m ex=+0.0469 ey=+0.0375 (tol +/-0.010) alt_err=-0.01m -> fwd=-0.15 right=+0.15 down=-0.00 m/s
+2026-09-01 08:01:35,796 [INFO] core.navigation.centering_controller: [CENTERING] MAVI_ALTIGEN 71/150 dx=+27px dy=+8px d=0.8m ex=+0.0422 ey=+0.0167 (tol +/-0.010) alt_err=-0.01m -> fwd=-0.15 right=+0.15 down=-0.01 m/s
+QGC port check failed, reporting UNKNOWN: (pid=16552)
+2026-09-01 08:01:36,346 [INFO] core.navigation.centering_controller: [CENTERING] MAVI_ALTIGEN 76/150 dx=+25px dy=-13px d=0.8m ex=+0.0391 ey=-0.0271 (tol +/-0.010) alt_err=-0.01m -> fwd=+0.15 right=+0.15 down=-0.01 m/s
+2026-09-01 08:01:36,898 [INFO] core.navigation.centering_controller: [CENTERING] MAVI_ALTIGEN 81/150 dx=+22px dy=-16px d=0.8m ex=+0.0344 ey=-0.0333 (tol +/-0.010) alt_err=-0.01m -> fwd=+0.15 right=+0.15 down=-0.01 m/s
+2026-09-01 08:01:36,950 [INFO] gz_system.main_gz: Dashboard paint loop: 0.0 FPS (main thread)
+2026-09-01 08:01:37,117 [INFO] core.detection.vision_runtime: [VISION] detect() calisiyor -- bu karede 2 tespit: ['MAVI_ALTIGEN', 'KIRMIZI_DIKDORTGEN']
+2026-09-01 08:01:37,448 [INFO] core.navigation.centering_controller: [CENTERING] MAVI_ALTIGEN 86/150 dx=+19px dy=-5px d=0.5m ex=+0.0297 ey=-0.0104 (tol +/-0.010) alt_err=-0.01m -> fwd=+0.15 right=+0.15 down=-0.00 m/s
+QGC port check failed, reporting UNKNOWN: (pid=16552)
+2026-09-01 08:01:37,998 [INFO] core.navigation.centering_controller: [CENTERING] MAVI_ALTIGEN 91/150 dx=+17px dy=+16px d=0.6m ex=+0.0266 ey=+0.0333 (tol +/-0.010) alt_err=-0.01m -> fwd=-0.15 right=+0.15 down=-0.00 m/s
+2026-09-01 08:01:38,546 [INFO] core.navigation.centering_controller: [CENTERING] MAVI_ALTIGEN 96/150 dx=+14px dy=+12px d=0.5m ex=+0.0219 ey=+0.0250 (tol +/-0.010) alt_err=-0.01m -> fwd=-0.15 right=+0.15 down=-0.00 m/s
+2026-09-01 08:01:39,097 [INFO] core.navigation.centering_controller: [CENTERING] MAVI_ALTIGEN 101/150 dx=+10px dy=+2px d=0.3m ex=+0.0156 ey=+0.0042 (tol +/-0.010) alt_err=-0.00m -> fwd=+0.00 right=+0.15 down=-0.00 m/s
+2026-09-01 08:01:39,648 [INFO] core.navigation.centering_controller: [CENTERING] MAVI_ALTIGEN 106/150 dx=+6px dy=-22px d=0.6m ex=+0.0094 ey=-0.0458 (tol +/-0.010) alt_err=-0.01m -> fwd=+0.15 right=+0.00 down=-0.01 m/s
+QGC port check failed, reporting UNKNOWN: (pid=16552)
+2026-09-01 08:01:40,194 [INFO] core.detection.vision_runtime: [VISION] detect() calisiyor -- bu karede 2 tespit: ['MAVI_ALTIGEN', 'KIRMIZI_DIKDORTGEN']
+2026-09-01 08:01:40,195 [INFO] core.navigation.centering_controller: [CENTERING] MAVI_ALTIGEN 111/150 dx=-10px dy=-9px d=0.4m ex=-0.0156 ey=-0.0187 (tol +/-0.010) alt_err=-0.01m -> fwd=+0.15 right=-0.15 down=-0.01 m/s
+2026-09-01 08:01:40,746 [INFO] core.navigation.centering_controller: [CENTERING] MAVI_ALTIGEN 116/150 dx=-11px dy=-3px d=0.3m ex=-0.0172 ey=-0.0063 (tol +/-0.010) alt_err=-0.01m -> fwd=+0.00 right=-0.15 down=-0.00 m/s
+2026-09-01 08:01:41,291 [INFO] core.navigation.centering_controller: [CENTERING] MAVI_ALTIGEN 121/150 dx=+10px dy=+18px d=0.6m ex=+0.0156 ey=+0.0375 (tol +/-0.010) alt_err=-0.00m -> fwd=-0.15 right=+0.15 down=-0.00 m/s
+2026-09-01 08:01:41,841 [INFO] core.navigation.centering_controller: [CENTERING] MAVI_ALTIGEN 126/150 dx=+21px dy=+7px d=0.6m ex=+0.0328 ey=+0.0146 (tol +/-0.010) alt_err=+0.00m -> fwd=-0.15 right=+0.15 down=+0.00 m/s
+QGC port check failed, reporting UNKNOWN: (pid=16552)
+2026-09-01 08:01:41,982 [INFO] gz_system.main_gz: Dashboard paint loop: 0.0 FPS (main thread)
+2026-09-01 08:01:42,390 [INFO] core.navigation.centering_controller: [CENTERING] MAVI_ALTIGEN 131/150 dx=+8px dy=-10px d=0.4m ex=+0.0125 ey=-0.0208 (tol +/-0.010) alt_err=-0.00m -> fwd=+0.15 right=+0.15 down=-0.00 m/s
+2026-09-01 08:01:42,938 [INFO] core.navigation.centering_controller: [CENTERING] MAVI_ALTIGEN 136/150 dx=-9px dy=-18px d=0.6m ex=-0.0141 ey=-0.0375 (tol +/-0.010) alt_err=-0.01m -> fwd=+0.15 right=-0.15 down=-0.01 m/s
+2026-09-01 08:01:43,267 [INFO] core.detection.vision_runtime: [VISION] detect() calisiyor -- bu karede 2 tespit: ['MAVI_ALTIGEN', 'KIRMIZI_DIKDORTGEN']
+2026-09-01 08:01:43,490 [INFO] core.navigation.centering_controller: [CENTERING] MAVI_ALTIGEN 141/150 dx=-14px dy=-7px d=0.4m ex=-0.0219 ey=-0.0146 (tol +/-0.010) alt_err=-0.00m -> fwd=+0.15 right=-0.15 down=-0.00 m/s
+2026-09-01 08:01:43,821 [INFO] core.navigation.centering_controller: Merkezleme tamamlandi. (attempt 144/150, dx=-5px dy=-2px ex=-0.0078 ey=-0.0042 alt_err=-0.00m)
+QGC port check failed, reporting UNKNOWN: (pid=16552)
+QGC port check failed, reporting UNKNOWN: (pid=16552)
+2026-09-01 08:01:46,360 [INFO] core.detection.vision_runtime: [VISION] detect() calisiyor -- bu karede 2 tespit: ['MAVI_ALTIGEN', 'KIRMIZI_DIKDORTGEN']
+2026-09-01 08:01:46,914 [INFO] core.mission.gorev2_orchestrator: [POST_LOCK_DRIFT] MAVI_ALTIGEN 3s: peak=20.2px final=10.4px (56.27cm / 29.02cm), 28 ornek, 0 kayip
+2026-09-01 08:01:46,914 [INFO] core.navigation.centering_controller: 2.0 saniye hover yapiliyor (Konum dogrulama)...
+2026-09-01 08:01:46,994 [INFO] gz_system.main_gz: Dashboard paint loop: 0.0 FPS (main thread)
+QGC port check failed, reporting UNKNOWN: (pid=16552)
+2026-09-01 08:01:49,007 [INFO] core.position_log.position_store: Konum basariyla kaydedildi: MAVI_ALTIGEN (ilk)
+2026-09-01 08:01:49,007 [INFO] core.mission.gorev2_orchestrator: Mavi Altigen ortalandi -- KIRMIZI yuk hemen birakiliyor.
+2026-09-01 08:01:49,007 [INFO] core.mission.gorev2_fsm: PAYLOAD MISSION 1 basliyor (Mavi Altigen / RED payload)
+2026-09-01 08:01:49,007 [INFO] core.navigation.centering_controller: Kayitli GPS konumuna gidiliyor: lat=47.3982704, lon=8.5462625, alt=15.0m
+2026-09-01 08:01:49,007 [INFO] core.mission.payload_release: Yük bırakma başlatılıyor: MAVI_ALTIGEN
+2026-09-01 08:01:49,007 [INFO] core.navigation.centering_controller: MAVI_ALTIGEN hedefine merkezleniyor (irtifa hedefi: 10.0m, irtifa bandi +/-0.30m)...
+2026-09-01 08:01:49,008 [INFO] core.navigation.centering_controller: [CENTERING] MAVI_ALTIGEN 1/200 dx=+5px dy=+1px d=0.1m ex=+0.0078 ey=+0.0021 (tol +/-0.010) alt_err=+5.01m -> fwd=+0.00 right=+0.00 down=+0.15 m/s
+2026-09-01 08:01:49,448 [INFO] core.detection.vision_runtime: [VISION] detect() calisiyor -- bu karede 2 tespit: ['MAVI_ALTIGEN', 'KIRMIZI_DIKDORTGEN']
+2026-09-01 08:01:49,559 [INFO] core.navigation.centering_controller: [CENTERING] MAVI_ALTIGEN 6/200 dx=+6px dy=+1px d=0.2m ex=+0.0094 ey=+0.0021 (tol +/-0.010) alt_err=+4.87m -> fwd=+0.00 right=+0.00 down=+0.90 m/s
+QGC port check failed, reporting UNKNOWN: (pid=16552)
+2026-09-01 08:01:50,123 [INFO] core.navigation.centering_controller: [CENTERING] MAVI_ALTIGEN 11/200 dx=+6px dy=+1px d=0.2m ex=+0.0094 ey=+0.0021 (tol +/-0.010) alt_err=+4.35m -> fwd=+0.00 right=+0.00 down=+1.65 m/s
+2026-09-01 08:01:50,675 [INFO] core.navigation.centering_controller: [CENTERING] MAVI_ALTIGEN 16/200 dx=+6px dy=+1px d=0.2m ex=+0.0094 ey=+0.0021 (tol +/-0.010) alt_err=+3.55m -> fwd=+0.00 right=+0.00 down=+1.78 m/s
+2026-09-01 08:01:51,220 [INFO] core.navigation.centering_controller: [CENTERING] MAVI_ALTIGEN 21/200 dx=+14px dy=+1px d=0.3m ex=+0.0219 ey=+0.0021 (tol +/-0.010) alt_err=+2.64m -> fwd=+0.00 right=+0.15 down=+1.32 m/s
+2026-09-01 08:01:51,765 [INFO] core.navigation.centering_controller: [CENTERING] MAVI_ALTIGEN 26/200 dx=+13px dy=-1px d=0.3m ex=+0.0203 ey=-0.0021 (tol +/-0.010) alt_err=+2.00m -> fwd=+0.00 right=+0.15 down=+1.00 m/s
+QGC port check failed, reporting UNKNOWN: (pid=16552)
+2026-09-01 08:01:52,002 [INFO] gz_system.main_gz: Dashboard paint loop: 0.0 FPS (main thread)
+2026-09-01 08:01:52,307 [INFO] core.navigation.centering_controller: [CENTERING] MAVI_ALTIGEN 31/200 dx=+4px dy=-1px d=0.1m ex=+0.0063 ey=-0.0021 (tol +/-0.010) alt_err=+1.42m -> fwd=+0.00 right=+0.00 down=+0.71 m/s
+2026-09-01 08:01:52,524 [INFO] core.detection.vision_runtime: [VISION] detect() calisiyor -- bu karede 1 tespit: ['MAVI_ALTIGEN']
+2026-09-01 08:01:52,853 [INFO] core.navigation.centering_controller: [CENTERING] MAVI_ALTIGEN 36/200 dx=-17px dy=-2px d=0.4m ex=-0.0266 ey=-0.0042 (tol +/-0.010) alt_err=+1.08m -> fwd=+0.00 right=-0.15 down=+0.54 m/s
+2026-09-01 08:01:53,396 [INFO] core.navigation.centering_controller: [CENTERING] MAVI_ALTIGEN 41/200 dx=-4px dy=+0px d=0.1m ex=-0.0063 ey=+0.0000 (tol +/-0.010) alt_err=+0.82m -> fwd=+0.00 right=+0.00 down=+0.41 m/s
+QGC port check failed, reporting UNKNOWN: (pid=16552)
+2026-09-01 08:01:53,940 [INFO] core.navigation.centering_controller: [CENTERING] MAVI_ALTIGEN 46/200 dx=+20px dy=+0px d=0.4m ex=+0.0312 ey=+0.0000 (tol +/-0.010) alt_err=+0.60m -> fwd=+0.00 right=+0.15 down=+0.30 m/s
+2026-09-01 08:01:54,486 [INFO] core.navigation.centering_controller: [CENTERING] MAVI_ALTIGEN 51/200 dx=+15px dy=-1px d=0.3m ex=+0.0234 ey=-0.0021 (tol +/-0.010) alt_err=+0.46m -> fwd=+0.00 right=+0.15 down=+0.23 m/s
+2026-09-01 08:01:55,030 [INFO] core.navigation.centering_controller: [CENTERING] MAVI_ALTIGEN 56/200 dx=+5px dy=+0px d=0.1m ex=+0.0078 ey=+0.0000 (tol +/-0.010) alt_err=+0.34m -> fwd=+0.00 right=+0.00 down=+0.17 m/s
+2026-09-01 08:01:55,573 [INFO] core.detection.vision_runtime: [VISION] detect() calisiyor -- bu karede 1 tespit: ['MAVI_ALTIGEN']
+2026-09-01 08:01:55,575 [INFO] core.navigation.centering_controller: [CENTERING] MAVI_ALTIGEN 61/200 dx=-17px dy=+1px d=0.3m ex=-0.0266 ey=+0.0021 (tol +/-0.010) alt_err=+0.26m -> fwd=+0.00 right=-0.15 down=+0.13 m/s
+QGC port check failed, reporting UNKNOWN: (pid=16552)
+2026-09-01 08:01:56,117 [INFO] core.navigation.centering_controller: [CENTERING] MAVI_ALTIGEN 66/200 dx=-13px dy=+3px d=0.3m ex=-0.0203 ey=+0.0063 (tol +/-0.010) alt_err=+0.19m -> fwd=+0.00 right=-0.15 down=+0.10 m/s
+2026-09-01 08:01:56,552 [INFO] core.navigation.centering_controller: Merkezleme tamamlandi. (attempt 70/200, dx=-4px dy=+3px ex=-0.0063 ey=+0.0063 alt_err=+0.16m)
+2026-09-01 08:01:56,553 [INFO] core.navigation.centering_controller: MAVI_ALTIGEN hedefine merkezleniyor (irtifa hedefi: 5.0m, irtifa bandi +/-0.30m)...
+2026-09-01 08:01:56,553 [INFO] core.navigation.centering_controller: [CENTERING] MAVI_ALTIGEN 1/200 dx=-4px dy=+3px d=0.1m ex=-0.0063 ey=+0.0063 (tol +/-0.010) alt_err=+5.16m -> fwd=+0.00 right=+0.00 down=+0.15 m/s
+2026-09-01 08:01:57,029 [INFO] gz_system.main_gz: Dashboard paint loop: 0.0 FPS (main thread)
+2026-09-01 08:01:57,097 [INFO] core.navigation.centering_controller: [CENTERING] MAVI_ALTIGEN 6/200 dx=+16px dy=+4px d=0.3m ex=+0.0250 ey=+0.0083 (tol +/-0.010) alt_err=+5.06m -> fwd=+0.00 right=+0.15 down=+0.90 m/s
+2026-09-01 08:01:57,642 [INFO] core.navigation.centering_controller: [CENTERING] MAVI_ALTIGEN 11/200 dx=+13px dy=+5px d=0.2m ex=+0.0203 ey=+0.0104 (tol +/-0.010) alt_err=+4.48m -> fwd=-0.15 right=+0.15 down=+1.65 m/s
+QGC port check failed, reporting UNKNOWN: (pid=16552)
+2026-09-01 08:01:58,186 [INFO] core.navigation.centering_controller: [CENTERING] MAVI_ALTIGEN 16/200 dx=-2px dy=+15px d=0.2m ex=-0.0031 ey=+0.0312 (tol +/-0.010) alt_err=+3.70m -> fwd=-0.15 right=+0.00 down=+1.85 m/s
+2026-09-01 08:01:58,619 [INFO] core.detection.vision_runtime: [VISION] detect() calisiyor -- bu karede 1 tespit: ['MAVI_ALTIGEN']
+2026-09-01 08:01:58,728 [INFO] core.navigation.centering_controller: [CENTERING] MAVI_ALTIGEN 21/200 dx=-22px dy=+5px d=0.3m ex=-0.0344 ey=+0.0104 (tol +/-0.010) alt_err=+2.77m -> fwd=-0.15 right=-0.15 down=+1.38 m/s
+2026-09-01 08:01:59,271 [INFO] core.navigation.centering_controller: [CENTERING] MAVI_ALTIGEN 26/200 dx=-7px dy=-22px d=0.3m ex=-0.0109 ey=-0.0458 (tol +/-0.010) alt_err=+2.08m -> fwd=+0.15 right=-0.15 down=+1.04 m/s
+2026-09-01 08:01:59,818 [INFO] core.navigation.centering_controller: [CENTERING] MAVI_ALTIGEN 31/200 dx=+15px dy=-18px d=0.3m ex=+0.0234 ey=-0.0375 (tol +/-0.010) alt_err=+1.49m -> fwd=+0.15 right=+0.15 down=+0.75 m/s
+QGC port check failed, reporting UNKNOWN: (pid=16552)
+2026-09-01 08:02:00,364 [INFO] core.navigation.centering_controller: [CENTERING] MAVI_ALTIGEN 36/200 dx=+22px dy=-6px d=0.3m ex=+0.0344 ey=-0.0125 (tol +/-0.010) alt_err=+1.14m -> fwd=+0.15 right=+0.15 down=+0.57 m/s
+2026-09-01 08:02:00,907 [INFO] core.navigation.centering_controller: [CENTERING] MAVI_ALTIGEN 41/200 dx=+8px dy=+13px d=0.2m ex=+0.0125 ey=+0.0271 (tol +/-0.010) alt_err=+0.82m -> fwd=-0.15 right=+0.15 down=+0.41 m/s
+2026-09-01 08:02:01,451 [INFO] core.navigation.centering_controller: [CENTERING] MAVI_ALTIGEN 46/200 dx=-8px dy=+21px d=0.2m ex=-0.0125 ey=+0.0437 (tol +/-0.010) alt_err=+0.63m -> fwd=-0.15 right=-0.15 down=+0.31 m/s
+2026-09-01 08:02:01,665 [INFO] core.detection.vision_runtime: [VISION] detect() calisiyor -- bu karede 1 tespit: ['MAVI_ALTIGEN']
+QGC port check failed, reporting UNKNOWN: (pid=16552)
+2026-09-01 08:02:01,992 [INFO] core.navigation.centering_controller: [CENTERING] MAVI_ALTIGEN 51/200 dx=-20px dy=+6px d=0.2m ex=-0.0312 ey=+0.0125 (tol +/-0.010) alt_err=+0.50m -> fwd=-0.15 right=-0.15 down=+0.25 m/s
+2026-09-01 08:02:02,056 [INFO] gz_system.main_gz: Dashboard paint loop: 0.0 FPS (main thread)
+2026-09-01 08:02:02,535 [INFO] core.navigation.centering_controller: [CENTERING] MAVI_ALTIGEN 56/200 dx=-7px dy=-23px d=0.2m ex=-0.0109 ey=-0.0479 (tol +/-0.010) alt_err=+0.37m -> fwd=+0.15 right=-0.15 down=+0.19 m/s
+2026-09-01 08:02:03,080 [INFO] core.navigation.centering_controller: [CENTERING] MAVI_ALTIGEN 61/200 dx=+14px dy=-16px d=0.2m ex=+0.0219 ey=-0.0333 (tol +/-0.010) alt_err=+0.29m -> fwd=+0.15 right=+0.15 down=+0.15 m/s
+2026-09-01 08:02:03,629 [INFO] core.navigation.centering_controller: [CENTERING] MAVI_ALTIGEN 66/200 dx=+14px dy=-2px d=0.1m ex=+0.0219 ey=-0.0042 (tol +/-0.010) alt_err=+0.21m -> fwd=+0.00 right=+0.15 down=+0.10 m/s
+QGC port check failed, reporting UNKNOWN: (pid=16552)
+2026-09-01 08:02:04,175 [INFO] core.navigation.centering_controller: [CENTERING] MAVI_ALTIGEN 71/200 dx=-4px dy=+30px d=0.3m ex=-0.0063 ey=+0.0625 (tol +/-0.010) alt_err=+0.16m -> fwd=-0.15 right=+0.00 down=+0.08 m/s
+2026-09-01 08:02:04,719 [INFO] core.detection.vision_runtime: [VISION] detect() calisiyor -- bu karede 1 tespit: ['MAVI_ALTIGEN']
+2026-09-01 08:02:04,720 [INFO] core.navigation.centering_controller: [CENTERING] MAVI_ALTIGEN 76/200 dx=-24px dy=+16px d=0.3m ex=-0.0375 ey=+0.0333 (tol +/-0.010) alt_err=+0.12m -> fwd=-0.15 right=-0.15 down=+0.06 m/s
+2026-09-01 08:02:05,261 [INFO] core.navigation.centering_controller: Merkezleme tamamlandi. (attempt 81/200, dx=-6px dy=+1px ex=-0.0094 ey=+0.0021 alt_err=+0.10m)
+2026-09-01 08:02:05,263 [INFO] core.navigation.centering_controller: MAVI_ALTIGEN hedefine merkezleniyor (irtifa hedefi: 0.45m, irtifa bandi +/-0.05m)...
+2026-09-01 08:02:05,263 [INFO] core.navigation.centering_controller: [CENTERING] MAVI_ALTIGEN 1/200 dx=-6px dy=+1px d=0.1m ex=-0.0094 ey=+0.0021 (tol +/-0.010) alt_err=+4.65m -> fwd=+0.00 right=+0.00 down=+0.15 m/s
+2026-09-01 08:02:05,810 [INFO] core.navigation.centering_controller: [CENTERING] MAVI_ALTIGEN 6/200 dx=+21px dy=-27px d=0.3m ex=+0.0328 ey=-0.0563 (tol +/-0.010) alt_err=+4.49m -> fwd=+0.15 right=+0.15 down=+0.90 m/s
+QGC port check failed, reporting UNKNOWN: (pid=16552)
+2026-09-01 08:02:06,354 [INFO] core.navigation.centering_controller: [CENTERING] MAVI_ALTIGEN 11/200 dx=+21px dy=-14px d=0.2m ex=+0.0328 ey=-0.0292 (tol +/-0.010) alt_err=+3.98m -> fwd=+0.15 right=+0.15 down=+1.65 m/s
+2026-09-01 08:02:06,899 [INFO] core.navigation.centering_controller: [CENTERING] MAVI_ALTIGEN 16/200 dx=+5px dy=-2px d=0.0m ex=+0.0078 ey=-0.0042 (tol +/-0.010) alt_err=+3.19m -> fwd=+0.00 right=+0.00 down=+1.59 m/s
+2026-09-01 08:02:07,066 [INFO] gz_system.main_gz: Dashboard paint loop: 0.0 FPS (main thread)
+2026-09-01 08:02:07,442 [INFO] core.navigation.centering_controller: [CENTERING] MAVI_ALTIGEN 21/200 dx=-24px dy=+34px d=0.2m ex=-0.0375 ey=+0.0708 (tol +/-0.010) alt_err=+2.29m -> fwd=-0.12 right=-0.15 down=+1.15 m/s
+2026-09-01 08:02:07,766 [INFO] core.detection.vision_runtime: [VISION] detect() calisiyor -- bu karede 1 tespit: ['MAVI_ALTIGEN']
+QGC port check failed, reporting UNKNOWN: (pid=19607)
+2026-09-01 08:02:07,984 [INFO] core.navigation.centering_controller: [CENTERING] MAVI_ALTIGEN 26/200 dx=-15px dy=+17px d=0.1m ex=-0.0234 ey=+0.0354 (tol +/-0.010) alt_err=+1.74m -> fwd=-0.10 right=-0.13 down=+0.87 m/s
+2026-09-01 08:02:08,527 [INFO] core.navigation.centering_controller: [CENTERING] MAVI_ALTIGEN 31/200 dx=+17px dy=-1px d=0.1m ex=+0.0266 ey=-0.0021 (tol +/-0.010) alt_err=+1.24m -> fwd=+0.00 right=+0.10 down=+0.62 m/s
+2026-09-01 08:02:09,072 [INFO] core.navigation.centering_controller: [CENTERING] MAVI_ALTIGEN 36/200 dx=+34px dy=-26px d=0.1m ex=+0.0531 ey=-0.0531 (tol +/-0.010) alt_err=+0.95m -> fwd=+0.08 right=+0.08 down=+0.48 m/s
+2026-09-01 08:02:09,616 [INFO] core.navigation.centering_controller: [CENTERING] MAVI_ALTIGEN 41/200 dx=+12px dy=-9px d=0.0m ex=+0.0180 ey=-0.0187 (tol +/-0.010) alt_err=+0.68m -> fwd=+0.05 right=+0.07 down=+0.34 m/s
+QGC port check failed, reporting UNKNOWN: (pid=16552)
+2026-09-01 08:02:10,162 [INFO] core.navigation.centering_controller: [CENTERING] MAVI_ALTIGEN 46/200 dx=-20px dy=+16px d=0.0m ex=-0.0320 ey=+0.0333 (tol +/-0.010) alt_err=+0.53m -> fwd=-0.05 right=-0.06 down=+0.27 m/s
+2026-09-01 08:02:10,706 [INFO] core.navigation.centering_controller: [CENTERING] MAVI_ALTIGEN 51/200 dx=-36px dy=+5px d=0.1m ex=-0.0570 ey=+0.0104 (tol +/-0.010) alt_err=+0.42m -> fwd=-0.04 right=-0.09 down=+0.21 m/s
+2026-09-01 08:02:10,814 [INFO] core.detection.vision_runtime: [VISION] detect() calisiyor -- bu karede 1 tespit: ['MAVI_ALTIGEN']
+2026-09-01 08:02:11,250 [INFO] core.navigation.centering_controller: [CENTERING] MAVI_ALTIGEN 56/200 dx=-2px dy=+0px d=0.0m ex=-0.0023 ey=+0.0000 (tol +/-0.010) alt_err=+0.30m -> fwd=+0.00 right=+0.00 down=+0.15 m/s
+2026-09-01 08:02:11,793 [INFO] core.navigation.centering_controller: [CENTERING] MAVI_ALTIGEN 61/200 dx=+0px dy=+0px d=0.0m ex=+0.0000 ey=+0.0000 (tol +/-0.010) alt_err=+0.23m -> fwd=+0.00 right=+0.00 down=+0.12 m/s
+QGC port check failed, reporting UNKNOWN: (pid=16552)
+2026-09-01 08:02:12,101 [INFO] gz_system.main_gz: Dashboard paint loop: 0.0 FPS (main thread)
+2026-09-01 08:02:12,340 [INFO] core.navigation.centering_controller: [CENTERING] MAVI_ALTIGEN 66/200 dx=+0px dy=+0px d=0.0m ex=+0.0000 ey=+0.0000 (tol +/-0.010) alt_err=+0.17m -> fwd=+0.00 right=+0.00 down=+0.09 m/s
+2026-09-01 08:02:12,557 [WARNING] core.navigation.centering_controller: [LOW_ALT_OPEN_LOOP_DESCENT] MAVI_ALTIGEN: goruntu 0.62m'de kayboldu -- dondurulmus kestirime (47.3982708, 8.5462646, offset=0.0cm @ 0.61m) gore 0.45m'ye alcalmaya devam.
+2026-09-01 08:02:13,534 [INFO] core.navigation.centering_controller: [LOW_ALT_OPEN_LOOP_DESCENT] MAVI_ALTIGEN: 0.490m'ye ulasildi (hedef 0.45m).
+2026-09-01 08:02:13,534 [INFO] core.navigation.centering_controller: [AIM_OFFSET_APPLIED] MAVI_ALTIGEN: montaj (ileri=0.00, sag=0.04) m, yon=1.5 deg -> tutma noktasi (47.3982708, 8.5462642) olarak otelendi (kuzey +0.00, dogu -0.03 m).
+2026-09-01 08:02:13,858 [INFO] core.detection.vision_runtime: [VISION] detect() calisiyor -- bu karede 0 tespit: []
+QGC port check failed, reporting UNKNOWN: (pid=16552)
+2026-09-01 08:02:14,074 [INFO] core.navigation.centering_controller: [MOUNT_TRANSLATE_DONE] MAVI_ALTIGEN: kalan 4.8 cm, sure 0.54 s (yakinsadi).
+2026-09-01 08:02:14,074 [WARNING] core.navigation.centering_controller: [LOW_ALT_OPEN_LOOP_DESCENT] MAVI_ALTIGEN: goruntu 0.48m'de kayboldu -- dondurulmus kestirime (47.3982708, 8.5462642, offset=0.0cm @ 0.61m) gore 0.45m'ye alcalmaya devam.
+2026-09-01 08:02:14,074 [INFO] core.navigation.centering_controller: [LOW_ALT_OPEN_LOOP_DESCENT] MAVI_ALTIGEN: 0.479m'ye ulasildi (hedef 0.45m).
+2026-09-01 08:02:14,074 [INFO] core.navigation.centering_controller: 0.1m ileri hareket ediliyor (0.3 m/s, 0.3s)...
+2026-09-01 08:02:14,506 [INFO] core.mission.payload_release: [RELEASE_OFFSET] MAVI_ALTIGEN: {'shape_type': 'MAVI_ALTIGEN', 'altitude_m': 0.493, 'target_visible': False, 'best_known_offset_cm': 9.21, 'best_known_offset_alt_m': 5.095}
+2026-09-01 08:02:14,506 [INFO] core.mission.payload_release: [MOUNT_VECTOR_MEASURED] MAVI_ALTIGEN: {'world_dx': 0.0355, 'world_dy': 0.0009, 'gazebo_yaw_deg': 90.0, 'body_forward_m': 0.0009, 'body_right_m': 0.0355} (uygulanan: (0.0, 0.035))
+2026-09-01 08:02:14,506 [INFO] gz_system.gz_payload_actuator: Gazebo DetachableJoint tetikleniyor: /payload/detach/red
+I0901 08:02:14.506893 13192237 fork_posix.cc:71] Other threads are currently calling into gRPC, skipping fork() handlers
+I0901 08:02:14.563198 13192237 fork_posix.cc:71] Other threads are currently calling into gRPC, skipping fork() handlers
+I0901 08:02:14.616198 13192237 fork_posix.cc:71] Other threads are currently calling into gRPC, skipping fork() handlers
+I0901 08:02:14.662745 13192237 fork_posix.cc:71] Other threads are currently calling into gRPC, skipping fork() handlers
+I0901 08:02:14.714679 13192237 fork_posix.cc:71] Other threads are currently calling into gRPC, skipping fork() handlers
+2026-09-01 08:02:15,643 [INFO] gz_system.gz_payload_actuator: Yuk ayrildi (red), gecikme 1.094 s.
+2026-09-01 08:02:15,643 [INFO] core.mission.payload_release: [PAYLOAD_RELEASED] PAYLOAD 1 RELEASED @0.49m
+QGC port check failed, reporting UNKNOWN: (pid=16552)
+2026-09-01 08:02:16,917 [INFO] core.detection.vision_runtime: [VISION] detect() calisiyor -- bu karede 1 tespit: ['KIRMIZI_DIKDORTGEN']
+2026-09-01 08:02:17,111 [INFO] gz_system.main_gz: Dashboard paint loop: 0.0 FPS (main thread)
+2026-09-01 08:02:17,644 [INFO] core.mission.payload_release: [PAYLOAD_FINAL_POSE] MAVI_ALTIGEN: x=7.548 y=33.479 z=0.035 merkeze 1996.1 cm egim 0.1 deg (HEDEF DISINDA)
+2026-09-01 08:02:17,644 [INFO] core.mission.payload_release: Doğrulama işareti aranıyor: KIRMIZI_DIKDORTGEN
+2026-09-01 08:02:17,644 [INFO] core.mission.payload_release: Yük bırakma DOĞRULANDI: KIRMIZI_DIKDORTGEN tespit edildi.
+2026-09-01 08:02:17,644 [INFO] core.navigation.centering_controller: 15.0m irtifasina tirmaniliyor (goruntuden bagimsiz)...
+QGC port check failed, reporting UNKNOWN: (pid=16552)
+QGC port check failed, reporting UNKNOWN: (pid=16552)
+2026-09-01 08:02:19,982 [INFO] core.detection.vision_runtime: [VISION] detect() calisiyor -- bu karede 1 tespit: ['MAVI_ALTIGEN']
+QGC port check failed, reporting UNKNOWN: (pid=16552)
+2026-09-01 08:02:22,117 [INFO] gz_system.main_gz: Dashboard paint loop: 0.0 FPS (main thread)
+2026-09-01 08:02:23,026 [INFO] core.detection.vision_runtime: [VISION] detect() calisiyor -- bu karede 1 tespit: ['MAVI_ALTIGEN']
+QGC port check failed, reporting UNKNOWN: (pid=16552)
+QGC port check failed, reporting UNKNOWN: (pid=16552)
+2026-09-01 08:02:26,099 [INFO] core.detection.vision_runtime: [VISION] detect() calisiyor -- bu karede 2 tespit: ['MAVI_ALTIGEN', 'KIRMIZI_DIKDORTGEN']
+2026-09-01 08:02:27,117 [INFO] gz_system.main_gz: Dashboard paint loop: 0.0 FPS (main thread)
+2026-09-01 08:02:27,199 [INFO] core.mission.gorev2_orchestrator: [ROUTE_REJOIN] rota hattina donuluyor (sabit eksen=lon): hedef lat=47.3982718 lon=8.5461637 (mevcut lat=47.3982718 lon=8.5462632).
+2026-09-01 08:02:27,199 [INFO] core.navigation.centering_controller: Kayitli GPS konumuna gidiliyor: lat=47.398271799999996, lon=8.5461637, alt=15.0m
+QGC port check failed, reporting UNKNOWN: (pid=16552)
+2026-09-01 08:02:29,186 [INFO] core.detection.vision_runtime: [VISION] detect() calisiyor -- bu karede 2 tespit: ['MAVI_ALTIGEN', 'KIRMIZI_DIKDORTGEN']
+QGC port check failed, reporting UNKNOWN: (pid=16552)
+2026-09-01 08:02:30,394 [INFO] mavsdk_common.mavsdk_backend_base: Offboard durduruluyor...
+Received ack for not-existing command: 176! Ignoring... (mavlink_command_sender.cpp:304)
+2026-09-01 08:02:31,114 [INFO] core.mission.gorev2_orchestrator: [MISSION_RESUME] rota 2. ogeden devam ettiriliyor.
+Received ack for not-existing command: 176! Ignoring... (mavlink_command_sender.cpp:304)
+QGC port check failed, reporting UNKNOWN: (pid=16552)
+2026-09-01 08:02:32,130 [INFO] gz_system.main_gz: Dashboard paint loop: 0.0 FPS (main thread)
+2026-09-01 08:02:32,277 [INFO] core.detection.vision_runtime: [VISION] detect() calisiyor -- bu karede 2 tespit: ['MAVI_ALTIGEN', 'KIRMIZI_DIKDORTGEN']
+QGC port check failed, reporting UNKNOWN: (pid=16552)
+2026-09-01 08:02:35,342 [INFO] core.detection.vision_runtime: [VISION] detect() calisiyor -- bu karede 1 tespit: ['MAVI_ALTIGEN']
+QGC port check failed, reporting UNKNOWN: (pid=16552)
+2026-09-01 08:02:37,137 [INFO] gz_system.main_gz: Dashboard paint loop: 0.0 FPS (main thread)
+QGC port check failed, reporting UNKNOWN: (pid=16552)
+2026-09-01 08:02:38,382 [INFO] core.detection.vision_runtime: [VISION] detect() calisiyor -- bu karede 0 tespit: []
+QGC port check failed, reporting UNKNOWN: (pid=16552)
+2026-09-01 08:02:41,362 [INFO] core.navigation.centering_controller: Mission modu durduruluyor, Offboard'a geciliyor...
+2026-09-01 08:02:41,362 [INFO] mavsdk_common.mavsdk_backend_base: Mission'dan Offboard'a geçiş yapılıyor...
+2026-09-01 08:02:41,378 [INFO] mavsdk_common.mavsdk_backend_base: Offboard başlatılıyor...
+2026-09-01 08:02:41,474 [INFO] core.detection.vision_runtime: [VISION] detect() calisiyor -- bu karede 2 tespit: ['KIRMIZI_UCGEN', 'MAVI_DIKDORTGEN']
+QGC port check failed, reporting UNKNOWN: (pid=16552)
+2026-09-01 08:02:42,163 [INFO] gz_system.main_gz: Dashboard paint loop: 0.0 FPS (main thread)
+QGC port check failed, reporting UNKNOWN: (pid=16552)
+2026-09-01 08:02:44,402 [ERROR] core.navigation.centering_controller: PX4 OFFBOARD modunu onaylamadi (timeout).
+2026-09-01 08:02:44,402 [INFO] core.mission.gorev2_orchestrator: [ROUTE_REJOIN] rota hattina donuluyor (sabit eksen=lon): hedef lat=47.3987287 lon=8.5461630 (mevcut lat=47.3987287 lon=8.5461623).
+2026-09-01 08:02:44,402 [INFO] core.navigation.centering_controller: Kayitli GPS konumuna gidiliyor: lat=47.3987287, lon=8.546163, alt=15.0m
+2026-09-01 08:02:44,402 [INFO] mavsdk_common.mavsdk_backend_base: Offboard durduruluyor...
+Received ack for not-existing command: 176! Ignoring... (mavlink_command_sender.cpp:304)
+2026-09-01 08:02:44,578 [INFO] core.detection.vision_runtime: [VISION] detect() calisiyor -- bu karede 2 tespit: ['KIRMIZI_UCGEN', 'MAVI_DIKDORTGEN']
+2026-09-01 08:02:45,199 [INFO] core.mission.gorev2_orchestrator: [MISSION_RESUME] rota 2. ogeden devam ettiriliyor.
+Received ack for not-existing command: 176! Ignoring... (mavlink_command_sender.cpp:304)
+2026-09-01 08:02:45,821 [INFO] core.mission.gorev2_orchestrator: [OFFBOARD] resume sonrasi 1.9s oturma payi bekleniyor.
+QGC port check failed, reporting UNKNOWN: (pid=19703)
+2026-09-01 08:02:47,170 [INFO] gz_system.main_gz: Dashboard paint loop: 0.0 FPS (main thread)
+2026-09-01 08:02:47,684 [INFO] core.detection.vision_runtime: [VISION] detect() calisiyor -- bu karede 1 tespit: ['KIRMIZI_UCGEN']
+2026-09-01 08:02:47,721 [INFO] core.navigation.centering_controller: Mission modu durduruluyor, Offboard'a geciliyor...
+2026-09-01 08:02:47,721 [INFO] mavsdk_common.mavsdk_backend_base: Mission'dan Offboard'a geçiş yapılıyor...
+2026-09-01 08:02:47,723 [INFO] mavsdk_common.mavsdk_backend_base: Offboard başlatılıyor...
+QGC port check failed, reporting UNKNOWN: (pid=16552)
+QGC port check failed, reporting UNKNOWN: (pid=16552)
+2026-09-01 08:02:50,742 [INFO] core.detection.vision_runtime: [VISION] detect() calisiyor -- bu karede 1 tespit: ['KIRMIZI_UCGEN']
+2026-09-01 08:02:50,761 [ERROR] core.navigation.centering_controller: PX4 OFFBOARD modunu onaylamadi (timeout).
+2026-09-01 08:02:50,761 [INFO] core.mission.gorev2_orchestrator: [ROUTE_REJOIN] rota hattina donuluyor (sabit eksen=lon): hedef lat=47.3988473 lon=8.5461640 (mevcut lat=47.3988473 lon=8.5461629).
+2026-09-01 08:02:50,761 [INFO] core.navigation.centering_controller: Kayitli GPS konumuna gidiliyor: lat=47.3988473, lon=8.546164, alt=15.0m
+2026-09-01 08:02:51,720 [INFO] mavsdk_common.mavsdk_backend_base: Offboard durduruluyor...
+Received ack for not-existing command: 176! Ignoring... (mavlink_command_sender.cpp:304)
+QGC port check failed, reporting UNKNOWN: (pid=16552)
+2026-09-01 08:02:52,190 [INFO] gz_system.main_gz: Dashboard paint loop: 0.0 FPS (main thread)
+2026-09-01 08:02:52,220 [INFO] core.mission.gorev2_orchestrator: [MISSION_RESUME] rota 2. ogeden devam ettiriliyor.
+Received ack for not-existing command: 176! Ignoring... (mavlink_command_sender.cpp:304)
+2026-09-01 08:02:52,838 [INFO] core.mission.gorev2_orchestrator: [OFFBOARD] resume sonrasi 1.9s oturma payi bekleniyor.
+2026-09-01 08:02:53,805 [INFO] core.detection.vision_runtime: [VISION] detect() calisiyor -- bu karede 0 tespit: []
+QGC port check failed, reporting UNKNOWN: (pid=16552)
+2026-09-01 08:02:54,737 [INFO] core.navigation.centering_controller: Mission modu durduruluyor, Offboard'a geciliyor...
+2026-09-01 08:02:54,737 [INFO] mavsdk_common.mavsdk_backend_base: Mission'dan Offboard'a geçiş yapılıyor...
+2026-09-01 08:02:54,758 [INFO] mavsdk_common.mavsdk_backend_base: Offboard başlatılıyor...
+Received ack for not-existing command: 176! Ignoring... (mavlink_command_sender.cpp:304)
+Received ack for not-existing command: 176! Ignoring... (mavlink_command_sender.cpp:304)
+2026-09-01 08:02:55,568 [INFO] core.mission.gorev2_orchestrator: KIRMIZI_UCGEN kucuk bir hedef -- merkezleme icin 8.0 m'ye alcaliniyor.
+2026-09-01 08:02:55,568 [INFO] core.navigation.centering_controller: KIRMIZI_UCGEN hedefine merkezleniyor (irtifa hedefi: 8.0m, irtifa bandi +/-0.30m)...
+2026-09-01 08:02:55,568 [WARNING] core.navigation.centering_controller: [CENTERING] KIRMIZI_UCGEN 1/200 hedef kayboldu (feed canli, hedef bu karede yok)
+QGC port check failed, reporting UNKNOWN: (pid=16552)
+2026-09-01 08:02:56,084 [WARNING] core.navigation.centering_controller: [CENTERING] KIRMIZI_UCGEN 6/200 hedef kayboldu (feed canli, hedef bu karede yok)
+2026-09-01 08:02:56,626 [WARNING] core.navigation.centering_controller: [CENTERING] KIRMIZI_UCGEN 11/200 hedef kayboldu (feed canli, hedef bu karede yok)
+2026-09-01 08:02:56,842 [INFO] core.detection.vision_runtime: [VISION] detect() calisiyor -- bu karede 0 tespit: []
+2026-09-01 08:02:57,165 [WARNING] core.navigation.centering_controller: [CENTERING] KIRMIZI_UCGEN 16/200 hedef kayboldu (feed canli, hedef bu karede yok)
+2026-09-01 08:02:57,221 [INFO] gz_system.main_gz: Dashboard paint loop: 0.0 FPS (main thread)
+2026-09-01 08:02:57,706 [WARNING] core.navigation.centering_controller: [CENTERING] KIRMIZI_UCGEN 21/200 hedef kayboldu (feed canli, hedef bu karede yok)
+QGC port check failed, reporting UNKNOWN: (pid=16552)
+2026-09-01 08:02:58,246 [WARNING] core.navigation.centering_controller: [CENTERING] KIRMIZI_UCGEN 26/200 hedef kayboldu (feed canli, hedef bu karede yok)
+2026-09-01 08:02:58,786 [WARNING] core.navigation.centering_controller: [CENTERING] KIRMIZI_UCGEN 31/200 hedef kayboldu (feed canli, hedef bu karede yok)
+2026-09-01 08:02:59,325 [WARNING] core.navigation.centering_controller: [CENTERING] KIRMIZI_UCGEN 36/200 hedef kayboldu (feed canli, hedef bu karede yok)
+2026-09-01 08:02:59,866 [INFO] core.detection.vision_runtime: [VISION] detect() calisiyor -- bu karede 0 tespit: []
+2026-09-01 08:02:59,866 [WARNING] core.navigation.centering_controller: [CENTERING] KIRMIZI_UCGEN 41/200 hedef kayboldu (feed canli, hedef bu karede yok)
+QGC port check failed, reporting UNKNOWN: (pid=16552)
+2026-09-01 08:03:00,408 [WARNING] core.navigation.centering_controller: [CENTERING] KIRMIZI_UCGEN 46/200 hedef kayboldu (feed canli, hedef bu karede yok)
+2026-09-01 08:03:00,949 [WARNING] core.navigation.centering_controller: [CENTERING] KIRMIZI_UCGEN 51/200 hedef kayboldu (feed canli, hedef bu karede yok)
+2026-09-01 08:03:01,488 [WARNING] core.navigation.centering_controller: [CENTERING] KIRMIZI_UCGEN 56/200 hedef kayboldu (feed canli, hedef bu karede yok)
+QGC port check failed, reporting UNKNOWN: (pid=16552)
+2026-09-01 08:03:02,026 [WARNING] core.navigation.centering_controller: [CENTERING] KIRMIZI_UCGEN 61/200 hedef kayboldu (feed canli, hedef bu karede yok)
+2026-09-01 08:03:02,251 [INFO] gz_system.main_gz: Dashboard paint loop: 0.0 FPS (main thread)
+2026-09-01 08:03:02,568 [WARNING] core.navigation.centering_controller: [CENTERING] KIRMIZI_UCGEN 66/200 hedef kayboldu (feed canli, hedef bu karede yok)
+2026-09-01 08:03:02,894 [INFO] core.detection.vision_runtime: [VISION] detect() calisiyor -- bu karede 0 tespit: []
+2026-09-01 08:03:03,109 [WARNING] core.navigation.centering_controller: [CENTERING] KIRMIZI_UCGEN 71/200 hedef kayboldu (feed canli, hedef bu karede yok)
+2026-09-01 08:03:03,650 [WARNING] core.navigation.centering_controller: [CENTERING] KIRMIZI_UCGEN 76/200 hedef kayboldu (feed canli, hedef bu karede yok)
+QGC port check failed, reporting UNKNOWN: (pid=16552)
+2026-09-01 08:03:04,191 [WARNING] core.navigation.centering_controller: [CENTERING] KIRMIZI_UCGEN 81/200 hedef kayboldu (feed canli, hedef bu karede yok)
+2026-09-01 08:03:04,732 [WARNING] core.navigation.centering_controller: [CENTERING] KIRMIZI_UCGEN 86/200 hedef kayboldu (feed canli, hedef bu karede yok)
+2026-09-01 08:03:05,275 [WARNING] core.navigation.centering_controller: [CENTERING] KIRMIZI_UCGEN 91/200 hedef kayboldu (feed canli, hedef bu karede yok)
+2026-09-01 08:03:05,812 [WARNING] core.navigation.centering_controller: [CENTERING] KIRMIZI_UCGEN 96/200 hedef kayboldu (feed canli, hedef bu karede yok)
+2026-09-01 08:03:05,921 [INFO] core.detection.vision_runtime: [VISION] detect() calisiyor -- bu karede 0 tespit: []
+QGC port check failed, reporting UNKNOWN: (pid=16552)
+2026-09-01 08:03:06,353 [WARNING] core.navigation.centering_controller: [CENTERING] KIRMIZI_UCGEN 101/200 hedef kayboldu (feed canli, hedef bu karede yok)
+2026-09-01 08:03:06,894 [WARNING] core.navigation.centering_controller: [CENTERING] KIRMIZI_UCGEN 106/200 hedef kayboldu (feed canli, hedef bu karede yok)
+2026-09-01 08:03:07,282 [INFO] gz_system.main_gz: Dashboard paint loop: 0.0 FPS (main thread)
+2026-09-01 08:03:07,434 [WARNING] core.navigation.centering_controller: [CENTERING] KIRMIZI_UCGEN 111/200 hedef kayboldu (feed canli, hedef bu karede yok)
+2026-09-01 08:03:07,974 [WARNING] core.navigation.centering_controller: [CENTERING] KIRMIZI_UCGEN 116/200 hedef kayboldu (feed canli, hedef bu karede yok)
+QGC port check failed, reporting UNKNOWN: (pid=16552)
+2026-09-01 08:03:08,514 [WARNING] core.navigation.centering_controller: [CENTERING] KIRMIZI_UCGEN 121/200 hedef kayboldu (feed canli, hedef bu karede yok)
+2026-09-01 08:03:08,945 [INFO] core.detection.vision_runtime: [VISION] detect() calisiyor -- bu karede 0 tespit: []
+2026-09-01 08:03:09,054 [WARNING] core.navigation.centering_controller: [CENTERING] KIRMIZI_UCGEN 126/200 hedef kayboldu (feed canli, hedef bu karede yok)
+2026-09-01 08:03:09,593 [WARNING] core.navigation.centering_controller: [CENTERING] KIRMIZI_UCGEN 131/200 hedef kayboldu (feed canli, hedef bu karede yok)
+QGC port check failed, reporting UNKNOWN: (pid=16552)
+2026-09-01 08:03:10,134 [WARNING] core.navigation.centering_controller: [CENTERING] KIRMIZI_UCGEN 136/200 hedef kayboldu (feed canli, hedef bu karede yok)
+2026-09-01 08:03:10,675 [WARNING] core.navigation.centering_controller: [CENTERING] KIRMIZI_UCGEN 141/200 hedef kayboldu (feed canli, hedef bu karede yok)
+2026-09-01 08:03:11,215 [WARNING] core.navigation.centering_controller: [CENTERING] KIRMIZI_UCGEN 146/200 hedef kayboldu (feed canli, hedef bu karede yok)
+2026-09-01 08:03:11,757 [WARNING] core.navigation.centering_controller: [CENTERING] KIRMIZI_UCGEN 151/200 hedef kayboldu (feed canli, hedef bu karede yok)
+2026-09-01 08:03:11,974 [INFO] core.detection.vision_runtime: [VISION] detect() calisiyor -- bu karede 0 tespit: []
+QGC port check failed, reporting UNKNOWN: (pid=16552)
+2026-09-01 08:03:12,299 [WARNING] core.navigation.centering_controller: [CENTERING] KIRMIZI_UCGEN 156/200 hedef kayboldu (feed canli, hedef bu karede yok)
+2026-09-01 08:03:12,303 [INFO] gz_system.main_gz: Dashboard paint loop: 0.0 FPS (main thread)
+2026-09-01 08:03:12,841 [WARNING] core.navigation.centering_controller: [CENTERING] KIRMIZI_UCGEN 161/200 hedef kayboldu (feed canli, hedef bu karede yok)
+2026-09-01 08:03:13,384 [WARNING] core.navigation.centering_controller: [CENTERING] KIRMIZI_UCGEN 166/200 hedef kayboldu (feed canli, hedef bu karede yok)
+2026-09-01 08:03:13,924 [WARNING] core.navigation.centering_controller: [CENTERING] KIRMIZI_UCGEN 171/200 hedef kayboldu (feed canli, hedef bu karede yok)
+QGC port check failed, reporting UNKNOWN: (pid=16552)
+2026-09-01 08:03:14,466 [WARNING] core.navigation.centering_controller: [CENTERING] KIRMIZI_UCGEN 176/200 hedef kayboldu (feed canli, hedef bu karede yok)
+2026-09-01 08:03:15,011 [INFO] core.detection.vision_runtime: [VISION] detect() calisiyor -- bu karede 0 tespit: []
+2026-09-01 08:03:15,011 [WARNING] core.navigation.centering_controller: [CENTERING] KIRMIZI_UCGEN 181/200 hedef kayboldu (feed canli, hedef bu karede yok)
+2026-09-01 08:03:15,552 [WARNING] core.navigation.centering_controller: [CENTERING] KIRMIZI_UCGEN 186/200 hedef kayboldu (feed canli, hedef bu karede yok)
+QGC port check failed, reporting UNKNOWN: (pid=16552)
+2026-09-01 08:03:16,095 [WARNING] core.navigation.centering_controller: [CENTERING] KIRMIZI_UCGEN 191/200 hedef kayboldu (feed canli, hedef bu karede yok)
+2026-09-01 08:03:16,632 [WARNING] core.navigation.centering_controller: [CENTERING] KIRMIZI_UCGEN 196/200 hedef kayboldu (feed canli, hedef bu karede yok)
+2026-09-01 08:03:17,175 [ERROR] core.navigation.centering_controller: Merkezleme zaman asimina ugradi! (200 deneme / 20.0s butcesi doldu)
+2026-09-01 08:03:17,175 [WARNING] core.mission.gorev2_orchestrator: [RETRY_IN_PLACE] KIRMIZI_UCGEN 1/3 merkezlenemedi -- 5s yerinde beklenip tekrar denenecek (hedef su an karede yok).
+2026-09-01 08:03:17,308 [INFO] gz_system.main_gz: Dashboard paint loop: 0.0 FPS (main thread)
+QGC port check failed, reporting UNKNOWN: (pid=16552)
+2026-09-01 08:03:18,042 [INFO] core.detection.vision_runtime: [VISION] detect() calisiyor -- bu karede 0 tespit: []
+QGC port check failed, reporting UNKNOWN: (pid=16552)
+2026-09-01 08:03:21,075 [INFO] core.detection.vision_runtime: [VISION] detect() calisiyor -- bu karede 0 tespit: []
+QGC port check failed, reporting UNKNOWN: (pid=16552)
+2026-09-01 08:03:22,266 [INFO] core.navigation.centering_controller: KIRMIZI_UCGEN hedefine merkezleniyor (irtifa hedefi: 8.0m, irtifa bandi +/-0.30m)...
+2026-09-01 08:03:22,266 [WARNING] core.navigation.centering_controller: [CENTERING] KIRMIZI_UCGEN 1/200 hedef kayboldu (feed canli, hedef bu karede yok)
+2026-09-01 08:03:22,330 [INFO] gz_system.main_gz: Dashboard paint loop: 0.0 FPS (main thread)
+2026-09-01 08:03:22,808 [WARNING] core.navigation.centering_controller: [CENTERING] KIRMIZI_UCGEN 6/200 hedef kayboldu (feed canli, hedef bu karede yok)
+2026-09-01 08:03:23,353 [WARNING] core.navigation.centering_controller: [CENTERING] KIRMIZI_UCGEN 11/200 hedef kayboldu (feed canli, hedef bu karede yok)
+2026-09-01 08:03:23,894 [WARNING] core.navigation.centering_controller: [CENTERING] KIRMIZI_UCGEN 16/200 hedef kayboldu (feed canli, hedef bu karede yok)
+QGC port check failed, reporting UNKNOWN: (pid=16552)
+2026-09-01 08:03:24,110 [INFO] core.detection.vision_runtime: [VISION] detect() calisiyor -- bu karede 0 tespit: []
+2026-09-01 08:03:24,433 [WARNING] core.navigation.centering_controller: [CENTERING] KIRMIZI_UCGEN 21/200 hedef kayboldu (feed canli, hedef bu karede yok)
+2026-09-01 08:03:24,976 [WARNING] core.navigation.centering_controller: [CENTERING] KIRMIZI_UCGEN 26/200 hedef kayboldu (feed canli, hedef bu karede yok)
+2026-09-01 08:03:25,517 [WARNING] core.navigation.centering_controller: [CENTERING] KIRMIZI_UCGEN 31/200 hedef kayboldu (feed canli, hedef bu karede yok)
+QGC port check failed, reporting UNKNOWN: (pid=16552)
+2026-09-01 08:03:26,059 [WARNING] core.navigation.centering_controller: [CENTERING] KIRMIZI_UCGEN 36/200 hedef kayboldu (feed canli, hedef bu karede yok)
+2026-09-01 08:03:26,602 [WARNING] core.navigation.centering_controller: [CENTERING] KIRMIZI_UCGEN 41/200 hedef kayboldu (feed canli, hedef bu karede yok)
+2026-09-01 08:03:27,143 [INFO] core.detection.vision_runtime: [VISION] detect() calisiyor -- bu karede 0 tespit: []
+2026-09-01 08:03:27,144 [WARNING] core.navigation.centering_controller: [CENTERING] KIRMIZI_UCGEN 46/200 hedef kayboldu (feed canli, hedef bu karede yok)
+2026-09-01 08:03:27,361 [INFO] gz_system.main_gz: Dashboard paint loop: 0.0 FPS (main thread)
+2026-09-01 08:03:27,687 [WARNING] core.navigation.centering_controller: [CENTERING] KIRMIZI_UCGEN 51/200 hedef kayboldu (feed canli, hedef bu karede yok)
+QGC port check failed, reporting UNKNOWN: (pid=16552)
+2026-09-01 08:03:28,226 [WARNING] core.navigation.centering_controller: [CENTERING] KIRMIZI_UCGEN 56/200 hedef kayboldu (feed canli, hedef bu karede yok)
+2026-09-01 08:03:28,770 [WARNING] core.navigation.centering_controller: [CENTERING] KIRMIZI_UCGEN 61/200 hedef kayboldu (feed canli, hedef bu karede yok)
+2026-09-01 08:03:29,310 [WARNING] core.navigation.centering_controller: [CENTERING] KIRMIZI_UCGEN 66/200 hedef kayboldu (feed canli, hedef bu karede yok)
+2026-09-01 08:03:29,850 [WARNING] core.navigation.centering_controller: [CENTERING] KIRMIZI_UCGEN 71/200 hedef kayboldu (feed canli, hedef bu karede yok)
+QGC port check failed, reporting UNKNOWN: (pid=16552)
+2026-09-01 08:03:30,174 [INFO] core.detection.vision_runtime: [VISION] detect() calisiyor -- bu karede 0 tespit: []
+2026-09-01 08:03:30,391 [WARNING] core.navigation.centering_controller: [CENTERING] KIRMIZI_UCGEN 76/200 hedef kayboldu (feed canli, hedef bu karede yok)
+2026-09-01 08:03:30,934 [WARNING] core.navigation.centering_controller: [CENTERING] KIRMIZI_UCGEN 81/200 hedef kayboldu (feed canli, hedef bu karede yok)
+2026-09-01 08:03:31,475 [WARNING] core.navigation.centering_controller: [CENTERING] KIRMIZI_UCGEN 86/200 hedef kayboldu (feed canli, hedef bu karede yok)
+2026-09-01 08:03:32,017 [WARNING] core.navigation.centering_controller: [CENTERING] KIRMIZI_UCGEN 91/200 hedef kayboldu (feed canli, hedef bu karede yok)
+QGC port check failed, reporting UNKNOWN: (pid=16552)
+2026-09-01 08:03:32,375 [INFO] gz_system.main_gz: Dashboard paint loop: 0.0 FPS (main thread)
+2026-09-01 08:03:32,557 [WARNING] core.navigation.centering_controller: [CENTERING] KIRMIZI_UCGEN 96/200 hedef kayboldu (feed canli, hedef bu karede yok)
+2026-09-01 08:03:33,098 [WARNING] core.navigation.centering_controller: [CENTERING] KIRMIZI_UCGEN 101/200 hedef kayboldu (feed canli, hedef bu karede yok)
+2026-09-01 08:03:33,206 [INFO] core.detection.vision_runtime: [VISION] detect() calisiyor -- bu karede 0 tespit: []
+2026-09-01 08:03:33,641 [WARNING] core.navigation.centering_controller: [CENTERING] KIRMIZI_UCGEN 106/200 hedef kayboldu (feed canli, hedef bu karede yok)
+QGC port check failed, reporting UNKNOWN: (pid=16552)
+2026-09-01 08:03:34,186 [WARNING] core.navigation.centering_controller: [CENTERING] KIRMIZI_UCGEN 111/200 hedef kayboldu (feed canli, hedef bu karede yok)
+2026-09-01 08:03:34,726 [WARNING] core.navigation.centering_controller: [CENTERING] KIRMIZI_UCGEN 116/200 hedef kayboldu (feed canli, hedef bu karede yok)
+2026-09-01 08:03:35,266 [WARNING] core.navigation.centering_controller: [CENTERING] KIRMIZI_UCGEN 121/200 hedef kayboldu (feed canli, hedef bu karede yok)
+2026-09-01 08:03:35,806 [WARNING] core.navigation.centering_controller: [CENTERING] KIRMIZI_UCGEN 126/200 hedef kayboldu (feed canli, hedef bu karede yok)
+QGC port check failed, reporting UNKNOWN: (pid=16552)
+2026-09-01 08:03:36,238 [INFO] core.detection.vision_runtime: [VISION] detect() calisiyor -- bu karede 0 tespit: []
+2026-09-01 08:03:36,346 [WARNING] core.navigation.centering_controller: [CENTERING] KIRMIZI_UCGEN 131/200 hedef kayboldu (feed canli, hedef bu karede yok)
+2026-09-01 08:03:36,888 [WARNING] core.navigation.centering_controller: [CENTERING] KIRMIZI_UCGEN 136/200 hedef kayboldu (feed canli, hedef bu karede yok)
+2026-09-01 08:03:37,390 [INFO] gz_system.main_gz: Dashboard paint loop: 0.0 FPS (main thread)
+2026-09-01 08:03:37,430 [WARNING] core.navigation.centering_controller: [CENTERING] KIRMIZI_UCGEN 141/200 hedef kayboldu (feed canli, hedef bu karede yok)
+2026-09-01 08:03:37,971 [WARNING] core.navigation.centering_controller: [CENTERING] KIRMIZI_UCGEN 146/200 hedef kayboldu (feed canli, hedef bu karede yok)
+QGC port check failed, reporting UNKNOWN: (pid=16552)
+2026-09-01 08:03:38,512 [WARNING] core.navigation.centering_controller: [CENTERING] KIRMIZI_UCGEN 151/200 hedef kayboldu (feed canli, hedef bu karede yok)
+2026-09-01 08:03:39,049 [WARNING] core.navigation.centering_controller: [CENTERING] KIRMIZI_UCGEN 156/200 hedef kayboldu (feed canli, hedef bu karede yok)
+2026-09-01 08:03:39,266 [INFO] core.detection.vision_runtime: [VISION] detect() calisiyor -- bu karede 0 tespit: []
+2026-09-01 08:03:39,590 [WARNING] core.navigation.centering_controller: [CENTERING] KIRMIZI_UCGEN 161/200 hedef kayboldu (feed canli, hedef bu karede yok)
+QGC port check failed, reporting UNKNOWN: (pid=16552)
+2026-09-01 08:03:40,130 [WARNING] core.navigation.centering_controller: [CENTERING] KIRMIZI_UCGEN 166/200 hedef kayboldu (feed canli, hedef bu karede yok)
+2026-09-01 08:03:40,670 [WARNING] core.navigation.centering_controller: [CENTERING] KIRMIZI_UCGEN 171/200 hedef kayboldu (feed canli, hedef bu karede yok)
+2026-09-01 08:03:41,210 [WARNING] core.navigation.centering_controller: [CENTERING] KIRMIZI_UCGEN 176/200 hedef kayboldu (feed canli, hedef bu karede yok)
+2026-09-01 08:03:41,751 [WARNING] core.navigation.centering_controller: [CENTERING] KIRMIZI_UCGEN 181/200 hedef kayboldu (feed canli, hedef bu karede yok)
+QGC port check failed, reporting UNKNOWN: (pid=16552)
+2026-09-01 08:03:42,289 [INFO] core.detection.vision_runtime: [VISION] detect() calisiyor -- bu karede 0 tespit: []
+2026-09-01 08:03:42,289 [WARNING] core.navigation.centering_controller: [CENTERING] KIRMIZI_UCGEN 186/200 hedef kayboldu (feed canli, hedef bu karede yok)
+2026-09-01 08:03:42,403 [INFO] gz_system.main_gz: Dashboard paint loop: 0.0 FPS (main thread)
+2026-09-01 08:03:42,830 [WARNING] core.navigation.centering_controller: [CENTERING] KIRMIZI_UCGEN 191/200 hedef kayboldu (feed canli, hedef bu karede yok)
+2026-09-01 08:03:43,373 [WARNING] core.navigation.centering_controller: [CENTERING] KIRMIZI_UCGEN 196/200 hedef kayboldu (feed canli, hedef bu karede yok)
+2026-09-01 08:03:43,914 [ERROR] core.navigation.centering_controller: Merkezleme zaman asimina ugradi! (200 deneme / 20.0s butcesi doldu)
+2026-09-01 08:03:43,915 [WARNING] core.mission.gorev2_orchestrator: [RETRY_IN_PLACE] KIRMIZI_UCGEN 2/3 merkezlenemedi -- 5s yerinde beklenip tekrar denenecek (hedef su an karede yok).
+QGC port check failed, reporting UNKNOWN: (pid=16552)
+2026-09-01 08:03:45,318 [INFO] core.detection.vision_runtime: [VISION] detect() calisiyor -- bu karede 0 tespit: []
+QGC port check failed, reporting UNKNOWN: (pid=16552)
+2026-09-01 08:03:47,434 [INFO] gz_system.main_gz: Dashboard paint loop: 0.0 FPS (main thread)
+QGC port check failed, reporting UNKNOWN: (pid=19842)
+2026-09-01 08:03:48,359 [INFO] core.detection.vision_runtime: [VISION] detect() calisiyor -- bu karede 0 tespit: []
+2026-09-01 08:03:49,010 [INFO] core.navigation.centering_controller: KIRMIZI_UCGEN hedefine merkezleniyor (irtifa hedefi: 8.0m, irtifa bandi +/-0.30m)...
+2026-09-01 08:03:49,010 [WARNING] core.navigation.centering_controller: [CENTERING] KIRMIZI_UCGEN 1/200 hedef kayboldu (feed canli, hedef bu karede yok)
+2026-09-01 08:03:49,552 [WARNING] core.navigation.centering_controller: [CENTERING] KIRMIZI_UCGEN 6/200 hedef kayboldu (feed canli, hedef bu karede yok)
+QGC port check failed, reporting UNKNOWN: (pid=19842)
+2026-09-01 08:03:50,096 [WARNING] core.navigation.centering_controller: [CENTERING] KIRMIZI_UCGEN 11/200 hedef kayboldu (feed canli, hedef bu karede yok)
+2026-09-01 08:03:50,639 [WARNING] core.navigation.centering_controller: [CENTERING] KIRMIZI_UCGEN 16/200 hedef kayboldu (feed canli, hedef bu karede yok)
+2026-09-01 08:03:51,181 [WARNING] core.navigation.centering_controller: [CENTERING] KIRMIZI_UCGEN 21/200 hedef kayboldu (feed canli, hedef bu karede yok)
+2026-09-01 08:03:51,398 [INFO] core.detection.vision_runtime: [VISION] detect() calisiyor -- bu karede 0 tespit: []
+2026-09-01 08:03:51,724 [WARNING] core.navigation.centering_controller: [CENTERING] KIRMIZI_UCGEN 26/200 hedef kayboldu (feed canli, hedef bu karede yok)
+QGC port check failed, reporting UNKNOWN: (pid=19842)
+2026-09-01 08:03:52,266 [WARNING] core.navigation.centering_controller: [CENTERING] KIRMIZI_UCGEN 31/200 hedef kayboldu (feed canli, hedef bu karede yok)
+2026-09-01 08:03:52,458 [INFO] gz_system.main_gz: Dashboard paint loop: 0.0 FPS (main thread)
+2026-09-01 08:03:52,803 [WARNING] core.navigation.centering_controller: [CENTERING] KIRMIZI_UCGEN 36/200 hedef kayboldu (feed canli, hedef bu karede yok)
+2026-09-01 08:03:53,348 [WARNING] core.navigation.centering_controller: [CENTERING] KIRMIZI_UCGEN 41/200 hedef kayboldu (feed canli, hedef bu karede yok)
+2026-09-01 08:03:53,887 [WARNING] core.navigation.centering_controller: [CENTERING] KIRMIZI_UCGEN 46/200 hedef kayboldu (feed canli, hedef bu karede yok)
+QGC port check failed, reporting UNKNOWN: (pid=19842)
+2026-09-01 08:03:54,428 [INFO] core.detection.vision_runtime: [VISION] detect() calisiyor -- bu karede 0 tespit: []
+2026-09-01 08:03:54,428 [WARNING] core.navigation.centering_controller: [CENTERING] KIRMIZI_UCGEN 51/200 hedef kayboldu (feed canli, hedef bu karede yok)
+2026-09-01 08:03:54,968 [WARNING] core.navigation.centering_controller: [CENTERING] KIRMIZI_UCGEN 56/200 hedef kayboldu (feed canli, hedef bu karede yok)
+2026-09-01 08:03:55,510 [WARNING] core.navigation.centering_controller: [CENTERING] KIRMIZI_UCGEN 61/200 hedef kayboldu (feed canli, hedef bu karede yok)
+2026-09-01 08:03:56,056 [WARNING] core.navigation.centering_controller: [CENTERING] KIRMIZI_UCGEN 66/200 hedef kayboldu (feed canli, hedef bu karede yok)
+QGC port check failed, reporting UNKNOWN: (pid=19856)
+2026-09-01 08:03:56,596 [WARNING] core.navigation.centering_controller: [CENTERING] KIRMIZI_UCGEN 71/200 hedef kayboldu (feed canli, hedef bu karede yok)
+2026-09-01 08:03:57,141 [WARNING] core.navigation.centering_controller: [CENTERING] KIRMIZI_UCGEN 76/200 hedef kayboldu (feed canli, hedef bu karede yok)
+2026-09-01 08:03:57,464 [INFO] core.detection.vision_runtime: [VISION] detect() calisiyor -- bu karede 0 tespit: []
+2026-09-01 08:03:57,468 [INFO] gz_system.main_gz: Dashboard paint loop: 0.0 FPS (main thread)
+2026-09-01 08:03:57,680 [WARNING] core.navigation.centering_controller: [CENTERING] KIRMIZI_UCGEN 81/200 hedef kayboldu (feed canli, hedef bu karede yok)
+QGC port check failed, reporting UNKNOWN: (pid=19856)
+2026-09-01 08:03:58,221 [WARNING] core.navigation.centering_controller: [CENTERING] KIRMIZI_UCGEN 86/200 hedef kayboldu (feed canli, hedef bu karede yok)
+2026-09-01 08:03:58,761 [WARNING] core.navigation.centering_controller: [CENTERING] KIRMIZI_UCGEN 91/200 hedef kayboldu (feed canli, hedef bu karede yok)
+2026-09-01 08:03:59,301 [WARNING] core.navigation.centering_controller: [CENTERING] KIRMIZI_UCGEN 96/200 hedef kayboldu (feed canli, hedef bu karede yok)
+2026-09-01 08:03:59,848 [WARNING] core.navigation.centering_controller: [CENTERING] KIRMIZI_UCGEN 101/200 hedef kayboldu (feed canli, hedef bu karede yok)
+QGC port check failed, reporting UNKNOWN: (pid=19856)
+2026-09-01 08:04:00,388 [WARNING] core.navigation.centering_controller: [CENTERING] KIRMIZI_UCGEN 106/200 hedef kayboldu (feed canli, hedef bu karede yok)
+2026-09-01 08:04:00,495 [INFO] core.detection.vision_runtime: [VISION] detect() calisiyor -- bu karede 0 tespit: []
+2026-09-01 08:04:00,927 [WARNING] core.navigation.centering_controller: [CENTERING] KIRMIZI_UCGEN 111/200 hedef kayboldu (feed canli, hedef bu karede yok)
+2026-09-01 08:04:01,466 [WARNING] core.navigation.centering_controller: [CENTERING] KIRMIZI_UCGEN 116/200 hedef kayboldu (feed canli, hedef bu karede yok)
+2026-09-01 08:04:02,013 [WARNING] core.navigation.centering_controller: [CENTERING] KIRMIZI_UCGEN 121/200 hedef kayboldu (feed canli, hedef bu karede yok)
+QGC port check failed, reporting UNKNOWN: (pid=19856)
+2026-09-01 08:04:02,486 [INFO] gz_system.main_gz: Dashboard paint loop: 0.0 FPS (main thread)
+2026-09-01 08:04:02,554 [WARNING] core.navigation.centering_controller: [CENTERING] KIRMIZI_UCGEN 126/200 hedef kayboldu (feed canli, hedef bu karede yok)
+2026-09-01 08:04:03,092 [WARNING] core.navigation.centering_controller: [CENTERING] KIRMIZI_UCGEN 131/200 hedef kayboldu (feed canli, hedef bu karede yok)
+2026-09-01 08:04:03,522 [INFO] core.detection.vision_runtime: [VISION] detect() calisiyor -- bu karede 0 tespit: []
+2026-09-01 08:04:03,631 [WARNING] core.navigation.centering_controller: [CENTERING] KIRMIZI_UCGEN 136/200 hedef kayboldu (feed canli, hedef bu karede yok)
+QGC port check failed, reporting UNKNOWN: (pid=19856)
+2026-09-01 08:04:04,170 [WARNING] core.navigation.centering_controller: [CENTERING] KIRMIZI_UCGEN 141/200 hedef kayboldu (feed canli, hedef bu karede yok)
+2026-09-01 08:04:04,710 [WARNING] core.navigation.centering_controller: [CENTERING] KIRMIZI_UCGEN 146/200 hedef kayboldu (feed canli, hedef bu karede yok)
+2026-09-01 08:04:05,249 [WARNING] core.navigation.centering_controller: [CENTERING] KIRMIZI_UCGEN 151/200 hedef kayboldu (feed canli, hedef bu karede yok)
+2026-09-01 08:04:05,788 [WARNING] core.navigation.centering_controller: [CENTERING] KIRMIZI_UCGEN 156/200 hedef kayboldu (feed canli, hedef bu karede yok)
+QGC port check failed, reporting UNKNOWN: (pid=19856)
+2026-09-01 08:04:06,329 [WARNING] core.navigation.centering_controller: [CENTERING] KIRMIZI_UCGEN 161/200 hedef kayboldu (feed canli, hedef bu karede yok)
+2026-09-01 08:04:06,544 [INFO] core.detection.vision_runtime: [VISION] detect() calisiyor -- bu karede 0 tespit: []
+2026-09-01 08:04:06,868 [WARNING] core.navigation.centering_controller: [CENTERING] KIRMIZI_UCGEN 166/200 hedef kayboldu (feed canli, hedef bu karede yok)
+2026-09-01 08:04:07,407 [WARNING] core.navigation.centering_controller: [CENTERING] KIRMIZI_UCGEN 171/200 hedef kayboldu (feed canli, hedef bu karede yok)
+2026-09-01 08:04:07,515 [INFO] gz_system.main_gz: Dashboard paint loop: 0.0 FPS (main thread)
+2026-09-01 08:04:07,948 [WARNING] core.navigation.centering_controller: [CENTERING] KIRMIZI_UCGEN 176/200 hedef kayboldu (feed canli, hedef bu karede yok)
+QGC port check failed, reporting UNKNOWN: (pid=19842)
+2026-09-01 08:04:08,487 [WARNING] core.navigation.centering_controller: [CENTERING] KIRMIZI_UCGEN 181/200 hedef kayboldu (feed canli, hedef bu karede yok)
+2026-09-01 08:04:09,028 [WARNING] core.navigation.centering_controller: [CENTERING] KIRMIZI_UCGEN 186/200 hedef kayboldu (feed canli, hedef bu karede yok)
+2026-09-01 08:04:09,566 [INFO] core.detection.vision_runtime: [VISION] detect() calisiyor -- bu karede 0 tespit: []
+2026-09-01 08:04:09,566 [WARNING] core.navigation.centering_controller: [CENTERING] KIRMIZI_UCGEN 191/200 hedef kayboldu (feed canli, hedef bu karede yok)
+QGC port check failed, reporting UNKNOWN: (pid=19842)
+2026-09-01 08:04:10,105 [WARNING] core.navigation.centering_controller: [CENTERING] KIRMIZI_UCGEN 196/200 hedef kayboldu (feed canli, hedef bu karede yok)
+2026-09-01 08:04:10,647 [ERROR] core.navigation.centering_controller: Merkezleme zaman asimina ugradi! (200 deneme / 20.0s butcesi doldu)
+2026-09-01 08:04:10,647 [WARNING] core.mission.gorev2_orchestrator: TARGET SEEN BUT NOT CENTERED: KIRMIZI_UCGEN 3 denemede merkezlenemedi -- bu hedef icin pursuit birakildi, arama devam ediyor.
+2026-09-01 08:04:10,647 [INFO] core.mission.gorev2_orchestrator: [ROUTE_REJOIN] rota hattina donuluyor (sabit eksen=lon): hedef lat=47.3989223 lon=8.5461631 (mevcut lat=47.3989223 lon=8.5461611).
+2026-09-01 08:04:10,647 [INFO] core.navigation.centering_controller: Kayitli GPS konumuna gidiliyor: lat=47.398922299999995, lon=8.5461631, alt=15.0m
+2026-09-01 08:04:10,647 [INFO] mavsdk_common.mavsdk_backend_base: Offboard durduruluyor...
+Received ack for not-existing command: 176! Ignoring... (mavlink_command_sender.cpp:304)
+2026-09-01 08:04:10,663 [INFO] core.mission.gorev2_orchestrator: [MISSION_RESUME] rota 2. ogeden devam ettiriliyor.
+Received ack for not-existing command: 176! Ignoring... (mavlink_command_sender.cpp:304)
+QGC port check failed, reporting UNKNOWN: (pid=19842)
+2026-09-01 08:04:12,541 [INFO] gz_system.main_gz: Dashboard paint loop: 0.0 FPS (main thread)
+2026-09-01 08:04:12,588 [INFO] core.detection.vision_runtime: [VISION] detect() calisiyor -- bu karede 0 tespit: []
+QGC port check failed, reporting UNKNOWN: (pid=19842)
+2026-09-01 08:04:15,611 [INFO] core.detection.vision_runtime: [VISION] detect() calisiyor -- bu karede 0 tespit: []
+2026-09-01 08:04:15,718 [WARNING] core.mission.gorev2_orchestrator: Gorev 2 Search Phase tamamlanamadi (mission bitti, iki hedef de bulunamadi).
+2026-09-01 08:04:15,719 [WARNING] core.mission.master_fsm: Gorev 2 tamamlanamadi (interlock kosullari saglanmadi) -- Gorev 3 atlanacak.
+2026-09-01 08:04:15,719 [INFO] core.mission.master_fsm: RETURNING_TO_START_FINISH (dist=143.4 m) -- hedef (47.3977459, 8.5461637) @ 15.0m, sebep: gorev2_failed
+2026-09-01 08:04:15,719 [INFO] core.navigation.centering_controller: Mission modu durduruluyor, Offboard'a geciliyor...
+2026-09-01 08:04:15,719 [INFO] mavsdk_common.mavsdk_backend_base: Mission'dan Offboard'a geçiş yapılıyor...
+2026-09-01 08:04:15,728 [INFO] mavsdk_common.mavsdk_backend_base: Offboard başlatılıyor...
+Received ack for not-existing command: 176! Ignoring... (mavlink_command_sender.cpp:304)
+Received ack for not-existing command: 176! Ignoring... (mavlink_command_sender.cpp:304)
+QGC port check failed, reporting UNKNOWN: (pid=19842)
+2026-09-01 08:04:16,744 [INFO] core.navigation.centering_controller: Kayitli GPS konumuna gidiliyor: lat=47.3977459, lon=8.5461637, alt=15.0m
+2026-09-01 08:04:17,558 [INFO] gz_system.main_gz: Dashboard paint loop: 0.0 FPS (main thread)
+QGC port check failed, reporting UNKNOWN: (pid=19842)
+2026-09-01 08:04:18,630 [INFO] core.detection.vision_runtime: [VISION] detect() calisiyor -- bu karede 0 tespit: []
+QGC port check failed, reporting UNKNOWN: (pid=19842)
+2026-09-01 08:04:21,686 [INFO] core.detection.vision_runtime: [VISION] detect() calisiyor -- bu karede 1 tespit: ['KIRMIZI_UCGEN']
+QGC port check failed, reporting UNKNOWN: (pid=19842)
+2026-09-01 08:04:22,591 [INFO] gz_system.main_gz: Dashboard paint loop: 0.0 FPS (main thread)
+QGC port check failed, reporting UNKNOWN: (pid=19842)
+2026-09-01 08:04:24,730 [INFO] core.detection.vision_runtime: [VISION] detect() calisiyor -- bu karede 0 tespit: []
+QGC port check failed, reporting UNKNOWN: (pid=19842)
+2026-09-01 08:04:27,614 [INFO] gz_system.main_gz: Dashboard paint loop: 0.0 FPS (main thread)
+2026-09-01 08:04:27,780 [INFO] core.detection.vision_runtime: [VISION] detect() calisiyor -- bu karede 0 tespit: []
+QGC port check failed, reporting UNKNOWN: (pid=19842)
+QGC port check failed, reporting UNKNOWN: (pid=19842)
+2026-09-01 08:04:30,798 [INFO] core.detection.vision_runtime: [VISION] detect() calisiyor -- bu karede 0 tespit: []
+QGC port check failed, reporting UNKNOWN: (pid=19842)
+2026-09-01 08:04:32,614 [INFO] gz_system.main_gz: Dashboard paint loop: 0.0 FPS (main thread)
+2026-09-01 08:04:33,063 [INFO] core.mission.master_fsm: Baslangic/bitis noktasina ulasildi -- checkpoint'e uzaklik 0.6 m. Inis baslatiliyor.
+2026-09-01 08:04:33,063 [INFO] core.mission.master_fsm: Son iniş gerçekleştiriliyor...
+2026-09-01 08:04:33,063 [INFO] mavsdk_common.mavsdk_backend_base: İniş yapılıyor...
+2026-09-01 08:04:33,080 [INFO] core.detection.detection_publisher: [DETECTION_PUB] yayin kapatiliyor (gonderilen=2192, atlanan=0).
+2026-09-01 08:04:33,080 [INFO] core.detection.vision_runtime: [VISION] pipeline durduruldu.
+[CAMERA_CLIENT] Stopping client...
+[CAMERA_CLIENT] Shutdown complete.
+I0901 08:04:33.104673 13192239 fork_posix.cc:71] Other threads are currently calling into gRPC, skipping fork() handlers
+[CAMERA_SERVICE_MANAGER] Stopping (PID: 19378)...
+I0901 08:04:33.109711 13192239 fork_posix.cc:71] Other threads are currently calling into gRPC, skipping fork() handlers
+I0901 08:04:33.113765 13192239 fork_posix.cc:71] Other threads are currently calling into gRPC, skipping fork() handlers
+[CAMERA_SERVICE_MANAGER] Stopped.

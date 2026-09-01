@@ -904,15 +904,6 @@ class GzPayloadActuator(IPayloadActuator):
         # kesintisiz "kapi altinda" serisinin uzunlugu da onemli, cunku
         # dwell 0.30 s = 20 Hz'de 6 ARDISIK ornek demek.
         tilt_all = []
-        # SALT OLCUM -- 10 Hz zaman serisi. tilt_dist "hangi rejim" sorusunu
-        # cevapliyor ama "NE ZAMAN basladi" sorusunu cevaplamiyor. B_surekli
-        # (kanca yatmis, tilt esigin altina hic inmiyor) temas ANINDA mi
-        # olusuyor, yoksa temastan SONRA mi gelisiyor? Duzeltmenin yonu buna
-        # bagli: temas aninda ise geometri/yaklasma acisi, sonradan ise ip
-        # dinamigi. Seride ins de var, boylece temas baslangici (ins > 0)
-        # dogrudan okunabiliyor. Dongu 20 Hz, ikide bir alarak 10 Hz.
-        seat_trace, _trace_i = [], 0
-        t_start = time.monotonic()
         last_log = 0.0
 
         while asyncio.get_event_loop().time() < deadline:
@@ -937,13 +928,6 @@ class GzPayloadActuator(IPayloadActuator):
                 try:
                     lat_all.append(geom.lateral_m * 1000.0)
                     tilt_all.append(math.degrees(geom.tilt_rad))
-                    _trace_i += 1
-                    if _trace_i % 2 == 0 and len(seat_trace) < 400:
-                        seat_trace.append([
-                            round(now - t_start, 2),
-                            round(math.degrees(geom.tilt_rad), 1),
-                            round(geom.lateral_m * 1000.0, 1),
-                            round(geom.insertion_m * 1000.0, 1)])
                     if not [f for f in fails if "lateral" not in f]:
                         lat_gate_ok.append(geom.lateral_m * 1000.0)
                 except Exception:  # noqa: BLE001
@@ -965,8 +949,6 @@ class GzPayloadActuator(IPayloadActuator):
                     "seated": True, "samples": sample_count,
                     "lateral_dist": _lat_summary(lat_all, lat_gate_ok),
                     "tilt_dist": _tilt_summary(tilt_all),
-                    "seat_trace": seat_trace,
-                    "seat_trace_cols": ["t_s", "tilt_deg", "lat_mm", "ins_mm"],
                     "capture_candidate_samples": candidate_samples,
                     "gate_rejections": dict(fail_counts),
                     "best_simultaneous": {
@@ -994,8 +976,6 @@ class GzPayloadActuator(IPayloadActuator):
             "samples": sample_count,
             "lateral_dist": _lat_summary(lat_all, lat_gate_ok),
             "tilt_dist": _tilt_summary(tilt_all),
-            "seat_trace": seat_trace,
-            "seat_trace_cols": ["t_s", "tilt_deg", "lat_mm", "ins_mm"],
             "capture_candidate_samples": candidate_samples,
             "gate_rejections": dict(sorted(fail_counts.items(), key=lambda kv: -kv[1])),
             "best_simultaneous": (

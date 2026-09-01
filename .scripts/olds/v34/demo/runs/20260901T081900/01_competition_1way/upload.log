@@ -1,0 +1,17 @@
+[UPLOAD] plan: competition_1way.plan  (3 item, dosyadan okundu)
+Connection using udp:// is deprecated, please use udpin:// or udpout:// (cli_arg.cpp:28)
+[UPLOAD] baglaniliyor: udp://:14540 (timeout 30s)
+[UPLOAD] arac bagli
+[UPLOAD] ayristirildi: 3 raw MAVLink item
+[UPLOAD] aractaki eski rota silindi
+[UPLOAD] yukleme ack alindi
+[UPLOAD] geri okundu: 3 item, 0 uyusmazlik
+[UPLOAD]   seq=0   cmd=22   lat=47.3977465 lon=8.5461637 alt=15.0
+[UPLOAD]   seq=1   cmd=16   lat=47.3977914 lon=8.5461637 alt=15.0
+[UPLOAD]   seq=2   cmd=16   lat=47.3990490 lon=8.5461637 alt=15.0
+[UPLOAD] DOGRULANDI: aractaki rota .plan ile birebir ayni
+Connection using udp:// is deprecated, please use udpin:// or udpout:// (cli_arg.cpp:28)
+[LAND-RESET] armable=False mode=HOLD armed=False on_ground=True
+[LAND-RESET] disarmed + on ground but not armable (mode=HOLD) -- commanding HOLD...
+Received ack for not-existing command: 176! Ignoring... (mavlink_command_sender.cpp:304)
+[LAND-RESET] armable after 4s (mode=HOLD)

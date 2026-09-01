@@ -256,8 +256,49 @@ reddedilmiş.
 ### Yeni darboğaz: tilt
 
 Yuvaya giren iki denemenin birinde bağlayıcı terim artık yanal değil,
-**tilt**. Bu mekanizma (1) komşusu bir durum; **bu oturumda
-araştırılmadı** (bkz. Bölüm 7, açık iş 1).
+**tilt**. Bu mekanizma (1) komşusu bir durum; bu oturumda araştırılmadı.
+**2026-09-01 akşamı araştırıldı — bkz. Bölüm 4b.**
+
+### 4b. DÜZELTME: yuva collision'ının bedeli de var (2026-09-01)
+
+Yukarıdaki "asıl sonuç" bölümü **eksikti**. Girme derinliği bulgusu
+(15.4 mm ölçülen vs 15.86 mm hesaplanan) doğrudan ölçülmüş mekanik bir
+olgudur ve **geçerliliğini koruyor**. Ama aynı değişikliğin bir de
+bedeli olduğu o rapor yazılırken bilinmiyordu:
+
+**Tilt 2.7 kat kötüleşti.** Kontrollü deney (aynı oturum, aynı kod, tek
+fark yuva collision'ı; marj 0.04'e sabit):
+
+| ölçüt | yuva KAPALI | yuva AÇIK |
+|---|---|---|
+| tilt medyanı (1 Hz, birleşik) | **7.4°** (n=411) | **20.0°** (n=208) |
+| tilt ≤ 15° oranı | %64 | %45 |
+| `B_surekli` rejimi | **0/12 deneme** | **2/8 deneme** |
+| dwell **ulaşılamaz** | **0/12** | **3/8** |
+
+Dwell'in ulaşılamaz hale gelmesi tek istatistiksel olarak anlamlı fark:
+Fisher kesin testi **p = 0.049**. (`B_surekli` için p = 0.147 — anlamlı
+değil.) `dwell_reachable=False`, tilt'in eşiğin altında 6 ardışık örnek
+bile tutamadığı, yani oturmanın **yapısal olarak imkânsız** olduğu
+anlamına geliyor.
+
+**Net etki belirlenemiyor.** Oturma ve `MISSION_COMPLETE` oranları:
+
+| | koşu | ulaşan | deneme | oturma | COMPLETE |
+|---|---|---|---|---|---|
+| KAPALI (bu oturum kontrol) | 6 | 4 | 12 | 0 | 0 |
+| AÇIK | 7 | 7 | 19 | 2 | 2 |
+
+Fisher: oturma/deneme **p = 0.510**, COMPLETE/ulaşan **p = 0.491**.
+Nokta tahminleri yuva lehine ama her iki kolda başarı sayısı 0–2; bu n
+ile **hiçbir yönde** oran iddiası desteklenmiyor.
+
+**Çerçevelemenin durumu:** "Asıl kazanım burnun gerçek CAD derinliğine
+oturması" ifadesi **doğru kalıyor** — o bir oran iddiası değil, doğrudan
+ölçüm. Ama tek başına bırakılırsa yanıltıcı: aynı değişiklik tilt'i
+belirgin biçimde kötüleştirdi ve toplam alma başarısına etkisi henüz
+bilinmiyor. Yuva geometrisi doğru olan ama **bedeli olan** bir adımdır;
+tilt çözülmeden "iyileştirme" denemez.
 
 ---
 
@@ -285,6 +326,13 @@ okundu — oysa kod her adımı çalıştırıyor, sadece `logger`'a yazıyordu.
 
 Bu son ikili, kapı sıkılaşmasının etkisini fiziksel hapsin etkisinden **ek
 uçuş gerektirmeden, aynı koşudan** ayırmayı sağlıyor.
+
+2026-09-01 akşamı eklenenler (yine salt-ölçüm, stub'la doğrulandı):
+
+| alan | ne veriyor |
+|---|---|
+| `tilt_dist` | tilt dağılımı + **eşik geçişi sayısı**, `longest_run_le_gate`, `dwell_reachable` ve türetilmiş `regime`. Geçiş sayısı iki rejimi ayırır: salınımda çok, sürekli yatmada ~0. Yalnızca medyana bakmak ikisini aynı gösterir. |
+| `seat_trace` | oturma penceresinin 10 Hz zaman serisi `[t_s, tilt_deg, lat_mm, ins_mm]`. `ins > 0` temas başlangıcını verdiği için "tilt temasta mı başladı, sonradan mı gelişti" ayrımı okunabilir. |
 
 ---
 
@@ -317,9 +365,9 @@ uçuş gerektirmeden, aynı koşudan** ayırmayı sağlıyor.
 
 ---
 
-## 7. Açık işler (bu oturumda BAŞLATILMADI)
+## 7. Açık işler
 
-### 1. Tilt darboğazı — YENİ BULUNDU, araştırılmadı
+### 1. Tilt darboğazı — FAZ 1+2 YAPILDI, kalan iş var
 
 Yuva collision'ı eklendikten sonra bağlayıcı terim değişti. 2026-09-01
 setinde yuvaya giren iki denemeden biri (`2·3`) yanal 1.62 mm ve
@@ -331,10 +379,17 @@ gevşediğini gösteriyor. Bu **mekanizma (1) komşusu** bir durum — salım
 hesabı ve ip dinamiği alanına giriyor. Bu turda kapsam dışıydı ve
 kasıtlı olarak açılmadı.
 
-*Başlarken:* FAZ 1, `lateral_dist` ile aynı desende bir `tilt_dist`
-eklemek ve tilt'in iniş/temas/temas-sonrası hangi anında büyüdüğünü
-ayırmak makul bir ilk adım olur. Mekanizma (1)'in salım formülüne
-dokunmadan önce ölçüm gerekir.
+**DURUM (2026-09-01 akşamı):** FAZ 1 ve FAZ 2 yapıldı. `tilt_dist` ve
+`seat_trace` eklendi, kontrollü deney koşuldu — sonuçlar Bölüm 4b'de.
+Özet: tilt'in kötüleşmesi yuva collision'ıyla **ilişkili ve
+tekrarlanabilir**; dwell'in ulaşılamaz hale gelmesi p = 0.049.
+
+**Kalan iş:** `B_surekli`'nin temas anında mı başladığı yoksa sonradan mı
+geliştiği **hâlâ bilinmiyor**. `seat_trace` bunu okuyacak şekilde eklendi
+ve sahada çalıştığı doğrulandı (9 denemede 110'ar nokta), ama `B_surekli`
+gözlenen açık-grup koşuları enstrümantasyondan **önce** yapıldığı için o
+rejimin izi henüz yakalanmadı. Sıradaki adım: yuva AÇIK, `seat_trace`
+etkin en az 3 koşu. Mekanizma (1)'in salım formülüne hâlâ dokunulmadı.
 
 ### 2. `kursad_hook` eksik mesh'leri
 

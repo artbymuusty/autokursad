@@ -1,0 +1,67 @@
+  mission_id : cbea5554cfbd
+  sure       : 424.9s  (6824 olay)
+  kaynak     : $REPO_ROOT/.scripts/olds/v34/demo/runs/20260901T081900/01_competition_1way/mission_cbea5554cfbd.jsonl
+
+  FAZLAR (27)
+    t+    1.0s  CONNECTING
+    t+    2.7s  ARMING
+    t+    2.7s  TAKEOFF
+    t+    2.7s  CLIMB_TO_ALTITUDE
+    t+   19.3s  CHECKPOINT_SAVE
+    t+   19.3s  MISSION_ROUTE_CONFIRM
+    t+   19.3s  MISSION_START
+    t+   23.9s  SEARCHING
+    t+   32.4s  TARGET_TRACKING
+    t+   32.4s  SWITCH_TO_OFFBOARD
+    t+   32.8s  GOTO_TARGET_CENTERING
+    t+   62.9s  HOVER_CONFIRM
+    t+   65.0s  GPS_SAVE
+    t+   65.0s  SEARCHING
+    t+   84.8s  TARGET_TRACKING
+    t+   84.8s  SWITCH_TO_OFFBOARD
+    t+   85.9s  GOTO_TARGET_CENTERING
+    t+  125.1s  HOVER_CONFIRM
+    t+  127.2s  GPS_SAVE
+    t+  161.8s  SEARCH_COMPLETE
+    t+  265.2s  GOREV2_COMPLETE
+    t+  265.2s  GOREV3_START
+    t+  265.2s  GOREV3_RUNNING
+    t+  410.1s  MISSION_FAILED
+    t+  410.1s  RETURN_TO_CHECKPOINT
+    t+  424.8s  LANDING
+    t+  424.8s  MISSION_FAILED
+
+  KILOMETRE TASLARI (26)
+    t+    1.0s  MISSION_STARTED  -- mission_id=cbea5554cfbd
+    t+    1.0s  MISSION_STARTED  -- Gorev 2 starting
+    t+    2.0s  CONNECTED  -- connected to udp://:14540
+    t+    2.7s  ARMED  -- vehicle armed
+    t+   19.3s  CHECKPOINT_SAVED
+    t+   19.3s  MISSION_ROUTE_CONFIRMED  -- 3 items already on vehicle (from QGroundControl)
+    t+   22.9s  MISSION_CURRENT_ITEM_SET  -- start index 1
+    t+   22.9s  MISSION_STARTED_ONBOARD
+    t+   59.8s  CENTERING_CONVERGED  -- KIRMIZI_UCGEN
+    t+   70.2s  MISSION_CURRENT_ITEM_SET  -- start index 2
+    t+   70.2s  MISSION_STARTED_ONBOARD
+    t+  122.0s  CENTERING_CONVERGED  -- MAVI_ALTIGEN
+    t+  133.5s  CENTERING_CONVERGED  -- MAVI_ALTIGEN
+    t+  140.1s  CENTERING_CONVERGED  -- MAVI_ALTIGEN
+    t+  150.1s  PAYLOAD_RELEASE_CONFIRMED  -- MAVI_ALTIGEN
+    t+  150.1s  PAYLOAD_RELEASED  -- PAYLOAD 1 RELEASED @0.47m
+    t+  161.8s  SEARCH_COMPLETE
+    t+  168.1s  CENTERING_CONVERGED  -- MAVI_ALTIGEN
+    t+  176.0s  CENTERING_CONVERGED  -- MAVI_ALTIGEN
+    t+  186.3s  PAYLOAD_RELEASE_CONFIRMED  -- MAVI_ALTIGEN
+    t+  186.3s  PAYLOAD_RELEASED  -- PAYLOAD 2 RELEASED @0.48m
+    t+  235.3s  CENTERING_CONVERGED  -- KIRMIZI_UCGEN
+    t+  261.2s  PAYLOAD_RELEASE_CONFIRMED  -- KIRMIZI_UCGEN
+    t+  261.2s  PAYLOAD_RELEASED  -- PAYLOAD 3 RELEASED @0.45m
+    t+  265.2s  GOREV2_COMPLETE
+    t+  293.7s  CENTERING_CONVERGED  -- KIRMIZI_DIKDORTGEN
+
+  SORUNLAR (3 WARNING+)
+    t+  410.1s  [CRITICAL] MISSION_PHASE_CHANGED: GOREV3_RUNNING -> MISSION_FAILED (gorev3_pickup_failed)
+    t+  410.1s  [CRITICAL] GOREV3_PHASE_FAILED: pickup
+    t+  424.8s  [CRITICAL] MISSION_PHASE_CHANGED: LANDING -> MISSION_FAILED (landed_after_prior_failure)
+
+  SONUC: MISSION_FAILED

@@ -1,0 +1,66 @@
+  mission_id : 43a2852c94d1
+  sure       : 241.4s  (4178 olay)
+  kaynak     : $REPO_ROOT/.scripts/olds/v34/demo/runs/20260901T080006/01_competition_1way/mission_43a2852c94d1.jsonl
+
+  FAZLAR (28)
+    t+    1.0s  CONNECTING
+    t+    2.7s  ARMING
+    t+    2.7s  TAKEOFF
+    t+    2.7s  CLIMB_TO_ALTITUDE
+    t+   19.3s  CHECKPOINT_SAVE
+    t+   19.3s  MISSION_ROUTE_CONFIRM
+    t+   19.3s  MISSION_START
+    t+   23.8s  SEARCHING
+    t+   34.5s  TARGET_TRACKING
+    t+   34.5s  SWITCH_TO_OFFBOARD
+    t+   34.7s  GOTO_TARGET_CENTERING
+    t+   75.2s  HOVER_CONFIRM
+    t+   77.3s  GPS_SAVE
+    t+  115.4s  SEARCHING
+    t+  129.6s  TARGET_TRACKING
+    t+  129.6s  SWITCH_TO_OFFBOARD
+    t+  132.6s  SEARCHING
+    t+  134.1s  TARGET_TRACKING
+    t+  134.1s  SWITCH_TO_OFFBOARD
+    t+  139.0s  SEARCHING
+    t+  141.1s  TARGET_TRACKING
+    t+  141.1s  SWITCH_TO_OFFBOARD
+    t+  143.8s  GOTO_TARGET_CENTERING
+    t+  218.9s  SEARCHING
+    t+  224.0s  MISSION_FAILED
+    t+  224.0s  RETURN_TO_CHECKPOINT
+    t+  241.3s  LANDING
+    t+  241.3s  MISSION_FAILED
+
+  KILOMETRE TASLARI (21)
+    t+    1.0s  MISSION_STARTED  -- mission_id=43a2852c94d1
+    t+    1.0s  MISSION_STARTED  -- Gorev 2 starting
+    t+    2.0s  CONNECTED  -- connected to udp://:14540
+    t+    2.7s  ARMED  -- vehicle armed
+    t+   19.3s  CHECKPOINT_SAVED
+    t+   19.3s  MISSION_ROUTE_CONFIRMED  -- 3 items already on vehicle (from QGroundControl)
+    t+   22.8s  MISSION_CURRENT_ITEM_SET  -- start index 1
+    t+   22.8s  MISSION_STARTED_ONBOARD
+    t+   72.1s  CENTERING_CONVERGED  -- MAVI_ALTIGEN
+    t+   84.8s  CENTERING_CONVERGED  -- MAVI_ALTIGEN
+    t+   93.5s  CENTERING_CONVERGED  -- MAVI_ALTIGEN
+    t+  103.9s  PAYLOAD_RELEASE_CONFIRMED  -- MAVI_ALTIGEN
+    t+  103.9s  PAYLOAD_RELEASED  -- PAYLOAD 1 RELEASED @0.49m
+    t+  119.4s  MISSION_CURRENT_ITEM_SET  -- start index 2
+    t+  119.4s  MISSION_STARTED_ONBOARD
+    t+  133.4s  MISSION_CURRENT_ITEM_SET  -- start index 2
+    t+  133.5s  MISSION_STARTED_ONBOARD
+    t+  140.5s  MISSION_CURRENT_ITEM_SET  -- start index 2
+    t+  140.5s  MISSION_STARTED_ONBOARD
+    t+  218.9s  MISSION_CURRENT_ITEM_SET  -- start index 2
+    t+  218.9s  MISSION_STARTED_ONBOARD
+
+  SORUNLAR (6 WARNING+)
+    t+  132.6s  [CRITICAL] OFFBOARD_SWITCH_FAILED: PX4 did not report OFFBOARD before timeout
+    t+  139.0s  [CRITICAL] OFFBOARD_SWITCH_FAILED: PX4 did not report OFFBOARD before timeout
+    t+  218.9s  [CRITICAL] TARGET_SEEN_BUT_NOT_CENTERED: KIRMIZI_UCGEN
+    t+  224.0s  [CRITICAL] MISSION_FINISHED_UNEXPECTED: flight.is_mission_finished() returned True before both targets were found
+    t+  224.0s  [CRITICAL] MISSION_PHASE_CHANGED: SEARCHING -> MISSION_FAILED (search_incomplete_mission_finished)
+    t+  241.3s  [CRITICAL] MISSION_PHASE_CHANGED: LANDING -> MISSION_FAILED (landed_after_prior_failure)
+
+  SONUC: MISSION_FAILED
