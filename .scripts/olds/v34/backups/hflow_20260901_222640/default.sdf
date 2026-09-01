@@ -147,37 +147,6 @@
             <ambient>0.30 0.30 0.31 1</ambient>
             <diffuse>0.30 0.30 0.31 1</diffuse>
             <specular>0 0 0 0</specular>
-            <!--
-              H-FLOW OPTIK AKIS ICIN TEXTURE (2026-09-01). SADECE bu
-              <material> blogu degisti; collision, geometry, pose ve
-              yarisma alani tanimlarina DOKUNULMADI.
-
-              NEDEN: optik akis sensoru ozellik noktasi izleyerek calisir.
-              Duz tek renkli bir zeminde izlenecek hicbir sey yoktur ve
-              sensor kor kalir. materials/textures/asphalt_grey.png cok
-              olcekli gri gurultudur (yerel kontrast std 31.4 gri seviye).
-
-              DEDEKTOR KALIBRASYONU KORUNDU -- yukaridaki uzun notta
-              anlatilan "zemin dedektore gorunmez olmali" kurali bilerek
-              saglandi:
-                * Texture TEK KANAL gri, yani R=G=B, yani DOYGUNLUK S=0.
-                  Olculdu: S maksimum = 0. Kirmizi maskesi S>=40, mavi
-                  maskesi S>=80 istiyor; S=0 ikisinin de altinda kalir,
-                  dolayisiyla zemin nasil aydinlatilirsa aydinlatilsin
-                  dedektore gorunmez.
-                * Ortalama parlaklik korundu: V ortalama 76.1/255, eski
-                  duz rengin karsiligi 0.30*255 = 76.5. Kontrast
-                  hesaplari (HSV_COLOR_FRAC_*) ayni zeminde calisiyor.
-              ambient/diffuse degerleri fallback olarak BIRAKILDI: PBR
-              yuklenemezse gorunum eski haline doner.
-            -->
-            <pbr>
-              <metal>
-                <albedo_map>materials/textures/asphalt_grey.png</albedo_map>
-                <metalness>0.0</metalness>
-                <roughness>1.0</roughness>
-              </metal>
-            </pbr>
           </material>
         </visual>
 
@@ -245,25 +214,25 @@
     <include>
       <uri>model://blue_hexagon</uri>
       <name>blue_hexagon</name>
-      <pose>-4.296 20.382 0.003 0 0 0</pose>
+      <pose>-3.547 83.806 0.003 0 0 0</pose>
     </include>
 
     <include>
       <uri>model://red_triangle</uri>
       <name>red_triangle</name>
-      <pose>-0.152 79.485 0.003 0 0 0</pose>
+      <pose>5.284 60.250 0.003 0 0 0</pose>
     </include>
 
     <include>
       <uri>model://red_square</uri>
       <name>red_square</name>
-      <pose>-8.223 56.936 0.003 0 0 0</pose>
+      <pose>3.736 30.000 0.003 0 0 0</pose>
     </include>
 
     <include>
       <uri>model://blue_square</uri>
       <name>blue_square</name>
-      <pose>4.126 14.271 0.003 0 0 0</pose>
+      <pose>-1.835 59.777 0.003 0 0 0</pose>
     </include>
     <!-- KURSAD_COMPETITION_AREA_END -->
 

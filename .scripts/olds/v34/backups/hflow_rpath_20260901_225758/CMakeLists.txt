@@ -64,35 +64,6 @@ target_include_directories(${PROJECT_NAME}
 
 add_dependencies(${PROJECT_NAME} OpticalFlow)
 
-# ---------------------------------------------------------------------------
-# RPATH: libOpticalFlow'un GERCEKTEN kuruldugu dizini goster.
-# ---------------------------------------------------------------------------
-# SORUN (2026-09-01, macOS/arm64): optical_flow.cmake libOpticalFlow'u
-# ${CMAKE_BINARY_DIR}/OpticalFlow/install/lib altina kuruyor, ama bu hedefin
-# link-zamani rpath'i PX4'un genel "external/Install/lib" dizinini gosteriyordu.
-# O dizin BOS kaldigi icin eklenti calisma aninda cozulemiyordu:
-#
-#   Error while loading the library [libOpticalFlowSystem.dylib]:
-#     Reason: tried: '.../build/px4_sitl_default/external/Install/lib/
-#             libOpticalFlow.dylib' (no such file)
-#
-# Bu SESSIZ bir arizaydi: gz-sim eklentiyi atliyor, simulasyon hatasiz aciliyor,
-# yalnizca sensor_optical_flow topic'i hic yayin yapmiyordu. Fark etmek icin
-# birinin bilerek topic listesine bakmasi gerekiyordu.
-#
-# Once build/ altinda symlink ile gecici olarak cozulmustu; ancak build/
-# temizlendiginde symlink de gidiyor ve ariza sessizce geri geliyordu.
-# Kalici cozum: rpath'i kutuphanenin gercek yerine gomuyoruz -- symlink'e
-# hic gerek kalmiyor. Yol OpticalFlow_LIBS'ten turetiliyor, boylece
-# optical_flow.cmake icindeki iki install-prefix dalindan hangisi secilirse
-# secilsin dogru kaliyor.
-get_filename_component(OpticalFlow_LIBDIR "${OpticalFlow_LIBS}" DIRECTORY)
-set_target_properties(${PROJECT_NAME} PROPERTIES
-    BUILD_WITH_INSTALL_RPATH FALSE
-    BUILD_RPATH "${OpticalFlow_LIBDIR}"
-    INSTALL_RPATH "${OpticalFlow_LIBDIR}"
-)
-
 if (NOT CMAKE_INSTALL_PREFIX_INITIALIZED_TO_DEFAULT)
     install(TARGETS ${PROJECT_NAME} LIBRARY DESTINATION lib/px4_gz_plugins)
 endif()

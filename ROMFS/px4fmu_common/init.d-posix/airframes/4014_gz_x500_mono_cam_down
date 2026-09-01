@@ -8,3 +8,48 @@
 PX4_SIM_MODEL=${PX4_SIM_MODEL:=x500_mono_cam_down}
 
 . ${R}etc/init.d-posix/airframes/4001_gz_x500
+
+# ---------------------------------------------------------------------------
+# HOLYBRO H-FLOW (DroneCAN) -- SITL karsiligi
+# ---------------------------------------------------------------------------
+# Gercek modul CAN/DroneCAN uzerinden konusur. SITL'de veri CAN'dan DEGIL,
+# Gazebo koprusunden (GZBridge -> uORB) gelir:
+#   GZBridge.cpp:268  .../link/lidar_sensor_link/sensor/lidar/scan
+#                     -> distance_sensor uORB
+#   GZBridge.cpp:320  .../link/flow_link/sensor/optical_flow/optical_flow
+#                     -> sensor_optical_flow uORB
+# Bu yuzden Holybro setup guide'indaki UAVCAN_* parametreleri (UAVCAN_SUB_FLOW,
+# UAVCAN_SUB_RNG, UAVCAN_RNG_MIN/MAX) SITL'de ETKISIZDIR ve BILEREK
+# ayarlanmamistir -- onlarin yerini SIM_GZ_EN_* koprusu ve SENS_FLOW_* alir.
+# Menzil sinirlari SITL'de sensor SDF'inde (<range><min>/<max>) tanimlidir.
+
+# Gazebo koprusunde iki sensoru de etkinlestir
+param set-default SIM_GZ_EN_FLOW 1
+param set-default SIM_GZ_EN_LIDAR 1
+
+# --- Optik akis fuzyonu (PAA3905E1) ---
+param set-default EKF2_OF_CTRL 1          # optik akis fuzyonu acik
+param set-default SENS_FLOW_MINHGT 0.08   # 80 mm  (PAA3905 min calisma mesafesi)
+param set-default SENS_FLOW_MAXHGT 30.0   # 30 m   (PAA3905 max calisma mesafesi)
+param set-default SENS_FLOW_MAXR 7.4      # 7.4 rad/s maksimum acisal akis hizi
+param set-default SENS_FLOW_ROT 0         # varsayilan montaj yonu
+
+# Sensorun agirlik merkezine gore montaj ofseti (FRD, metre).
+# Model: flow_link pose = 0 0 -0.02 (base_link'e gore), yani 2 cm ASAGIDA.
+# FRD'de asagi POZITIF oldugu icin Z = +0.02.
+param set-default EKF2_OF_POS_X 0.0
+param set-default EKF2_OF_POS_Y 0.0
+param set-default EKF2_OF_POS_Z 0.02
+
+# --- Mesafe sensoru (AFBR-S50LV85D) ---
+param set-default EKF2_RNG_A_HMAX 10.0    # Holybro setup guide
+param set-default EKF2_RNG_QLTY_T 0.2     # Holybro setup guide
+# Mesafe sensoru ayni PCB'de, ayni ofsette
+param set-default EKF2_RNG_POS_X 0.0
+param set-default EKF2_RNG_POS_Y 0.0
+param set-default EKF2_RNG_POS_Z 0.02
+
+# NOT: EKF2_GPS_CTRL 0 (GPS'siz optik akis ucusu) BILEREK ayarlanmadi --
+# Gorev 2/3 rotalari GPS tabanli waypoint'lerle calisiyor ve GPS'i kapatmak
+# mevcut gorev akisini bozardi. Optik akis GPS'e EK bir kaynak olarak fuzyona
+# giriyor.
