@@ -292,3 +292,49 @@ async def test_10_landing_navigates_to_checkpoint_not_search_waypoints():
     # flight.land() afterward) -- but it must never touch Mission APIs.
     assert 'start_mission' not in [c[0] for c in flight.calls]
     assert 'confirm_existing_mission' not in [c[0] for c in flight.calls]
+
+
+# ---------------------------------------------------------------------------
+# V33 SPEC MADDE 11 REGRESYONU (2026-09-01)
+# ---------------------------------------------------------------------------
+# Gozlenen ariza: hangi hedef once tespit edilirse edilsin ILK yuk birakma
+# HER ZAMAN Mavi Altigen'e gidiyordu. Kok neden PayloadInterlock'un sirayi
+# SEKLE baglamasiydi (payload_1 = Mavi Altigen) ve gorev2_orchestrator'un
+# KIRMIZI_UCGEN dalini o kapiya baglamasi; ucgen once merkezlendiginde
+# yerinde birakma ATLANIYORDU ("interlock geregi ... atlaniyor" logu).
+#
+# KANIT: 2026-09-01'in 12 kosusunda merkezleme sirasi 50/50 (6 altigen,
+# 6 ucgen) idi -- yani tespit yanli DEGILDI; yanlilik birakma dallanmasinda.
+#
+# Spec madde 11: "Mavi Altigen once veya Kirmizi Ucgen once tamamlanabilir."
+
+@pytest.mark.asyncio
+async def test_spec11_ucgen_once_gorulurse_yuk_ucgene_birakilir(tmp_path):
+    """Ucgen ILK ve TEK hedefse, yuk ONA birakilmali (eskiden atlaniyordu)."""
+    flight = MockFlightBackend()
+    orch, position_store, interlock = _build_orchestrator(
+        flight, _FixedShapeDetector(["KIRMIZI_UCGEN"]), tmp_path)
+    orch.centering.kp_altitude = 5.0
+
+    await _run_bounded(orch, flight)
+
+    assert position_store.get("KIRMIZI_UCGEN") is not None
+    # ASIL IDDIA: birakma gerceklesti ve BIRINCI birakma ucgene gitti.
+    assert interlock.release_order == ["KIRMIZI_UCGEN"], (
+        f"ucgen once gorulmesine ragmen birakma sirasi {interlock.release_order}")
+    assert interlock.payload_2_released is True
+    assert interlock.payload_1_released is False
+
+
+@pytest.mark.asyncio
+async def test_spec11_altigen_once_gorulurse_yuk_altigene_birakilir(tmp_path):
+    """Simetrik durum: eski davranis da korunmali."""
+    flight = MockFlightBackend()
+    orch, position_store, interlock = _build_orchestrator(
+        flight, _FixedShapeDetector(["MAVI_ALTIGEN"]), tmp_path)
+    orch.centering.kp_altitude = 5.0
+
+    await _run_bounded(orch, flight)
+
+    assert position_store.get("MAVI_ALTIGEN") is not None
+    assert interlock.release_order == ["MAVI_ALTIGEN"]

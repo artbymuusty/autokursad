@@ -1,65 +1,129 @@
-"""
-Görev 2 Rapor Bölüm 11.1'deki EN KRİTİK kuralın saf, backend'den tamamen bağımsız,
-kolayca test edilebilir implementasyonu.
+"""Yük bırakma sıra kilidi.
+
+SPEC DEGISIKLIGI (2026-09-01). Bu modul onceden "Gorev 2 Rapor Bolum
+11.1"deki kurali sekle BAGLI olarak uyguluyordu:
+
+    _payload_1_released  # Mavi Altigen
+    _payload_2_released  # Kirmizi Ucgen
+    can_release_payload_2() -> _payload_1_released
+
+Yani Kirmizi Ucgen'e yuk birakmak, Mavi Altigen'e birakilmis olmasina
+KOSULLUYDU. Bunun gozlenen sonucu: hangi hedef once tespit edilirse
+edilsin ILK birakma HER ZAMAN Mavi Altigen'e gidiyordu. Ucgen once
+merkezlendiginde gorev2_orchestrator yerinde birakmayi atliyor ve
+"toplu birakmada dogru sirada yapilacak" diyordu (12 kosunun 6'sinda
+uclen once merkezlendi ve altisinda da bu atlama logda goruldu).
+
+Bu, V33 spec madde 11 ile CELISIYOR:
+
+    "Gorev sirasi sekle gore sabit degil. Ilk basari completed_count==0
+     iken 1st_mission, ikinci basari completed_count==1 iken 2nd_mission.
+     ... Mavi Altigen once veya Kirmizi Ucgen once tamamlanabilir."
+
+Artik sira SEKILDEN degil TAMAMLANMA SIRASINDAN turuyor: hangi hedef
+once tamamlanirsa o birinci, digeri ikincidir.
+
+KORUNAN SEYLER:
+  * Renk<->hedef eslemesi DEGISMEDI. RED payload <-> Mavi Altigen,
+    BLUE payload <-> Kirmizi Ucgen; gz_payload_actuator.py'de "deliberate
+    team assignment" olarak kayitli, dokunulmadi.
+  * Ayni hedefe IKI KEZ birakma hala yazilim seviyesinde imkansiz
+    (RuntimeError). Gercekten korunmaya deger degismez kosul buydu.
+
+KALDIRILAN SEY: "ikinci birakma birinciden once olamaz" kapisi. O kapi
+sekle bagliyken anlamliydi; sira tamamlanmadan turetilince kendiliginden
+saglaniyor (once gelen zaten birincidir), yani vacuous hale geliyor.
+
+ACIK RISK: "Gorev 2 Rapor Bolum 11.1" belgesi bu depoda YOK; yalnizca
+koddan atifla biliniyor. Eger o belge yarisma kurali olarak gercekten
+KIRMIZI-once-MAVI sirasini zorunlu kiliyorsa bu degisiklik onu ihlal
+eder. Belge bulunana kadar V33 spec madde 11 esas alindi.
 """
 from core.telemetry.event_bus import NULL_PUBLISHER, EventPublisher
 from core.telemetry.events import Category, Event, Severity
 
+# Renk esleme SABIT (gz_payload_actuator.py: "deliberate team assignment").
+SHAPE_PAYLOAD_COLOR = {"MAVI_ALTIGEN": "RED", "KIRMIZI_UCGEN": "BLUE"}
+REQUIRED_SHAPES = ("MAVI_ALTIGEN", "KIRMIZI_UCGEN")
+
 
 class PayloadInterlock:
     def __init__(self, publisher: EventPublisher = NULL_PUBLISHER):
-        self._payload_1_released: bool = False   # Mavi Altıgen
-        self._payload_2_released: bool = False   # Kırmızı Üçgen
+        self._order: list[str] = []          # tamamlanma sirasi
         self.publisher = publisher
 
-    def mark_payload_1_released(self) -> None:
-        """Yalnızca Mavi Altıgen'e yük bırakıldığında çağrılır."""
-        self._payload_1_released = True
-        self.publisher.publish(Event(
-            code="PAYLOAD_1_RELEASED", subsystem="PayloadInterlock", category=Category.PAYLOAD,
-            message="payload 1 (MAVI_ALTIGEN) released",
-            data={"payload_1_released": True, "payload_2_released": self._payload_2_released},
-        ))
+    # -- sira tabanli API ------------------------------------------------
+    def can_release(self, shape: str) -> bool:
+        """Bu hedefe yuk birakilabilir mi?
 
-    def can_release_payload_2(self) -> bool:
-        """KRİTİK: Bu, Kırmızı Üçgen'e yük bırakılmasının TEK kapısıdır.
-        payload_1_released False iken bu HER ZAMAN False döner — istisnasız."""
-        return self._payload_1_released
+        Tek engel: ayni hedefe daha once birakilmis olmasi. Sira kisiti
+        YOK -- hangi hedef once gelirse o birincidir (V33 spec madde 11).
+        """
+        return shape not in self._order
 
-    def mark_payload_2_released(self) -> None:
-        """ÖNKOŞUL: can_release_payload_2() True olmalı. Değilse RuntimeError fırlat —
-        bu, interlock kuralının yazılım seviyesinde İHLAL EDİLEMEZ olmasını sağlar
-        (Görev 2 Rapor Bölüm 11.1: 'Kırmızı Üçgen'e yük... KESİNLİKLE gerçekleştirilemez')."""
-        if not self.can_release_payload_2():
-            # ADR-004 §9.4: this is the interlock working CORRECTLY -- but a
-            # raised exception alone reaches a log/traceback, not the
-            # operator's screen. Publish it as CRITICAL before raising so
-            # the Mission Operations Center shows it regardless of whether
-            # anyone is watching a terminal.
+    def is_terminal_release(self, shape: str) -> bool:
+        """Bu birakma IKINCI (yani Gorev 2'yi bitiren) birakma mi?
+
+        gorev2_fsm bunu tirmanis optimizasyonu icin kullaniyor; o
+        optimizasyon SIRAYA bagli (terminal birakmadan sonra tirmanisi
+        tuketen bir sey kalmiyor), SEKLE degil.
+        """
+        return shape not in self._order and len(self._order) == 1
+
+    def mark_released(self, shape: str) -> None:
+        if shape not in REQUIRED_SHAPES:
+            raise ValueError(f"bilinmeyen hedef: {shape}")
+        if shape in self._order:
             self.publisher.publish(Event(
-                code="INTERLOCK_VIOLATION_BLOCKED", subsystem="PayloadInterlock", category=Category.PAYLOAD,
-                severity=Severity.CRITICAL,
-                message="payload_2 release attempted while payload_1_released=False -- blocked",
-                data={"payload_1_released": False, "payload_2_released": self._payload_2_released},
+                code="INTERLOCK_VIOLATION_BLOCKED", subsystem="PayloadInterlock",
+                category=Category.PAYLOAD, severity=Severity.CRITICAL,
+                message=f"{shape} icin IKINCI kez birakma denendi -- engellendi",
+                data={"order": list(self._order)},
             ))
             raise RuntimeError(
-                "INTERLOCK IHLALI: payload_1_released=False iken payload_2 birakilamaz "
-                "(Gorev 2 Rapor Bolum 11.1)"
-            )
-        self._payload_2_released = True
+                f"INTERLOCK IHLALI: {shape} hedefine zaten yuk birakildi, "
+                f"ikinci kez birakilamaz")
+        self._order.append(shape)
+        ordinal = len(self._order)
         self.publisher.publish(Event(
-            code="PAYLOAD_2_RELEASED", subsystem="PayloadInterlock", category=Category.PAYLOAD,
-            message="payload 2 (KIRMIZI_UCGEN) released",
-            data={"payload_1_released": True, "payload_2_released": True},
+            code=f"PAYLOAD_{ordinal}_RELEASED", subsystem="PayloadInterlock",
+            category=Category.PAYLOAD,
+            message=f"payload {ordinal} ({shape} / "
+                    f"{SHAPE_PAYLOAD_COLOR[shape]} payload) released",
+            data={"shape": shape, "ordinal": ordinal, "order": list(self._order),
+                  "payload_1_released": self.payload_1_released,
+                  "payload_2_released": self.payload_2_released},
         ))
 
-    def both_released(self) -> bool:
-        return self._payload_1_released and self._payload_2_released
+    @property
+    def release_order(self) -> list:
+        return list(self._order)
 
+    def both_released(self) -> bool:
+        return len(self._order) == 2
+
+    # -- ESKI API: SEKLE bagli okumalar (dashboard, gorev3) --------------
+    # Bu iki ozellik SEKIL anlamini korur -- payload_1 = Mavi Altigen'in
+    # RED yuku, payload_2 = Kirmizi Ucgen'in BLUE yuku. Sira bilgisi icin
+    # release_order kullanilmalidir. Boylece mevcut okuyucularin hicbiri
+    # degismek zorunda kalmadi.
     @property
     def payload_1_released(self) -> bool:
-        return self._payload_1_released
+        return "MAVI_ALTIGEN" in self._order
 
     @property
     def payload_2_released(self) -> bool:
-        return self._payload_2_released
+        return "KIRMIZI_UCGEN" in self._order
+
+    def mark_payload_1_released(self) -> None:
+        """Geriye donuk uyumluluk sarmalayicisi."""
+        self.mark_released("MAVI_ALTIGEN")
+
+    def mark_payload_2_released(self) -> None:
+        """Geriye donuk uyumluluk sarmalayicisi."""
+        self.mark_released("KIRMIZI_UCGEN")
+
+    def can_release_payload_2(self) -> bool:
+        """ESKI API. Artik SIRA kisiti icermez; yalnizca "Kirmizi Ucgen'e
+        henuz birakilmadi mi" sorusunu cevaplar."""
+        return self.can_release("KIRMIZI_UCGEN")

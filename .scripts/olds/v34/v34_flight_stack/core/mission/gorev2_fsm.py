@@ -64,21 +64,34 @@ class PayloadMissionSequencer:
                             "yine de devam ediliyor (best-effort).")
 
     async def execute_payload_mission_1(self) -> bool:
-        """Payload Mission 1: Mavi Altıgen (RED payload) -- her zaman ilk."""
+        """Mavi Altıgen'e (RED payload) bırakma.
+
+        "her zaman ilk" DEGIL (2026-09-01): sira artik tespit sirasindan
+        turuyor, bkz. interlock.py. Bu metot yalnizca HEDEFI belirler;
+        kacinci birakma oldugunu interlock soyler."""
         logger.info("PAYLOAD MISSION 1 basliyor (Mavi Altigen / RED payload)")
         self._publish("PAYLOAD_MISSION_1_STARTED")
         await self._navigate_to_recorded("MAVI_ALTIGEN")
-        result = await self.release_service.release_and_verify("MAVI_ALTIGEN")
-        self.interlock.mark_payload_1_released()
+        # TIRMANIS: terminal (ikinci) birakmadan sonra 15 m'ye geri tirmanisi
+        # TUKETEN hicbir sey kalmiyor. Bu SIRAYA bagli bir optimizasyon,
+        # SEKLE degil -- eskiden yalnizca mission_2'de vardi cunku ikinci
+        # olmak sekle sabitlenmisti.
+        terminal = self.interlock.is_terminal_release("MAVI_ALTIGEN")
+        result = await self.release_service.release_and_verify(
+            "MAVI_ALTIGEN",
+            **({"climb_back_alt_m": GOREV2_FINAL_RELEASE_CLIMB_ALTITUDE_M}
+               if terminal else {}))
+        self.interlock.mark_released("MAVI_ALTIGEN")
         self.position_store.mark_payload_released("MAVI_ALTIGEN")
         self._publish("PAYLOAD_MISSION_1_COMPLETE", data={"verified": result})
         return result
 
     async def execute_payload_mission_2(self) -> bool:
-        """Payload Mission 2: Kırmızı Üçgen (BLUE payload) -- her zaman
-        ikinci. ÖNKOŞUL: interlock.mark_payload_1_released() zaten
-        çağrılmış olmalı (PayloadInterlock bunu yazılım seviyesinde
-        zorunlu kılar, aksi halde RuntimeError fırlatır)."""
+        """Kırmızı Üçgen'e (BLUE payload) bırakma.
+
+        "her zaman ikinci" DEGIL (2026-09-01): onkosul kaldirildi, cunku
+        o onkosul sirayi SEKLE sabitliyordu ve V33 spec madde 11 bunu
+        yasakliyor. Ucgen once merkezlenirse birinci birakma budur."""
         logger.info("PAYLOAD MISSION 2 basliyor (Kirmizi Ucgen / BLUE payload)")
         self._publish("PAYLOAD_MISSION_2_STARTED")
         await self._navigate_to_recorded("KIRMIZI_UCGEN")
@@ -89,15 +102,18 @@ class PayloadMissionSequencer:
         # alçalma / ~9 s tamamen boşa gidiyordu. Payload 1 (yukarıdaki) bilerek
         # dokunulmadan bırakıldı: oradaki tırmanış rota devamı ve ikinci hedefin
         # aranması tarafından gerçekten tüketiliyor.
+        terminal = self.interlock.is_terminal_release("KIRMIZI_UCGEN")
         result = await self.release_service.release_and_verify(
-            "KIRMIZI_UCGEN", climb_back_alt_m=GOREV2_FINAL_RELEASE_CLIMB_ALTITUDE_M)
-        self.interlock.mark_payload_2_released()
+            "KIRMIZI_UCGEN",
+            **({"climb_back_alt_m": GOREV2_FINAL_RELEASE_CLIMB_ALTITUDE_M}
+               if terminal else {}))
+        self.interlock.mark_released("KIRMIZI_UCGEN")
         self.position_store.mark_payload_released("KIRMIZI_UCGEN")
         self._publish("PAYLOAD_MISSION_2_COMPLETE", data={"verified": result})
         return result
 
     async def execute_all(self) -> None:
-        """İki payload görevini de sabit sırada çalıştırır. Yalnızca
+        """Henuz birakilmamis payload gorevlerini calistirir. Yalnizca
         Search Phase TAMAMEN bittiğinde (both_required_targets_found())
         çağrılmalıdır -- çağıran taraf (Gorev2Orchestrator) bu invariant'ı
         garanti eder; burada da savunma amaçlı yeniden doğrulanır."""
@@ -106,5 +122,19 @@ class PayloadMissionSequencer:
                 "PayloadMissionSequencer.execute_all() cagrildi ancak iki hedef de "
                 "henuz kayitli degil -- Search Phase invariant'i ihlal edildi."
             )
-        await self.execute_payload_mission_1()
-        await self.execute_payload_mission_2()
+        # SEBEKE: yalnizca HENUZ birakilmamis hedefler calistirilir.
+        # Onceden ikisi de kosulsuz cagriliyordu; bu, eski interlock'ta
+        # zararsizdi cunku yerinde birakma yalnizca MAVI_ALTIGEN icin
+        # olabiliyordu ve mark_payload_1_released() cift cagriyi sessizce
+        # yutuyordu. Artik yerinde birakma HER IKI hedef icin de mumkun
+        # (2026-09-01 sira duzeltmesi) ve interlock ayni hedefe ikinci
+        # birakmayi RuntimeError ile engelliyor -- dolayisiyla burada
+        # atlama ZORUNLU.
+        if self.interlock.can_release("MAVI_ALTIGEN"):
+            await self.execute_payload_mission_1()
+        else:
+            logger.info("Toplu birakma: MAVI_ALTIGEN zaten birakilmis, atlaniyor.")
+        if self.interlock.can_release("KIRMIZI_UCGEN"):
+            await self.execute_payload_mission_2()
+        else:
+            logger.info("Toplu birakma: KIRMIZI_UCGEN zaten birakilmis, atlaniyor.")

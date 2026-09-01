@@ -71,17 +71,45 @@ async def test_execute_payload_mission_1_navigates_then_releases_and_marks_inter
 
 
 @pytest.mark.asyncio
-async def test_execute_payload_mission_2_requires_payload_1_first(tmp_path):
+async def test_ucgen_payload_1_olmadan_da_birakilabilir(tmp_path):
+    """SPEC DEGISIKLIGI (2026-09-01). Bu test eskiden tersini sabitliyordu:
+    payload 2, payload 1 birakilmadan cagrilirsa RuntimeError bekleniyordu.
+
+    O kural sirayi SEKLE bagliyordu ve gozlenen sonucu, hangi hedef once
+    tespit edilirse edilsin ILK birakmanin HER ZAMAN Mavi Altigen'e
+    gitmesiydi -- V33 spec madde 11 ("Mavi Altigen once veya Kirmizi Ucgen
+    once tamamlanabilir") ile celisiyordu. Artik Kirmizi Ucgen BIRINCI
+    birakma olabilir."""
     store = PositionStore(str(tmp_path / "positions.json"))
     _record_both(store, "MAVI_ALTIGEN", "KIRMIZI_UCGEN")
-    interlock = PayloadInterlock()  # payload 1 never released
+    interlock = PayloadInterlock()          # hicbir sey birakilmadi
     centering = _RecordingCentering()
     release_service = _RecordingReleaseService()
     sequencer = PayloadMissionSequencer(flight=None, centering=centering, interlock=interlock,
                                          position_store=store, release_service=release_service)
 
+    await sequencer.execute_payload_mission_2()
+
+    assert interlock.release_order == ["KIRMIZI_UCGEN"]
+    assert interlock.payload_2_released is True
+    assert interlock.payload_1_released is False
+    assert store.get("KIRMIZI_UCGEN").payload_released is True
+
+
+@pytest.mark.asyncio
+async def test_ayni_hedefe_ikinci_birakma_engellenir(tmp_path):
+    """Korunan degismez kosul: ayni hedefe iki kez birakilamaz."""
+    store = PositionStore(str(tmp_path / "positions.json"))
+    _record_both(store, "MAVI_ALTIGEN", "KIRMIZI_UCGEN")
+    interlock = PayloadInterlock()
+    centering = _RecordingCentering()
+    release_service = _RecordingReleaseService()
+    sequencer = PayloadMissionSequencer(flight=None, centering=centering, interlock=interlock,
+                                         position_store=store, release_service=release_service)
+
+    await sequencer.execute_payload_mission_1()
     with pytest.raises(RuntimeError, match="INTERLOCK"):
-        await sequencer.execute_payload_mission_2()
+        await sequencer.execute_payload_mission_1()
 
 
 @pytest.mark.asyncio

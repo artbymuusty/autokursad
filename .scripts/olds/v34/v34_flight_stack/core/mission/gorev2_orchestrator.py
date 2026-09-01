@@ -796,36 +796,32 @@ class Gorev2Orchestrator:
                 # kaydedilmis GPS'e geri donup yeniden ortalamaktan hem daha
                 # kisa hem daha az hata biriktiren bir yol.
                 #
-                # SIRA BAGIMLILIGI: PayloadInterlock payload 2'nin payload
-                # 1'den once birakilmasini hala engelliyor (guard kaldirilmadi).
-                # Yani rota altigene ucgenden ONCE ugramali; tersi olursa
-                # interlock birakmayi durdurur ve bunu logda gorursun.
-                if selected.shape_type == "MAVI_ALTIGEN":
-                    logger.info("Mavi Altigen ortalandi -- KIRMIZI yuk hemen birakiliyor.")
-                    await self.sequencer.execute_payload_mission_1()
-                elif selected.shape_type == "KIRMIZI_UCGEN":
-                    # BUG FIX (2026-08-26): bu cagri eskiden KOSULSUZDU ve
-                    # yukaridaki not ("interlock birakmayi durdurur ve bunu
-                    # logda gorursun") YANLISTI: interlock durdurmuyor,
-                    # RuntimeError FIRLATIYOR (interlock.py
-                    # mark_payload_2_released), cunku Gorev 2 Rapor Bolum
-                    # 11.1 bu kurali "KESINLIKLE gerceklestirilemez" diye
-                    # tanimliyor. Rota ucgene altigenden ONCE ugradiginda o
-                    # istisna arama dongusunden disari cikip butun Gorev
-                    # 2'yi olduruyordu.
-                    # Yakalandi: test_mission_lifecycle_spec TEST 3.
-                    #
-                    # Yuk ATLANMIYOR: interlock izin vermiyorsa yerinde
-                    # birakma es geciliyor ve arama sonundaki toplu
-                    # execute_all() sebekesi onu dogru sirada tamamliyor --
-                    # o sebeke zaten tam bunun icin duruyor.
-                    if self.interlock.can_release_payload_2():
-                        logger.info("Kirmizi Ucgen ortalandi -- MAVI yuk hemen birakiliyor.")
+                # SIRA: SEKLE DEGIL, TESPIT SIRASINA bagli (2026-09-01).
+                # Onceden bu blok asimetrikti: MAVI_ALTIGEN kosulsuz
+                # birakiyor, KIRMIZI_UCGEN ise interlock kapisina takilip
+                # ATLANIYORDU. Sonucu, hangi hedef once merkezlenirse
+                # merkezlensin ILK birakmanin HER ZAMAN Mavi Altigen'e
+                # gitmesiydi -- V33 spec madde 11'e aykiri ("Mavi Altigen
+                # once veya Kirmizi Ucgen once tamamlanabilir").
+                # KANIT: 12 kosunun 6'sinda ucgen once merkezlendi ve
+                # altisinda da "interlock geregi yerinde birakma atlaniyor"
+                # logu var. Tespit sirasi 50/50; yanlilik SECIMDE degil,
+                # BIRAKMA dallanmasindaydi.
+                # Artik iki dal da simetrik: hangisi merkezlendiyse ona
+                # birakilir. Renk eslemesi degismedi (RED<->Altigen,
+                # BLUE<->Ucgen) -- o kasitli takim atamasi.
+                if self.interlock.can_release(selected.shape_type):
+                    if selected.shape_type == "MAVI_ALTIGEN":
+                        logger.info("Mavi Altigen ortalandi -- KIRMIZI yuk "
+                                    "hemen birakiliyor.")
+                        await self.sequencer.execute_payload_mission_1()
+                    elif selected.shape_type == "KIRMIZI_UCGEN":
+                        logger.info("Kirmizi Ucgen ortalandi -- MAVI yuk "
+                                    "hemen birakiliyor.")
                         await self.sequencer.execute_payload_mission_2()
-                    else:
-                        logger.info("Kirmizi Ucgen ortalandi ama payload 1 henuz "
-                                    "birakilmadi -- interlock geregi yerinde birakma "
-                                    "atlaniyor; toplu birakmada dogru sirada yapilacak.")
+                else:
+                    logger.info("%s hedefine yuk zaten birakilmis -- yerinde "
+                                "birakma atlaniyor.", selected.shape_type)
                 self._publish_payload_sync()
 
                 # THE core one-way transition (Görev 2 Rapor "Mission
