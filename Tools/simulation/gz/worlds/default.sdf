@@ -214,25 +214,25 @@
     <include>
       <uri>model://blue_hexagon</uri>
       <name>blue_hexagon</name>
-      <pose>-7.408 51.413 0.003 0 0 0</pose>
+      <pose>-3.547 83.806 0.003 0 0 0</pose>
     </include>
 
     <include>
       <uri>model://red_triangle</uri>
       <name>red_triangle</name>
-      <pose>10.944 18.728 0.003 0 0 0</pose>
+      <pose>5.284 60.250 0.003 0 0 0</pose>
     </include>
 
     <include>
       <uri>model://red_square</uri>
       <name>red_square</name>
-      <pose>10.263 42.742 0.003 0 0 0</pose>
+      <pose>3.736 30.000 0.003 0 0 0</pose>
     </include>
 
     <include>
       <uri>model://blue_square</uri>
       <name>blue_square</name>
-      <pose>10.503 35.215 0.003 0 0 0</pose>
+      <pose>-1.835 59.777 0.003 0 0 0</pose>
     </include>
     <!-- KURSAD_COMPETITION_AREA_END -->
 

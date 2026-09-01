@@ -189,31 +189,6 @@ HOOK_WINCH_EXTEND_M = 0.40
 # bir hedef gelirse formul kendini duzeltir, sabit sessizce yanlislasir.
 HOOK_PAYOUT_CHAIN_OFFSET_M = 0.060      # olculen kalibrasyondan turetildi
 HOOK_RECEIVER_DECK_HEIGHT_M = 0.070     # payload kutusu yuksekligi (yerde)
-
-# VINCIN FIZIKSEL SALIM SINIRI. KAYNAK, uydurma degil:
-#   Tools/simulation/gz/models/x500_mono_cam_down/model.sdf,
-#   <joint name="HookRopeJoint"> ... <limit><upper>0.35</upper>
-# Oradaki yorum bu tavani neden 0.50'den 0.35'e cektigini de yaziyor:
-# fazla salim gevseklige, gevseklik kordun katlanmasina, katlanma da
-# kancanin devrilmesine yol aciyor (OLCULMUS: +-0.7 rad -> 77 derece,
-# +-1.2 rad -> 49 derece).
-#
-# NEDEN BURADA BIR SABIT VAR: 2026-09-01 denetiminde 32 alma denemesinin
-# 32'sinde hesaplanan salim bu limiti ASIYORDU (ortalama 28.1 mm) ve bunu
-# ne bir log ne bir uyari gosteriyordu -- fizik sessizce kirpiyordu. Yani
-# MARGIN parametresi o irtifa rejiminde tamamen ETKISIZDI: 0.04 ve 0.06
-# kollari ayni fiziksel salimi (0.350 m) uretiyordu. 2026-08-31'in
-# "tarama sonucu belirlemedi" bulgusu buyuk olasilikla bu yuzden.
-#
-# Bu sabit DAVRANIS DEGISTIRMEZ (fizik zaten kirpiyordu); yalnizca sessiz
-# arizayi gorunur kilar. Deger degistirilecekse ONCE SDF'de degistirilmeli,
-# ikisi birbirinden kaymamali.
-HOOK_WINCH_MAX_EXTENSION_M = 0.35
-
-# hook_body_link orijini -> burun alt yuzeyi (mutlak deger, metre).
-# core/mission/hook_seating.HOOK_NOSE_OFFSET_M = -0.06465 ile ayni sayi;
-# burada isaretsiz tutuluyor cunku dunya Z'sinden CIKARILIYOR.
-HOOK_NOSE_OFFSET_ABS = 0.06465
 # PX4'un birkac cm'lik irtifa hatasini yutacak pay.
 #
 # GECICI DEGER -- SONUCU BELIRLEMEDI, iki gozlenmis hata yonunun ARASINDA
@@ -321,7 +296,6 @@ class GzPayloadActuator(IPayloadActuator):
         # kendisi telemetriye bagimli kalmasin diye burada yalnizca veri
         # birakiliyor.
         self.last_seating_report = None
-        self._last_payout_wanted_m = None
         self.last_pickup_report = None
         self.gazebo_service_name = gazebo_service_name
         # W4.3: only needed to address the dynamic_pose topic when reporting
@@ -691,88 +665,6 @@ class GzPayloadActuator(IPayloadActuator):
         pose = self.pose_monitor.get(PAYLOAD_MODEL % color) if self.pose_monitor else None
         return None if pose is None else pose[2]
 
-    # Kord zinciri, SDF'den olculmustur (model.sdf link pozlari):
-    #   hook_rope_link -> seg_1 : 22.87 mm
-    #   seg_1..seg_4           : 45.75 mm her biri
-    #   seg_4 -> hook_body_link: 22.87 mm      TOPLAM 182.99 mm
-    # Dogrulama: alt=0, P=0'da burun yer seviyesinin 42.4 mm ustunde cikiyor
-    # ve model.sdf satir 206 bagimsiz olarak ayni sayiyi veriyor.
-    HOOK_CHAIN_LINKS = ("hook_winch_link", "hook_rope_link", "hook_rope_seg_1",
-                        "hook_rope_seg_2", "hook_rope_seg_3", "hook_rope_seg_4",
-                        "hook_body_link")
-
-    def winch_state(self):
-        """Vincin ULASTIGI salim ve kordun katlanma acilari. SALT OLCUM.
-
-        NEDEN POZDAN TURETILIYOR: alternatif JointStatePublisher eklentisini
-        modele eklemekti; gerek kalmadi, cunku zincirin YEDI linkinin hepsi
-        zaten /world/<world>/dynamic_pose/info akisinda (2026-09-01'de probe
-        ile dogrulandi). Boylece SDF'ye hic dokunulmuyor: yeni eklenti yok,
-        yeni konu yok, fizige mudahale yok.
-
-        Dondurur:
-          achieved_m  : |hook_rope_link - hook_winch_link|. Prizmatik eklem
-                        P=0'da bu ikisini cakistirdigi icin bu mesafe DOGRUDAN
-                        ulasilan salimdir. Komut edilen degeri DEGIL, gercekte
-                        ulasilani verir -- 32/32 denemede ikisinin ayni
-                        olmadigi (fizik 0.35'te kirpiyordu) bu yuzden onemli.
-          fold_deg    : dort universal eklemin katlanma acisi (derece).
-          span_m      : rope_link'ten hook_body_link'e DUZ mesafe. Kord tam
-                        gergin ise 0.183 m'ye yakin; katlandikca kisalir.
-          base_z_m    : base_link'in DUNYA Z'si. SALT OLCUM, 2026-09-01.
-                        NEDEN: CHAIN_OFFSET'in dogru degeri iki adaydan
-                        (SDF geometrisi 0.04236, kayitli kalibrasyon 0.060)
-                        hangisi diye sorulmustu; olcum UCUNCU bir sayiya
-                        (~0.015) isaret etti. Aradaki fark, "alt" telemetri
-                        degerinin base_link yuksekligine NASIL eslendigi
-                        varsayimindan geliyor: SDF'ye gore base_link yerdeyken
-                        z=0.240, yani alt+0.240 bekleniyordu ama olculen
-                        arac-tarafi ofset 0.2627 cikti (27.3 mm fark).
-                        base_z_m bu varsayimi ortadan kaldirir: alt'a hic
-                        guvenmeden, base_link'in gercek Z'siyle hesaplanir.
-                        Bu oturumda YALNIZCA TOPLANIYOR, degerlendirilmiyor.
-        """
-        pm = self.pose_monitor
-        if pm is None:
-            return None
-        pos = []
-        for name in self.HOOK_CHAIN_LINKS:
-            pr = pm.link_world_pose(VEHICLE_MODEL_NAME, name)
-            if pr is None:
-                return None
-            pos.append(pr[0])
-        import math as _m
-
-        def _sub(a, b):
-            return (a[0] - b[0], a[1] - b[1], a[2] - b[2])
-
-        def _norm(v):
-            return _m.sqrt(v[0] * v[0] + v[1] * v[1] + v[2] * v[2])
-
-        def _ang(u, v):
-            nu, nv = _norm(u), _norm(v)
-            if nu < 1e-9 or nv < 1e-9:
-                return None
-            c = (u[0] * v[0] + u[1] * v[1] + u[2] * v[2]) / (nu * nv)
-            return _m.degrees(_m.acos(max(-1.0, min(1.0, c))))
-
-        base = None
-        try:
-            bp = pm.link_world_pose(VEHICLE_MODEL_NAME, "base_link")
-            if bp is not None:
-                base = round(bp[0][2], 4)
-        except Exception:  # noqa: BLE001
-            base = None
-        achieved = _norm(_sub(pos[1], pos[0]))
-        dirs = [_sub(pos[i + 1], pos[i]) for i in range(1, 6)]
-        fold = [_ang(dirs[i], dirs[i + 1]) for i in range(4)]
-        span = _norm(_sub(pos[6], pos[1]))
-        return {"achieved_m": round(achieved, 4),
-                "fold_deg": [None if f is None else round(f, 1) for f in fold],
-                "span_m": round(span, 4),
-                "base_z_m": base,
-                "nose_z_m": round(pos[6][2] - HOOK_NOSE_OFFSET_ABS, 4)}
-
     def get_hook_world_pose(self):
         """THE authoritative hook pose. WORLD frame, from Gazebo.
 
@@ -1021,14 +913,6 @@ class GzPayloadActuator(IPayloadActuator):
         # dogrudan okunabiliyor. Dongu 20 Hz, ikide bir alarak 10 Hz.
         seat_trace, _trace_i = [], 0
         t_start = time.monotonic()
-        # SALT OLCUM -- pencere basinda vincin ULASTIGI salim ve kord katlanmasi.
-        # extend_winch_for icinde okunmuyor: orada vinc daha hareket halinde
-        # olurdu ve beklemek ZAMANLAMAYI degistirirdi. Burada okumak davranisa
-        # dokunmuyor.
-        try:
-            winch0 = self.winch_state()
-        except Exception:  # noqa: BLE001
-            winch0 = None
         last_log = 0.0
 
         while asyncio.get_event_loop().time() < deadline:
@@ -1055,18 +939,11 @@ class GzPayloadActuator(IPayloadActuator):
                     tilt_all.append(math.degrees(geom.tilt_rad))
                     _trace_i += 1
                     if _trace_i % 2 == 0 and len(seat_trace) < 400:
-                        try:
-                            ws = self.winch_state()
-                        except Exception:  # noqa: BLE001
-                            ws = None
                         seat_trace.append([
                             round(now - t_start, 2),
                             round(math.degrees(geom.tilt_rad), 1),
                             round(geom.lateral_m * 1000.0, 1),
-                            round(geom.insertion_m * 1000.0, 1),
-                            None if ws is None else ws["achieved_m"],
-                            None if ws is None else ws["span_m"],
-                            None if ws is None else ws["fold_deg"]])
+                            round(geom.insertion_m * 1000.0, 1)])
                     if not [f for f in fails if "lateral" not in f]:
                         lat_gate_ok.append(geom.lateral_m * 1000.0)
                 except Exception:  # noqa: BLE001
@@ -1089,11 +966,7 @@ class GzPayloadActuator(IPayloadActuator):
                     "lateral_dist": _lat_summary(lat_all, lat_gate_ok),
                     "tilt_dist": _tilt_summary(tilt_all),
                     "seat_trace": seat_trace,
-                    "seat_trace_cols": ["t_s", "tilt_deg", "lat_mm", "ins_mm",
-                                        "winch_m", "span_m", "fold_deg"],
-                    "winch_at_window_start": winch0,
-                    "payout_cmd_m": self._last_payout_wanted_m,
-                    "payout_sent_m": getattr(self, "_last_payout_m", None),
+                    "seat_trace_cols": ["t_s", "tilt_deg", "lat_mm", "ins_mm"],
                     "capture_candidate_samples": candidate_samples,
                     "gate_rejections": dict(fail_counts),
                     "best_simultaneous": {
@@ -1122,11 +995,7 @@ class GzPayloadActuator(IPayloadActuator):
             "lateral_dist": _lat_summary(lat_all, lat_gate_ok),
             "tilt_dist": _tilt_summary(tilt_all),
             "seat_trace": seat_trace,
-            "seat_trace_cols": ["t_s", "tilt_deg", "lat_mm", "ins_mm",
-                                "winch_m", "span_m", "fold_deg"],
-            "winch_at_window_start": winch0,
-            "payout_cmd_m": self._last_payout_wanted_m,
-            "payout_sent_m": getattr(self, "_last_payout_m", None),
+            "seat_trace_cols": ["t_s", "tilt_deg", "lat_mm", "ins_mm"],
             "capture_candidate_samples": candidate_samples,
             "gate_rejections": dict(sorted(fail_counts.items(), key=lambda kv: -kv[1])),
             "best_simultaneous": (
@@ -1167,34 +1036,13 @@ class GzPayloadActuator(IPayloadActuator):
         cagri hook_payout_m'i ayri ayri cagiriyordu; formul degisirse
         birinin unutulmasi mumkundu. Artik her iki cagiran da buradan gecer.
         """
-        wanted = hook_payout_m(altitude_m, deck_height_m)
-        payout = min(wanted, HOOK_WINCH_MAX_EXTENSION_M)
+        payout = hook_payout_m(altitude_m, deck_height_m)
         logger.info("[HOOK] vinc salimi: %.3f m  (irtifa=%s, guverte=%.3f, "
                     "zincir ofseti=%.3f, pay=%.3f)",
                     payout,
                     f"{altitude_m:.3f} m" if altitude_m is not None else "BILINMIYOR -> sabit",
                     deck_height_m, HOOK_PAYOUT_CHAIN_OFFSET_M, hook_payout_margin_m())
-        if wanted > HOOK_WINCH_MAX_EXTENSION_M + 1e-9:
-            # DAVRANIS DEGISMEZ: fizik bu kirpmayi zaten yapiyordu (eklem
-            # limiti). Degisen tek sey, artik GORUNUYOR olmasi. Sessizken
-            # MARGIN'in etkisiz oldugu 32/32 denemede fark edilmemisti.
-            logger.warning(
-                "[HOOK] VINC DOYUMU: hesaplanan salim %.3f m, fiziksel sinir "
-                "%.3f m -- %.1f mm KIRPILDI. Bu irtifada (%s) MARGIN=%.3f "
-                "ETKISIZ: bu irtifanin uzerinde formulun ciktisi ne olursa "
-                "olsun salim %.3f m'de kaliyor. MARGIN'in etkili oldugu ust "
-                "irtifa siniri %.3f m. (Fiziksel erisim tavani AYRI bir sayi "
-                "ve CHAIN_OFFSET'e bagli; o sabit su an tartismali -- SDF "
-                "geometrisi 0.04236, kayitli kalibrasyon 0.060 diyor -- bu "
-                "yuzden burada kasten yazilmiyor.)",
-                wanted, HOOK_WINCH_MAX_EXTENSION_M,
-                (wanted - HOOK_WINCH_MAX_EXTENSION_M) * 1000.0,
-                f"{altitude_m:.3f} m" if altitude_m is not None else "bilinmiyor",
-                hook_payout_margin_m(), HOOK_WINCH_MAX_EXTENSION_M,
-                HOOK_WINCH_MAX_EXTENSION_M + deck_height_m
-                - HOOK_PAYOUT_CHAIN_OFFSET_M - hook_payout_margin_m())
         self._last_payout_m = payout
-        self._last_payout_wanted_m = wanted
         return await self.set_winch(payout)
 
     async def set_winch(self, extension_m: float) -> bool:

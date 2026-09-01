@@ -302,6 +302,65 @@ tilt çözülmeden "iyileştirme" denemez.
 
 ---
 
+## 4c. Mekanizma (1) — vinç doyumu ve kord ölçümü · 2026-09-01 akşamı
+
+`B_surekli`'nin kaynağı Bölüm 7'de mekanizma (1) alanına havale edilmişti.
+FAZ 1–3 yapıldı. **Düzeltme tasarımı yapılmadı**; `gorev3_pickup.py` ve
+`CHAIN_OFFSET` bu turda da değişmedi.
+
+### Geometri, SDF zincirinden ölçüldü
+
+Kord = 0.02287 + 3×0.04575 + 0.02287 = **0.18299 m**. `nose_z = alt + K − P`.
+Doğrulama: `alt=0, P=0` → 0.0424 m; `model.sdf` satır 206 bağımsız olarak
+*"hook tip is 42.4 mm above ground"* diyor. Birebir tutuyor.
+
+### Bulgu A — retry denemeleri penceresinin çoğunu boşa harcıyor
+
+Deneme 2–3'te vinç **~0.002 m'den** başlıyor ve **oturma penceresi sırasında**
+salıyor. `t=0.05 s`'de burun deck'in **318 mm üstünde**. İzden doğrudan
+okunuyor, hipotez değil. 12 s'lik pencerenin etkin kısmı çok daha kısa.
+
+### Bulgu B — vinç komut edilen değere hiç ulaşmıyor
+
+**32/32 denemede** hesaplanan salım `HookRopeJoint`'in **0.35 m** limitini
+aşıyordu (ortalama 28.1 mm) ve bunu ne log ne uyarı gösteriyordu — fizik
+sessizce kırpıyordu. Deneme 1'de bile pencere başında ulaşılan 0.327–0.329 m,
+pencere sonunda ~0.346–0.350.
+
+**Sonucu:** o irtifa rejiminde `MARGIN` **etkisiz**; 0.04 ve 0.06 kolları aynı
+fiziksel salımı (0.350 m) üretiyor. 2026-08-31'in *"tarama sonucu belirlemedi"*
+bulgusu büyük olasılıkla bu yüzden — üç koldan ikisi (çoğu irtifada üçü) aynı
+deneydi.
+
+**Yapılan:** `HOOK_WINCH_MAX_EXTENSION_M = 0.35` (kaynağı SDF satırına atıflı)
+ile kırpma + `VINC DOYUMU` uyarısı. **Davranış değişikliği sıfır** — fizik
+zaten kırpıyordu; biten şey yalnızca sessiz arıza.
+
+### Bulgu C — `CHAIN_OFFSET` hâlâ karara bağlanamadı
+
+Ölçüm, araç-tarafı ofseti **0.2627 m** veriyor; SDF'den beklenen 0.290 değil
+(**27.3 mm** fark). Bu `CHAIN_OFFSET ≈ 0.015` demek — iki adayın (SDF
+geometrisi 0.04236, kayıtlı kalibrasyon 0.060) **hiçbiri**. Kalan bilinmeyen
+`alt` → `base_link` eşlemesi. Bunu kilitleyecek ölçüm (`base_z_m`) eklendi ve
+stub'landı; **bu oturumda yalnızca toplanıyor, değerlendirilmiyor.**
+
+### Bulgu D — kord katlanması görünür oldu, ama tilt'i açıklamıyor
+
+Katlanma kancaya en yakın iki eklemde toplanıyor (5 katlanmış vakanın 4'ünde
+j3/j4 = 14–46°, j1/j2 < 4°). Ama katlanma toplamı tilt'i **öngörmüyor**:
+
+| katlanma toplamı | tilt p50 |
+|---|---|
+| 81.8° | **0.0°** |
+| 32.2° | **47.1°** |
+| 98.6° | 27.5° |
+| 1.9° | 0.3° |
+
+**Pearson r = +0.175 (n=9).** Koşu-içi 80°'lik yayılımın kaynağı olarak
+önerdiğim aday **çürütüldü**.
+
+---
+
 ## 5. Eklenen ölçüm altyapısı (davranışa etkisiz)
 
 | log / event | ne verir |
@@ -332,7 +391,9 @@ uçuş gerektirmeden, aynı koşudan** ayırmayı sağlıyor.
 | alan | ne veriyor |
 |---|---|
 | `tilt_dist` | tilt dağılımı + **eşik geçişi sayısı**, `longest_run_le_gate`, `dwell_reachable` ve türetilmiş `regime`. Geçiş sayısı iki rejimi ayırır: salınımda çok, sürekli yatmada ~0. Yalnızca medyana bakmak ikisini aynı gösterir. |
-| `seat_trace` | oturma penceresinin 10 Hz zaman serisi `[t_s, tilt_deg, lat_mm, ins_mm]`. `ins > 0` temas başlangıcını verdiği için "tilt temasta mı başladı, sonradan mı gelişti" ayrımı okunabilir. |
+| `seat_trace` | oturma penceresinin 10 Hz zaman serisi `[t_s, tilt_deg, lat_mm, ins_mm, winch_m, span_m, fold_deg]`. `ins > 0` temas başlangıcını verir; `winch_m` ulaşılan salımı, `fold_deg` dört eklemin katlanma açısını. |
+| `winch_state()` | ulaşılan salım, kord açıklığı, dört katlanma açısı, `base_z_m`, `nose_z_m`. **SDF'ye dokunmadan** mevcut poz akışından türetiliyor — yeni eklenti/konu yok. |
+| `payout_cmd_m` / `payout_sent_m` | formülün istediği vs fiziksel sınıra kırpıldıktan sonra gönderilen salım. |
 
 ---
 
@@ -427,6 +488,19 @@ kovalanmadı.
 formülüne bu turda da dokunulmadı. Bulgu 2 doğrudan mekanizma (1)
 alanına girdiği için, tasarım AYRI bir oturuma bırakıldı.
 
+### 1b. Retry penceresi / salım örtüşmesi — YENİ, açılmadı
+
+Bulgu A. Deneme 2–3'te oturma penceresi vinç salımıyla örtüşüyor ve pencerenin
+büyük kısmı burun deck'in 300+ mm üstündeyken geçiyor. Düzeltme
+`gorev3_pickup.py`'nin retry akışına girmeyi gerektirdiği için **yeni bir
+FAZ 1'e** bırakıldı (2026-09-01 kararı).
+
+### 1c. `CHAIN_OFFSET` kararı — ölçüm hazır, karar verilmedi
+
+Bulgu C. `base_z_m` ölçümü eklendi ve stub'landı; `alt` telemetrisine hiç
+güvenmeden hesap yapmayı sağlıyor. Karar bilinçli olarak sonraki oturuma
+bırakıldı. **MARGIN taraması bu karar netleşmeden anlamsız** — bekletiliyor.
+
 ### 2. `kursad_hook` eksik mesh'leri
 
 Bölüm 6, madde 5. Dört STL repoda yok. Fizik etkilenmiyor ama kanca
@@ -454,4 +528,8 @@ zaten yapılacak bir doğrulama koşusuna bindirmek en ucuzu.
     demo/faz1_y1_backup_20260831T183949Z/       10 Hz iz
     demo/faz3_realign_backup_20260831T191302Z/  yeniden hizalama
     demo/faz3_cleanup_backup_20260831T201707Z/  son temizlik
-    backups/faz3_bore_20260901_044825/          yuva + huni collision (bu tur)
+    backups/faz3_bore_20260901_044825/          yuva + huni collision
+    backups/faz2_tilt_20260901_074413/          tilt_dist enstrumantasyonu
+    backups/faz3_trace_20260901_091532/         seat_trace (10 Hz iz)
+    backups/faz3_winch_20260901_153658/         vinc doyumu + kord olcumu
+    backups/faz3_baselink_20260901_201948/      base_link Z olcumu (bu tur)

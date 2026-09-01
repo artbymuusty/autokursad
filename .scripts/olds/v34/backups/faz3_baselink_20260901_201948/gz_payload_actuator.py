@@ -209,11 +209,6 @@ HOOK_RECEIVER_DECK_HEIGHT_M = 0.070     # payload kutusu yuksekligi (yerde)
 # arizayi gorunur kilar. Deger degistirilecekse ONCE SDF'de degistirilmeli,
 # ikisi birbirinden kaymamali.
 HOOK_WINCH_MAX_EXTENSION_M = 0.35
-
-# hook_body_link orijini -> burun alt yuzeyi (mutlak deger, metre).
-# core/mission/hook_seating.HOOK_NOSE_OFFSET_M = -0.06465 ile ayni sayi;
-# burada isaretsiz tutuluyor cunku dunya Z'sinden CIKARILIYOR.
-HOOK_NOSE_OFFSET_ABS = 0.06465
 # PX4'un birkac cm'lik irtifa hatasini yutacak pay.
 #
 # GECICI DEGER -- SONUCU BELIRLEMEDI, iki gozlenmis hata yonunun ARASINDA
@@ -719,18 +714,6 @@ class GzPayloadActuator(IPayloadActuator):
           fold_deg    : dort universal eklemin katlanma acisi (derece).
           span_m      : rope_link'ten hook_body_link'e DUZ mesafe. Kord tam
                         gergin ise 0.183 m'ye yakin; katlandikca kisalir.
-          base_z_m    : base_link'in DUNYA Z'si. SALT OLCUM, 2026-09-01.
-                        NEDEN: CHAIN_OFFSET'in dogru degeri iki adaydan
-                        (SDF geometrisi 0.04236, kayitli kalibrasyon 0.060)
-                        hangisi diye sorulmustu; olcum UCUNCU bir sayiya
-                        (~0.015) isaret etti. Aradaki fark, "alt" telemetri
-                        degerinin base_link yuksekligine NASIL eslendigi
-                        varsayimindan geliyor: SDF'ye gore base_link yerdeyken
-                        z=0.240, yani alt+0.240 bekleniyordu ama olculen
-                        arac-tarafi ofset 0.2627 cikti (27.3 mm fark).
-                        base_z_m bu varsayimi ortadan kaldirir: alt'a hic
-                        guvenmeden, base_link'in gercek Z'siyle hesaplanir.
-                        Bu oturumda YALNIZCA TOPLANIYOR, degerlendirilmiyor.
         """
         pm = self.pose_monitor
         if pm is None:
@@ -756,22 +739,13 @@ class GzPayloadActuator(IPayloadActuator):
             c = (u[0] * v[0] + u[1] * v[1] + u[2] * v[2]) / (nu * nv)
             return _m.degrees(_m.acos(max(-1.0, min(1.0, c))))
 
-        base = None
-        try:
-            bp = pm.link_world_pose(VEHICLE_MODEL_NAME, "base_link")
-            if bp is not None:
-                base = round(bp[0][2], 4)
-        except Exception:  # noqa: BLE001
-            base = None
         achieved = _norm(_sub(pos[1], pos[0]))
         dirs = [_sub(pos[i + 1], pos[i]) for i in range(1, 6)]
         fold = [_ang(dirs[i], dirs[i + 1]) for i in range(4)]
         span = _norm(_sub(pos[6], pos[1]))
         return {"achieved_m": round(achieved, 4),
                 "fold_deg": [None if f is None else round(f, 1) for f in fold],
-                "span_m": round(span, 4),
-                "base_z_m": base,
-                "nose_z_m": round(pos[6][2] - HOOK_NOSE_OFFSET_ABS, 4)}
+                "span_m": round(span, 4)}
 
     def get_hook_world_pose(self):
         """THE authoritative hook pose. WORLD frame, from Gazebo.

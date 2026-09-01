@@ -1,0 +1,7 @@
+KURSAD40 V34 -- demo 20260901T154033
+plan sirasi: competition_1way
+gorev duvar limiti: 900s   dry-run: 0
+
+#    PLAN             YUKLEME    GOREV        SONUC
+-------------------------------------------------------------------------
+1    competition_1way OK         rc=0         MISSION_FAILED
