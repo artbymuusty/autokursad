@@ -183,31 +183,6 @@ command -v gz >/dev/null 2>&1;                 check "gz (Gazebo)" $? "$(command
 "$PYTHON" -c "import mavsdk" 2>/dev/null;      check "python: mavsdk" $?
 "$PYTHON" -c "import cv2, zmq, numpy" 2>/dev/null; check "python: cv2/zmq/numpy (dashboard)" $?
 [ -x "$REPO/safe_sitl_launcher.sh" ];          check "safe_sitl_launcher.sh" $?
-
-# ---------------------------------------------------------------------------
-# EKSIK PLANI URET (temiz klon icin)
-# ---------------------------------------------------------------------------
-# .plan rotalari QGC'nin Missions dizininde yasiyor, yani DEPO DISINDA. Sifirdan
-# klonlayan biri bu yuzden on kontrolde "plan bulunamadi" ile takiliyordu
-# (2026-09-01 klon tamlik denetimi). Rotalar tasarim sabitlerinden
-# uretilebildigi icin dogru cozum "bir kereligine kopyala" degil, EKSIKSE URET.
-# Depoda referans kopyalari da duruyor (Tools/simulation/gz/worlds/plans/), ama
-# tek dogruluk kaynagi generate_competition_plans.py'dir.
-PLAN_GEN="$REPO/Tools/simulation/gz/worlds/generate_competition_plans.py"
-mkdir -p "$MISSIONS_DIR" 2>/dev/null
-_PLAN_MISSING=0
-for p in $PLANS; do
-    [ -f "$MISSIONS_DIR/$p.plan" ] || _PLAN_MISSING=1
-done
-if [ "$_PLAN_MISSING" = "1" ] && [ -f "$PLAN_GEN" ]; then
-    say "eksik .plan var -- generate_competition_plans.py ile uretiliyor"
-    if "$PYTHON" "$PLAN_GEN" --out-dir "$MISSIONS_DIR" >> "$RUN_DIR/demo.log" 2>&1; then
-        say "  rotalar uretildi -> $MISSIONS_DIR"
-    else
-        say "  UYARI: uretim basarisiz -- asagidaki plan kontrolu raporlayacak"
-    fi
-fi
-
 [ -d "$MISSIONS_DIR" ];                        check "QGC missions dizini" $? "$MISSIONS_DIR"
 
 PLAN_PATHS=()

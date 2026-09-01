@@ -1,0 +1,156 @@
+
+===========================================================
+[00:00] FAZ 0/5 -- ON KONTROL
+===========================================================
+[00:00] python: /Users/muusty/Projects/kursad40-venv/bin/python
+[00:00]   [OK]   PX4 SITL binary  -- /Users/muusty/AytechUAS/autokursad/build/px4_sitl_default/bin/px4
+[00:00]   [OK]   gz (Gazebo)  -- /opt/homebrew/bin/gz 8.15.0
+[00:00]   [OK]   python: mavsdk
+[00:00]   [OK]   python: cv2/zmq/numpy (dashboard)
+[00:00]   [OK]   safe_sitl_launcher.sh
+[00:00]   [OK]   QGC missions dizini  -- /Users/muusty/Documents/QGroundControl Daily/Missions
+[00:00]   [OK]   plan: competition_1way.plan  -- 3 waypoint
+[00:00] on kontrol temiz: 1 plan sirayla kosulacak
+
+===========================================================
+[00:00] FAZ 1/5 -- PX4 SITL + GAZEBO
+===========================================================
+[00:00] safe_sitl_launcher.sh baslatiliyor (log: /Users/muusty/AytechUAS/autokursad/.scripts/olds/v34/demo/runs/20260901T054757/sitl.log)
+[00:00]   pid=98861
+
+===========================================================
+[00:00] FAZ 2/5 -- ARAC HAZIR MI
+===========================================================
+Connection using udp:// is deprecated, please use udpin:// or udpout:// (cli_arg.cpp:28)
+[WAIT] bekleniyor: 1/3 MAVLink heartbeat (kalan 216s)
+[WAIT]   -> OK (23.6s)
+[WAIT] bekleniyor: 2/3 global+home pozisyon (EKF) (kalan 216s)
+[WAIT]   -> OK (24.6s)
+[WAIT] bekleniyor: 3/3 is_armable (kalan 215s)
+[WAIT]   -> OK (25.6s)
+[WAIT] arac ucusa hazir (25.6s)
+
+===========================================================
+[00:27] FAZ 3/5 -- MISSION DASHBOARD
+===========================================================
+[00:27] dashboard KAPALI (--no-dashboard)
+
+===========================================================
+[00:27] FAZ 4/5 -- PLANLAR (SIRAYLA)
+===========================================================
+
+===========================================================
+[00:27] PLAN 1/1 -- competition_1way
+===========================================================
+[00:27] rota yukleniyor ve dogrulaniyor
+[UPLOAD] plan: competition_1way.plan  (3 item, dosyadan okundu)
+Connection using udp:// is deprecated, please use udpin:// or udpout:// (cli_arg.cpp:28)
+[UPLOAD] baglaniliyor: udp://:14540 (timeout 30s)
+[UPLOAD] arac bagli
+[UPLOAD] ayristirildi: 3 raw MAVLink item
+[UPLOAD] aractaki eski rota silindi
+[UPLOAD] yukleme ack alindi
+[UPLOAD] geri okundu: 3 item, 0 uyusmazlik
+[UPLOAD]   seq=0   cmd=22   lat=47.3977465 lon=8.5461637 alt=15.0
+[UPLOAD]   seq=1   cmd=16   lat=47.3977914 lon=8.5461637 alt=15.0
+[UPLOAD]   seq=2   cmd=16   lat=47.3990490 lon=8.5461637 alt=15.0
+[UPLOAD] DOGRULANDI: aractaki rota .plan ile birebir ayni
+[00:28] LAND modu temizligi
+Connection using udp:// is deprecated, please use udpin:// or udpout:// (cli_arg.cpp:28)
+[LAND-RESET] armable=False mode=HOLD armed=False on_ground=True
+[LAND-RESET] disarmed + on ground but not armable (mode=HOLD) -- commanding HOLD...
+Received ack for not-existing command: 176! Ignoring... (mavlink_command_sender.cpp:304)
+[LAND-RESET] armable after 4s (mode=HOLD)
+[00:35] gorev basliyor (main_gz.py, duvar limiti 900s)
+[00:35]   canli log: tail -f /Users/muusty/AytechUAS/autokursad/.scripts/olds/v34/demo/runs/20260901T054757/01_competition_1way/mission.log
+[07:21] gorev sureci 0 ile bitti
+[07:21] olay akisi ozeti (633a98d0044b)
+  mission_id : 633a98d0044b
+  sure       : 404.0s  (6433 olay)
+  kaynak     : /Users/muusty/AytechUAS/autokursad/.scripts/olds/v34/demo/runs/20260901T054757/01_competition_1way/mission_633a98d0044b.jsonl
+
+  FAZLAR (32)
+    t+    1.0s  CONNECTING
+    t+    2.6s  ARMING
+    t+    2.6s  TAKEOFF
+    t+    2.7s  CLIMB_TO_ALTITUDE
+    t+   19.2s  CHECKPOINT_SAVE
+    t+   19.2s  MISSION_ROUTE_CONFIRM
+    t+   19.2s  MISSION_START
+    t+   23.8s  SEARCHING
+    t+   34.9s  TARGET_TRACKING
+    t+   34.9s  SWITCH_TO_OFFBOARD
+    t+   37.9s  SEARCHING
+    t+   40.0s  TARGET_TRACKING
+    t+   40.0s  SWITCH_TO_OFFBOARD
+    t+   42.7s  GOTO_TARGET_CENTERING
+    t+   81.8s  HOVER_CONFIRM
+    t+   83.9s  GPS_SAVE
+    t+  149.5s  SEARCHING
+    t+  165.4s  TARGET_TRACKING
+    t+  165.4s  SWITCH_TO_OFFBOARD
+    t+  165.9s  GOTO_TARGET_CENTERING
+    t+  198.0s  HOVER_CONFIRM
+    t+  200.1s  GPS_SAVE
+    t+  240.9s  SEARCH_COMPLETE
+    t+  241.1s  GOREV2_COMPLETE
+    t+  241.1s  GOREV3_START
+    t+  241.1s  GOREV3_RUNNING
+    t+  338.0s  GOREV3_RUNNING
+    t+  345.3s  GOREV3_RUNNING
+    t+  381.9s  RETURN_TO_CHECKPOINT
+    t+  398.6s  RETURN_TO_CHECKPOINT
+    t+  403.9s  LANDING
+    t+  404.0s  MISSION_COMPLETE
+
+  KILOMETRE TASLARI (26)
+    t+    1.0s  MISSION_STARTED  -- mission_id=633a98d0044b
+    t+    1.0s  MISSION_STARTED  -- Gorev 2 starting
+    t+    1.9s  CONNECTED  -- connected to udp://:14540
+    t+    2.6s  ARMED  -- vehicle armed
+    t+   19.2s  CHECKPOINT_SAVED
+    t+   19.2s  MISSION_ROUTE_CONFIRMED  -- 3 items already on vehicle (from QGroundControl)
+    t+   22.8s  MISSION_CURRENT_ITEM_SET  -- start index 1
+    t+   22.8s  MISSION_STARTED_ONBOARD
+    t+   38.9s  MISSION_CURRENT_ITEM_SET  -- start index 2
+    t+   38.9s  MISSION_STARTED_ONBOARD
+    t+   78.7s  CENTERING_CONVERGED  -- MAVI_ALTIGEN
+    t+  138.0s  PAYLOAD_RELEASE_CONFIRMED  -- MAVI_ALTIGEN
+    t+  138.0s  PAYLOAD_RELEASED  -- PAYLOAD 1 RELEASED @0.48m
+    t+  153.6s  MISSION_CURRENT_ITEM_SET  -- start index 2
+    t+  153.6s  MISSION_STARTED_ONBOARD
+    t+  194.9s  CENTERING_CONVERGED  -- KIRMIZI_UCGEN
+    t+  210.2s  CENTERING_CONVERGED  -- KIRMIZI_UCGEN
+    t+  217.6s  CENTERING_CONVERGED  -- KIRMIZI_UCGEN
+    t+  234.3s  CENTERING_CONVERGED  -- KIRMIZI_UCGEN
+    t+  237.0s  PAYLOAD_RELEASE_CONFIRMED  -- KIRMIZI_UCGEN
+    t+  237.0s  PAYLOAD_RELEASED  -- PAYLOAD 2 RELEASED @0.45m
+    t+  240.9s  SEARCH_COMPLETE
+    t+  241.1s  GOREV2_COMPLETE
+    t+  261.4s  CENTERING_CONVERGED  -- KIRMIZI_DIKDORTGEN
+    t+  398.6s  GOREV3_COMPLETE
+    t+  404.0s  MISSION_COMPLETE
+
+  SORUNLAR (1 WARNING+)
+    t+   37.9s  [CRITICAL] OFFBOARD_SWITCH_FAILED: PX4 did not report OFFBOARD before timeout
+
+  SONUC: MISSION_COMPLETE
+
+===========================================================
+[07:26] FAZ 5/5 -- OZET
+===========================================================
+KURSAD40 V34 -- demo 20260901T054757
+plan sirasi: competition_1way
+gorev duvar limiti: 900s   dry-run: 0
+
+#    PLAN             YUKLEME    GOREV        SONUC
+-------------------------------------------------------------------------
+1    competition_1way OK         rc=0         MISSION_COMPLETE
+[07:26] 
+[07:26] her plan icin: /Users/muusty/AytechUAS/autokursad/.scripts/olds/v34/demo/runs/20260901T054757/<NN>_<plan>/{upload.log,mission.log,summary.txt,mission_*.jsonl}
+
+===========================================================
+[07:26] TEARDOWN
+===========================================================
+[07:26] SITL kapatiliyor
+[07:26] artefaktlar: /Users/muusty/AytechUAS/autokursad/.scripts/olds/v34/demo/runs/20260901T054757

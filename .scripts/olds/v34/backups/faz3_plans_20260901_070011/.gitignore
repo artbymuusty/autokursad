@@ -145,12 +145,3 @@ GZ_PARTITION=*
 .scripts/olds/*/demo/runs/2026083*/
 # generate_competition_area.py'nin dondurdugu world yedekleri
 *.sdf.bak.*
-
-# 2026-09-01 kosularinin HAM kanitini geri al.
-# Yukaridaki genel *.jsonl / *.log kurallari bu dizinleri de bosaltiyordu:
-# klon tamlik denetiminde (2026-09-01) kosu dizinlerinde yalnizca summary.txt
-# ve mission_positions_*.json kaldigi, oysa GOREV3_ALMA_DURUM.md'nin atif
-# yaptigi sayilarin mission.log ve mission_*.jsonl icinde oldugu gorulduo.
-# Rapordaki iddialar ham veriden dogrulanabilsin diye bu dort kosu geri
-# aliniyor. Yeni kosular yine varsayilan olarak DISARIDA kalir.
-!.scripts/olds/v34/demo/runs/20260901T*/**
