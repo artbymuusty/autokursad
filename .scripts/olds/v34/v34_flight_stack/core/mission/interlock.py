@@ -34,10 +34,14 @@ KALDIRILAN SEY: "ikinci birakma birinciden once olamaz" kapisi. O kapi
 sekle bagliyken anlamliydi; sira tamamlanmadan turetilince kendiliginden
 saglaniyor (once gelen zaten birincidir), yani vacuous hale geliyor.
 
-ACIK RISK: "Gorev 2 Rapor Bolum 11.1" belgesi bu depoda YOK; yalnizca
-koddan atifla biliniyor. Eger o belge yarisma kurali olarak gercekten
-KIRMIZI-once-MAVI sirasini zorunlu kiliyorsa bu degisiklik onu ihlal
-eder. Belge bulunana kadar V33 spec madde 11 esas alindi.
+ESKI GEREKCE HAKKINDA: kod eskiden bu kurali "Gorev 2 Rapor Bolum 11.1"e
+dayandirip "KESINLIKLE gerceklestirilemez" diye tarif ediyordu, yani bir
+YARISMA ZORUNLULUGU gibi. 2026-09-01'de dogrulandi: bu bir zorunluluk
+DEGIL, onceden alinmis ve artik TERK EDILMIS bir tasarim tercihiydi.
+Guncel davranis spec madde 11'e gore SIRA-BAZLIDIR ve sekle bagli
+zorunluluk yoktur. Eski gerekce metni bu yuzden kaldirildi; burada
+yalnizca tarihce olarak aniliyor ki eski loglari okuyan biri
+"KESINLIKLE gerceklestirilemez" ifadesini hala gecerli sanmasin.
 """
 from core.telemetry.event_bus import NULL_PUBLISHER, EventPublisher
 from core.telemetry.events import Category, Event, Severity

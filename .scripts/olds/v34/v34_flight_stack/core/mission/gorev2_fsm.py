@@ -26,10 +26,12 @@ class PayloadMissionSequencer:
     Search Phase TAMAMEN bittikten (PositionStore.both_required_targets_found()
     True olduktan) SONRA, Offboard'ın tek yetkili olduğu evrede çalışır.
 
-    PayloadInterlock (değişmedi) payload_2'nin payload_1'den önce asla
-    bırakılamayacağını yazılım seviyesinde hâlâ garanti eder -- bu
-    sequencer zaten sabit sırada çağırdığı için interlock'u ihlal etmesi
-    mümkün değildir, ama guard yine de kaldırılmadı (savunma amaçlı)."""
+    PayloadInterlock ARTIK SIRA KISITI UYGULAMAZ (2026-09-01). Eskiden
+    "payload_2, payload_1'den önce asla bırakılamaz" garantisi vardı; o
+    garanti sırayı ŞEKLE bağlıyordu ve gözlenen sonucu, hangi hedef önce
+    tespit edilirse edilsin ilk bırakmanın hep Mavi Altıgen'e gitmesiydi.
+    Spec madde 11 bunu yasakladığı için kaldırıldı. Interlock'un koruduğu
+    tek değişmez koşul artık aynı hedefe İKİ KEZ bırakılamamasıdır."""
 
     def __init__(self, flight: IFlightBackend, centering: CenteringController,
                  interlock: PayloadInterlock, position_store: PositionStore,

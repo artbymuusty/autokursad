@@ -633,8 +633,9 @@ class Gorev2Orchestrator:
         (`self._search_complete` bayrağı, `_resume_mission_route`'un kendi
         savunma guard'ı üzerinden bunu yazılım seviyesinde zorunlu kılar).
         Search tamamlandığında döngüden çıkılır ve PayloadMissionSequencer
-        Offboard'ın TEK yetkili olduğu evrede Payload Mission 1 -> 2'yi
-        sabit sırada çalıştırır."""
+        Offboard'ın TEK yetkili olduğu evrede kalan payload görevlerini
+        çalıştırır. SIRA SABİT DEĞİLDİR (2026-09-01): hangi hedef önce
+        tamamlanırsa birinci odur -- spec madde 11."""
         while (not self.position_store.both_required_targets_found()
                and not await self.flight.is_mission_finished()):
             now = time.time()
@@ -853,8 +854,9 @@ class Gorev2Orchestrator:
             self.context.transition_to(MissionPhase.MISSION_FAILED, reason="search_incomplete_mission_finished")
             return
 
-        # OFFBOARD ONLY from here on -- Payload Mission 1 -> Payload Mission 2,
-        # sabit sırada (bkz. PayloadMissionSequencer, gorev2_fsm.py).
+        # OFFBOARD ONLY from here on. SIRA SABIT DEGIL (2026-09-01): hangi
+        # hedef once tamamlandiysa birinci odur; buradaki sebeke yalnizca
+        # HENUZ birakilmamis olani tamamlar (bkz. gorev2_fsm.execute_all).
         # Yukler artik tespit aninda birakiliyor (yukaridaki blok), bu yuzden
         # buradaki toplu calistirma yalnizca bir SEBEKE: bir sebeple
         # birakilmamis olan kalirsa onu tamamlar. Ikisi de birakildiysa
