@@ -1,0 +1,1280 @@
+2026-09-01 11:46:34,185 [INFO] gz_system.main_gz: gz-transport env: GZ_PARTITION=kursad40 GZ_IP=127.0.0.1
+2026-09-01 11:46:34,187 [INFO] gz_system.gz_camera_source: Gazebo kamera servisi kontrol ediliyor (topic=/world/default/model/x500_mono_cam_down_0/link/camera_link/sensor/camera/image)...
+[CAMERA_SERVICE_MANAGER] Starting camera_service.py (topic=/world/default/model/x500_mono_cam_down_0/link/camera_link/sensor/camera/image, zmq=tcp://127.0.0.1:5555)...
+QGC port check failed, reporting UNKNOWN: (pid=50414)
+[CAMERA_SERVICE_MANAGER] gz-transport env for child: GZ_PARTITION=kursad40 GZ_IP=127.0.0.1
+[CAMERA_SERVICE_MANAGER] Started (PID: 50439).
+[CAMERA_CLIENT] Connecting to ZMQ publisher at tcp://127.0.0.1:5555...2026-09-01 11:46:35,202 [INFO] gz_system.gz_camera_source: Gazebo kamera istemcisi baslatildi.
+
+[CAMERA_CLIENT] Connected. Waiting for frames...
+2026-09-01 11:46:35,204 [INFO] gz_system.gz_pose_monitor: Gazebo poz izleyicisi basladi: /world/default/dynamic_pose/info
+2026-09-01 11:46:35,205 [INFO] core.detection.detection_publisher: [DETECTION_PUB] tespit yayini acik: tcp://127.0.0.1:5556
+2026-09-01 11:46:35,205 [INFO] core.detection.vision_runtime: [VISION] pipeline basladi (mission omru boyunca calisir).
+2026-09-01 11:46:35,205 [INFO] core.mission.master_fsm: MASTER MISSION CONTROLLER BASLATILDI
+2026-09-01 11:46:35,205 [WARNING] core.detection.vision_runtime: Frame grab loop hatasi (art arda 1. hata, mission etkilenmez): Gazebo kameradan kare okunamadi. Henuz kare alinmadi veya baglanti koptu.
+2026-09-01 11:46:35,205 [WARNING] core.detection.vision_runtime: [VISION] detect() basarisiz (art arda 1. hata, mission etkilenmez): Gazebo kameradan kare okunamadi. Henuz kare alinmadi veya baglanti koptu.
+2026-09-01 11:46:35,206 [INFO] core.mission.gorev2_orchestrator: GOREV 2 BASLIYOR
+2026-09-01 11:46:35,206 [INFO] mavsdk_common.mavsdk_backend_base: Drone'a bağlanılıyor: udp://:14540
+Connection using udp:// is deprecated, please use udpin:// or udpout:// (cli_arg.cpp:28)
+QGC port check failed, reporting UNKNOWN: (pid=50414)
+2026-09-01 11:46:36,276 [INFO] mavsdk_common.mavsdk_backend_base: Drone bağlantısı bekleniyor...
+2026-09-01 11:46:36,276 [INFO] mavsdk_common.mavsdk_backend_base: Drone bağlandı!
+2026-09-01 11:46:36,294 [INFO] mavsdk_common.mavsdk_backend_base: [TELEMETRY] position rate 10.0 Hz istendi.
+2026-09-01 11:46:36,306 [INFO] mavsdk_common.mavsdk_backend_base: [TELEMETRY] position_velocity_ned rate 10.0 Hz istendi.
+2026-09-01 11:46:36,325 [INFO] mavsdk_common.mavsdk_backend_base: [TELEMETRY] attitude_euler rate 10.0 Hz istendi.
+2026-09-01 11:46:36,834 [INFO] mavsdk_common.mavsdk_backend_base: Drone arm ediliyor...
+2026-09-01 11:46:36,866 [INFO] mavsdk_common.mavsdk_backend_base: Kalkış yapılıyor (Hedef: 15.0m)...
+QGC port check failed, reporting UNKNOWN: (pid=50414)
+2026-09-01 11:46:38,271 [INFO] core.detection.vision_runtime: [VISION] detect() calisiyor -- bu karede 0 tespit: []
+2026-09-01 11:46:39,208 [INFO] gz_system.main_gz: Dashboard paint loop: 0.0 FPS (main thread)
+QGC port check failed, reporting UNKNOWN: (pid=50414)
+2026-09-01 11:46:41,336 [INFO] core.detection.vision_runtime: [VISION] detect() calisiyor -- bu karede 0 tespit: []
+QGC port check failed, reporting UNKNOWN: (pid=50414)
+QGC port check failed, reporting UNKNOWN: (pid=50414)
+2026-09-01 11:46:44,232 [INFO] gz_system.main_gz: Dashboard paint loop: 0.0 FPS (main thread)
+2026-09-01 11:46:44,355 [INFO] core.detection.vision_runtime: [VISION] detect() calisiyor -- bu karede 0 tespit: []
+QGC port check failed, reporting UNKNOWN: (pid=50414)
+2026-09-01 11:46:47,458 [INFO] core.detection.vision_runtime: [VISION] detect() calisiyor -- bu karede 0 tespit: []
+QGC port check failed, reporting UNKNOWN: (pid=50414)
+2026-09-01 11:46:49,263 [INFO] gz_system.main_gz: Dashboard paint loop: 0.0 FPS (main thread)
+QGC port check failed, reporting UNKNOWN: (pid=50414)
+2026-09-01 11:46:50,567 [INFO] core.detection.vision_runtime: [VISION] detect() calisiyor -- bu karede 0 tespit: []
+QGC port check failed, reporting UNKNOWN: (pid=50413)
+2026-09-01 11:46:53,424 [INFO] core.mission.gorev2_orchestrator: Start Checkpoint kaydedildi: (47.3977459, 8.5461637, 14.209000587463379)
+2026-09-01 11:46:53,460 [INFO] core.mission.gorev2_orchestrator: [ROUTE_REJOIN] rota ekseni tespit edildi: sabit=lon (lat_span=0.001258, lon_span=0.000000).
+2026-09-01 11:46:53,484 [INFO] core.mission.gorev2_orchestrator: [MISSION_START] Rota dogrulandi (3 item): 0:NAV_TAKEOFF, 1:NAV_WAYPOINT, 2:NAV_WAYPOINT
+2026-09-01 11:46:53,484 [INFO] core.mission.gorev2_orchestrator: [MISSION_START] Baslangic indeksi: 1
+2026-09-01 11:46:53,484 [INFO] core.mission.gorev2_orchestrator: [MISSION_START] 3.0s stabilizasyon bekleniyor...
+2026-09-01 11:46:53,584 [INFO] core.detection.vision_runtime: [VISION] detect() calisiyor -- bu karede 0 tespit: []
+QGC port check failed, reporting UNKNOWN: (pid=50413)
+2026-09-01 11:46:54,288 [INFO] gz_system.main_gz: Dashboard paint loop: 0.0 FPS (main thread)
+QGC port check failed, reporting UNKNOWN: (pid=50413)
+2026-09-01 11:46:56,619 [INFO] core.detection.vision_runtime: [VISION] detect() calisiyor -- bu karede 0 tespit: []
+2026-09-01 11:46:56,975 [INFO] core.mission.gorev2_orchestrator: [MISSION_START] PX4 mevcut gorev ogesi 1 olarak ayarlandi (seq0 NAV_TAKEOFF atlandi -- kalkis zaten yapildi).
+2026-09-01 11:46:56,975 [INFO] core.mission.gorev2_orchestrator: [MISSION_START] Yuklu gorev baslatiliyor...
+Received ack for not-existing command: 176! Ignoring... (mavlink_command_sender.cpp:304)
+2026-09-01 11:46:58,005 [INFO] core.mission.gorev2_orchestrator: [MISSION_START] PX4 MISSION moduna gecti -- arama fazi basliyor.
+QGC port check failed, reporting UNKNOWN: (pid=50515)
+2026-09-01 11:46:59,315 [INFO] gz_system.main_gz: Dashboard paint loop: 0.0 FPS (main thread)
+2026-09-01 11:46:59,738 [INFO] core.detection.vision_runtime: [VISION] detect() calisiyor -- bu karede 0 tespit: []
+QGC port check failed, reporting UNKNOWN: (pid=50521)
+QGC port check failed, reporting UNKNOWN: (pid=50521)
+2026-09-01 11:47:02,761 [INFO] core.detection.vision_runtime: [VISION] detect() calisiyor -- bu karede 0 tespit: []
+QGC port check failed, reporting UNKNOWN: (pid=50521)
+2026-09-01 11:47:04,317 [INFO] gz_system.main_gz: Dashboard paint loop: 0.0 FPS (main thread)
+2026-09-01 11:47:05,816 [INFO] core.detection.vision_runtime: [VISION] detect() calisiyor -- bu karede 0 tespit: []
+QGC port check failed, reporting UNKNOWN: (pid=50546)
+QGC port check failed, reporting UNKNOWN: (pid=50546)
+2026-09-01 11:47:08,816 [INFO] core.detection.vision_runtime: [VISION] detect() calisiyor -- bu karede 1 tespit: ['KIRMIZI_DIKDORTGEN']
+2026-09-01 11:47:09,320 [INFO] gz_system.main_gz: Dashboard paint loop: 0.0 FPS (main thread)
+QGC port check failed, reporting UNKNOWN: (pid=50546)
+2026-09-01 11:47:10,667 [INFO] core.navigation.centering_controller: Mission modu durduruluyor, Offboard'a geciliyor...
+2026-09-01 11:47:10,667 [INFO] mavsdk_common.mavsdk_backend_base: Mission'dan Offboard'a geçiş yapılıyor...
+2026-09-01 11:47:10,685 [INFO] mavsdk_common.mavsdk_backend_base: Offboard başlatılıyor...
+Received ack for not-existing command: 176! Ignoring... (mavlink_command_sender.cpp:304)
+Received ack for not-existing command: 176! Ignoring... (mavlink_command_sender.cpp:304)
+2026-09-01 11:47:10,898 [INFO] core.navigation.centering_controller: MAVI_ALTIGEN hedefine merkezleniyor (irtifa hedefi: 15.0m, irtifa bandi +/-0.30m)...
+2026-09-01 11:47:10,899 [WARNING] core.navigation.centering_controller: [CENTERING] MAVI_ALTIGEN 1/150 hedef kayboldu (feed canli, hedef bu karede yok)
+2026-09-01 11:47:11,362 [INFO] core.detection.camera_intrinsics: [CAMERA] intrinsics: hfov=1.7400 rad (99.7 deg) 1280x960 -> f=539.9 px (kaynak: ../../../Tools/simulation/gz/models/mono_cam/model.sdf)
+2026-09-01 11:47:11,490 [INFO] core.navigation.centering_controller: [CENTERING] MAVI_ALTIGEN 6/150 dx=-246px dy=+87px d=7.3m ex=-0.3844 ey=+0.1812 (tol +/-0.010) alt_err=+0.14m -> fwd=-0.27 right=-0.30 down=+0.07 m/s
+2026-09-01 11:47:11,836 [INFO] core.detection.vision_runtime: [VISION] detect() calisiyor -- bu karede 2 tespit: ['MAVI_ALTIGEN', 'MAVI_DIKDORTGEN']
+2026-09-01 11:47:12,066 [INFO] core.navigation.centering_controller: [CENTERING] MAVI_ALTIGEN 11/150 dx=-299px dy=-61px d=8.5m ex=-0.4672 ey=-0.1271 (tol +/-0.010) alt_err=+0.06m -> fwd=+0.19 right=-0.70 down=+0.03 m/s
+QGC port check failed, reporting UNKNOWN: (pid=50546)
+2026-09-01 11:47:12,645 [INFO] core.navigation.centering_controller: [CENTERING] MAVI_ALTIGEN 16/150 dx=-270px dy=-152px d=8.6m ex=-0.4219 ey=-0.3167 (tol +/-0.010) alt_err=+0.01m -> fwd=+0.47 right=-0.63 down=+0.01 m/s
+2026-09-01 11:47:13,222 [INFO] core.navigation.centering_controller: [CENTERING] MAVI_ALTIGEN 21/150 dx=-239px dy=-135px d=7.6m ex=-0.3734 ey=-0.2812 (tol +/-0.010) alt_err=+0.00m -> fwd=+0.42 right=-0.56 down=+0.00 m/s
+2026-09-01 11:47:13,793 [INFO] core.navigation.centering_controller: [CENTERING] MAVI_ALTIGEN 26/150 dx=-225px dy=-108px d=6.9m ex=-0.3516 ey=-0.2250 (tol +/-0.010) alt_err=-0.01m -> fwd=+0.34 right=-0.53 down=-0.00 m/s
+QGC port check failed, reporting UNKNOWN: (pid=50546)
+2026-09-01 11:47:14,333 [INFO] gz_system.main_gz: Dashboard paint loop: 0.0 FPS (main thread)
+2026-09-01 11:47:14,355 [INFO] core.navigation.centering_controller: [CENTERING] MAVI_ALTIGEN 31/150 dx=-217px dy=-103px d=6.7m ex=-0.3391 ey=-0.2146 (tol +/-0.010) alt_err=-0.02m -> fwd=+0.32 right=-0.51 down=-0.01 m/s
+2026-09-01 11:47:14,921 [INFO] core.detection.vision_runtime: [VISION] detect() calisiyor -- bu karede 1 tespit: ['MAVI_ALTIGEN']
+2026-09-01 11:47:14,930 [INFO] core.navigation.centering_controller: [CENTERING] MAVI_ALTIGEN 36/150 dx=-206px dy=-102px d=6.4m ex=-0.3219 ey=-0.2125 (tol +/-0.010) alt_err=-0.02m -> fwd=+0.32 right=-0.48 down=-0.01 m/s
+2026-09-01 11:47:15,489 [INFO] core.navigation.centering_controller: [CENTERING] MAVI_ALTIGEN 41/150 dx=-194px dy=-101px d=6.1m ex=-0.3031 ey=-0.2104 (tol +/-0.010) alt_err=-0.01m -> fwd=+0.32 right=-0.45 down=-0.01 m/s
+2026-09-01 11:47:16,073 [INFO] core.navigation.centering_controller: [CENTERING] MAVI_ALTIGEN 46/150 dx=-184px dy=-100px d=5.8m ex=-0.2875 ey=-0.2083 (tol +/-0.010) alt_err=-0.01m -> fwd=+0.31 right=-0.43 down=-0.00 m/s
+QGC port check failed, reporting UNKNOWN: (pid=50546)
+2026-09-01 11:47:16,607 [INFO] core.navigation.centering_controller: [CENTERING] MAVI_ALTIGEN 50/150 dx=-177px dy=-98px d=5.6m ex=-0.2766 ey=-0.2042 (tol +/-0.010) alt_err=-0.01m -> fwd=+0.31 right=-0.41 down=-0.00 m/s
+2026-09-01 11:47:17,158 [INFO] core.navigation.centering_controller: [CENTERING] MAVI_ALTIGEN 54/150 dx=-167px dy=-96px d=5.3m ex=-0.2609 ey=-0.2000 (tol +/-0.010) alt_err=-0.01m -> fwd=+0.30 right=-0.39 down=-0.01 m/s
+2026-09-01 11:47:17,697 [INFO] core.navigation.centering_controller: [CENTERING] MAVI_ALTIGEN 57/150 dx=-161px dy=-94px d=5.2m ex=-0.2516 ey=-0.1958 (tol +/-0.010) alt_err=-0.01m -> fwd=+0.29 right=-0.38 down=-0.01 m/s
+2026-09-01 11:47:17,959 [INFO] core.detection.vision_runtime: [VISION] detect() calisiyor -- bu karede 1 tespit: ['MAVI_ALTIGEN']
+QGC port check failed, reporting UNKNOWN: (pid=50591)
+2026-09-01 11:47:18,319 [INFO] core.navigation.centering_controller: [CENTERING] MAVI_ALTIGEN 61/150 dx=-154px dy=-92px d=5.0m ex=-0.2406 ey=-0.1917 (tol +/-0.010) alt_err=-0.02m -> fwd=+0.29 right=-0.36 down=-0.01 m/s
+2026-09-01 11:47:18,848 [INFO] core.navigation.centering_controller: [CENTERING] MAVI_ALTIGEN 65/150 dx=-147px dy=-90px d=4.8m ex=-0.2297 ey=-0.1875 (tol +/-0.010) alt_err=-0.02m -> fwd=+0.28 right=-0.34 down=-0.01 m/s
+2026-09-01 11:47:19,360 [INFO] gz_system.main_gz: Dashboard paint loop: 0.0 FPS (main thread)
+2026-09-01 11:47:19,452 [INFO] core.navigation.centering_controller: [CENTERING] MAVI_ALTIGEN 70/150 dx=-139px dy=-87px d=4.5m ex=-0.2172 ey=-0.1812 (tol +/-0.010) alt_err=-0.02m -> fwd=+0.27 right=-0.33 down=-0.01 m/s
+2026-09-01 11:47:20,064 [INFO] core.navigation.centering_controller: [CENTERING] MAVI_ALTIGEN 75/150 dx=-132px dy=-83px d=4.3m ex=-0.2062 ey=-0.1729 (tol +/-0.010) alt_err=-0.01m -> fwd=+0.26 right=-0.31 down=-0.01 m/s
+QGC port check failed, reporting UNKNOWN: (pid=50605)
+2026-09-01 11:47:20,663 [INFO] core.navigation.centering_controller: [CENTERING] MAVI_ALTIGEN 80/150 dx=-124px dy=-80px d=4.1m ex=-0.1938 ey=-0.1667 (tol +/-0.010) alt_err=-0.01m -> fwd=+0.25 right=-0.29 down=-0.00 m/s
+2026-09-01 11:47:21,029 [INFO] core.detection.vision_runtime: [VISION] detect() calisiyor -- bu karede 2 tespit: ['MAVI_ALTIGEN', 'MAVI_DIKDORTGEN']
+2026-09-01 11:47:21,281 [INFO] core.navigation.centering_controller: [CENTERING] MAVI_ALTIGEN 85/150 dx=-118px dy=-76px d=3.9m ex=-0.1844 ey=-0.1583 (tol +/-0.010) alt_err=-0.01m -> fwd=+0.24 right=-0.28 down=-0.00 m/s
+2026-09-01 11:47:21,891 [INFO] core.navigation.centering_controller: [CENTERING] MAVI_ALTIGEN 90/150 dx=-112px dy=-72px d=3.7m ex=-0.1750 ey=-0.1500 (tol +/-0.010) alt_err=-0.00m -> fwd=+0.22 right=-0.26 down=-0.00 m/s
+QGC port check failed, reporting UNKNOWN: (pid=50611)
+2026-09-01 11:47:22,487 [INFO] core.navigation.centering_controller: [CENTERING] MAVI_ALTIGEN 95/150 dx=-104px dy=-68px d=3.5m ex=-0.1625 ey=-0.1417 (tol +/-0.010) alt_err=-0.01m -> fwd=+0.21 right=-0.24 down=-0.00 m/s
+2026-09-01 11:47:23,084 [INFO] core.navigation.centering_controller: [CENTERING] MAVI_ALTIGEN 100/150 dx=-98px dy=-65px d=3.3m ex=-0.1531 ey=-0.1354 (tol +/-0.010) alt_err=-0.01m -> fwd=+0.20 right=-0.23 down=-0.00 m/s
+2026-09-01 11:47:23,673 [INFO] core.navigation.centering_controller: [CENTERING] MAVI_ALTIGEN 105/150 dx=-93px dy=-61px d=3.1m ex=-0.1453 ey=-0.1271 (tol +/-0.010) alt_err=-0.01m -> fwd=+0.19 right=-0.22 down=-0.00 m/s
+2026-09-01 11:47:24,144 [INFO] core.detection.vision_runtime: [VISION] detect() calisiyor -- bu karede 2 tespit: ['MAVI_ALTIGEN', 'MAVI_DIKDORTGEN']
+2026-09-01 11:47:24,263 [INFO] core.navigation.centering_controller: [CENTERING] MAVI_ALTIGEN 110/150 dx=-88px dy=-57px d=2.9m ex=-0.1375 ey=-0.1187 (tol +/-0.010) alt_err=-0.01m -> fwd=+0.18 right=-0.21 down=-0.00 m/s
+QGC port check failed, reporting UNKNOWN: (pid=50614)
+2026-09-01 11:47:24,377 [INFO] gz_system.main_gz: Dashboard paint loop: 0.0 FPS (main thread)
+2026-09-01 11:47:24,845 [INFO] core.navigation.centering_controller: [CENTERING] MAVI_ALTIGEN 115/150 dx=-83px dy=-54px d=2.8m ex=-0.1297 ey=-0.1125 (tol +/-0.010) alt_err=+0.00m -> fwd=+0.17 right=-0.19 down=+0.00 m/s
+2026-09-01 11:47:25,430 [INFO] core.navigation.centering_controller: [CENTERING] MAVI_ALTIGEN 120/150 dx=-81px dy=-50px d=2.6m ex=-0.1266 ey=-0.1042 (tol +/-0.010) alt_err=-0.01m -> fwd=+0.16 right=-0.19 down=-0.00 m/s
+2026-09-01 11:47:26,010 [INFO] core.navigation.centering_controller: [CENTERING] MAVI_ALTIGEN 125/150 dx=-75px dy=-47px d=2.5m ex=-0.1172 ey=-0.0979 (tol +/-0.010) alt_err=-0.01m -> fwd=+0.15 right=-0.18 down=-0.00 m/s
+QGC port check failed, reporting UNKNOWN: (pid=50619)
+2026-09-01 11:47:26,593 [INFO] core.navigation.centering_controller: [CENTERING] MAVI_ALTIGEN 130/150 dx=-70px dy=-44px d=2.3m ex=-0.1094 ey=-0.0917 (tol +/-0.010) alt_err=-0.00m -> fwd=+0.15 right=-0.16 down=-0.00 m/s
+2026-09-01 11:47:27,170 [INFO] core.detection.vision_runtime: [VISION] detect() calisiyor -- bu karede 2 tespit: ['MAVI_ALTIGEN', 'MAVI_DIKDORTGEN']
+2026-09-01 11:47:27,172 [INFO] core.navigation.centering_controller: [CENTERING] MAVI_ALTIGEN 135/150 dx=-67px dy=-42px d=2.2m ex=-0.1047 ey=-0.0875 (tol +/-0.010) alt_err=+0.01m -> fwd=+0.15 right=-0.16 down=+0.00 m/s
+2026-09-01 11:47:27,744 [INFO] core.navigation.centering_controller: [CENTERING] MAVI_ALTIGEN 140/150 dx=-63px dy=-39px d=2.1m ex=-0.0984 ey=-0.0813 (tol +/-0.010) alt_err=+0.01m -> fwd=+0.15 right=-0.15 down=+0.01 m/s
+2026-09-01 11:47:28,319 [INFO] core.navigation.centering_controller: [CENTERING] MAVI_ALTIGEN 145/150 dx=-61px dy=-37px d=2.0m ex=-0.0953 ey=-0.0771 (tol +/-0.010) alt_err=+0.01m -> fwd=+0.15 right=-0.15 down=+0.00 m/s
+QGC port check failed, reporting UNKNOWN: (pid=50619)
+2026-09-01 11:47:28,886 [INFO] core.navigation.centering_controller: [CENTERING] MAVI_ALTIGEN 150/150 dx=-59px dy=-33px d=1.9m ex=-0.0922 ey=-0.0688 (tol +/-0.010) alt_err=-0.00m -> fwd=+0.15 right=-0.15 down=-0.00 m/s
+2026-09-01 11:47:28,999 [ERROR] core.navigation.centering_controller: Merkezleme zaman asimina ugradi! (150 deneme / 15.0s butcesi doldu)
+2026-09-01 11:47:28,999 [WARNING] core.mission.gorev2_orchestrator: [RETRY_IN_PLACE] MAVI_ALTIGEN 1/3 merkezlenemedi -- 5s yerinde beklenip tekrar denenecek (hedef goruniyor, d=1.85m).
+2026-09-01 11:47:29,411 [INFO] gz_system.main_gz: Dashboard paint loop: 0.0 FPS (main thread)
+2026-09-01 11:47:30,257 [INFO] core.detection.vision_runtime: [VISION] detect() calisiyor -- bu karede 2 tespit: ['MAVI_ALTIGEN', 'MAVI_DIKDORTGEN']
+QGC port check failed, reporting UNKNOWN: (pid=50619)
+QGC port check failed, reporting UNKNOWN: (pid=50619)
+2026-09-01 11:47:33,276 [INFO] core.detection.vision_runtime: [VISION] detect() calisiyor -- bu karede 2 tespit: ['MAVI_ALTIGEN', 'MAVI_DIKDORTGEN']
+2026-09-01 11:47:34,094 [INFO] core.navigation.centering_controller: MAVI_ALTIGEN hedefine merkezleniyor (irtifa hedefi: 15.0m, irtifa bandi +/-0.30m)...
+2026-09-01 11:47:34,096 [INFO] core.navigation.centering_controller: [CENTERING] MAVI_ALTIGEN 1/150 dx=-53px dy=-29px d=1.7m ex=-0.0828 ey=-0.0604 (tol +/-0.010) alt_err=-0.07m -> fwd=+0.15 right=-0.15 down=-0.03 m/s
+QGC port check failed, reporting UNKNOWN: (pid=50619)
+2026-09-01 11:47:34,422 [INFO] gz_system.main_gz: Dashboard paint loop: 0.0 FPS (main thread)
+2026-09-01 11:47:34,676 [INFO] core.navigation.centering_controller: [CENTERING] MAVI_ALTIGEN 6/150 dx=-65px dy=-38px d=2.1m ex=-0.1016 ey=-0.0792 (tol +/-0.010) alt_err=-0.04m -> fwd=+0.15 right=-0.15 down=-0.02 m/s
+2026-09-01 11:47:35,241 [INFO] core.navigation.centering_controller: [CENTERING] MAVI_ALTIGEN 11/150 dx=-56px dy=-29px d=1.7m ex=-0.0875 ey=-0.0604 (tol +/-0.010) alt_err=-0.03m -> fwd=+0.15 right=-0.15 down=-0.02 m/s
+2026-09-01 11:47:35,812 [INFO] core.navigation.centering_controller: [CENTERING] MAVI_ALTIGEN 16/150 dx=-51px dy=-24px d=1.6m ex=-0.0797 ey=-0.0500 (tol +/-0.010) alt_err=-0.03m -> fwd=+0.15 right=-0.15 down=-0.01 m/s
+QGC port check failed, reporting UNKNOWN: (pid=50619)
+2026-09-01 11:47:36,386 [INFO] core.detection.vision_runtime: [VISION] detect() calisiyor -- bu karede 2 tespit: ['MAVI_ALTIGEN', 'MAVI_DIKDORTGEN']
+2026-09-01 11:47:36,387 [INFO] core.navigation.centering_controller: [CENTERING] MAVI_ALTIGEN 21/150 dx=-47px dy=-21px d=1.4m ex=-0.0734 ey=-0.0437 (tol +/-0.010) alt_err=-0.01m -> fwd=+0.15 right=-0.15 down=-0.01 m/s
+2026-09-01 11:47:36,967 [INFO] core.navigation.centering_controller: [CENTERING] MAVI_ALTIGEN 26/150 dx=-45px dy=-17px d=1.3m ex=-0.0703 ey=-0.0354 (tol +/-0.010) alt_err=-0.01m -> fwd=+0.15 right=-0.15 down=-0.00 m/s
+2026-09-01 11:47:37,546 [INFO] core.navigation.centering_controller: [CENTERING] MAVI_ALTIGEN 31/150 dx=-41px dy=-15px d=1.2m ex=-0.0641 ey=-0.0312 (tol +/-0.010) alt_err=-0.01m -> fwd=+0.15 right=-0.15 down=-0.00 m/s
+2026-09-01 11:47:38,136 [INFO] core.navigation.centering_controller: [CENTERING] MAVI_ALTIGEN 36/150 dx=-39px dy=-12px d=1.1m ex=-0.0609 ey=-0.0250 (tol +/-0.010) alt_err=-0.01m -> fwd=+0.15 right=-0.15 down=-0.00 m/s
+QGC port check failed, reporting UNKNOWN: (pid=50619)
+2026-09-01 11:47:38,742 [INFO] core.navigation.centering_controller: [CENTERING] MAVI_ALTIGEN 41/150 dx=-37px dy=-8px d=1.1m ex=-0.0578 ey=-0.0167 (tol +/-0.010) alt_err=-0.02m -> fwd=+0.15 right=-0.15 down=-0.01 m/s
+2026-09-01 11:47:39,362 [INFO] core.navigation.centering_controller: [CENTERING] MAVI_ALTIGEN 46/150 dx=-33px dy=-6px d=0.9m ex=-0.0516 ey=-0.0125 (tol +/-0.010) alt_err=-0.01m -> fwd=+0.15 right=-0.15 down=-0.01 m/s
+2026-09-01 11:47:39,435 [INFO] gz_system.main_gz: Dashboard paint loop: 0.0 FPS (main thread)
+2026-09-01 11:47:39,478 [INFO] core.detection.vision_runtime: [VISION] detect() calisiyor -- bu karede 2 tespit: ['MAVI_ALTIGEN', 'MAVI_DIKDORTGEN']
+2026-09-01 11:47:39,960 [INFO] core.navigation.centering_controller: [CENTERING] MAVI_ALTIGEN 51/150 dx=-30px dy=+8px d=0.9m ex=-0.0469 ey=+0.0167 (tol +/-0.010) alt_err=-0.01m -> fwd=-0.15 right=-0.15 down=-0.01 m/s
+QGC port check failed, reporting UNKNOWN: (pid=50619)
+2026-09-01 11:47:40,564 [INFO] core.navigation.centering_controller: [CENTERING] MAVI_ALTIGEN 56/150 dx=-26px dy=+17px d=0.9m ex=-0.0406 ey=+0.0354 (tol +/-0.010) alt_err=-0.01m -> fwd=-0.15 right=-0.15 down=-0.01 m/s
+2026-09-01 11:47:41,156 [INFO] core.navigation.centering_controller: [CENTERING] MAVI_ALTIGEN 61/150 dx=-22px dy=+3px d=0.6m ex=-0.0344 ey=+0.0063 (tol +/-0.010) alt_err=-0.01m -> fwd=+0.00 right=-0.15 down=-0.01 m/s
+2026-09-01 11:47:41,656 [INFO] core.navigation.centering_controller: [CENTERING] MAVI_ALTIGEN 65/150 dx=-20px dy=-18px d=0.7m ex=-0.0312 ey=-0.0375 (tol +/-0.010) alt_err=-0.01m -> fwd=+0.15 right=-0.15 down=-0.01 m/s
+2026-09-01 11:47:42,254 [INFO] core.navigation.centering_controller: [CENTERING] MAVI_ALTIGEN 70/150 dx=-18px dy=-11px d=0.6m ex=-0.0281 ey=-0.0229 (tol +/-0.010) alt_err=-0.01m -> fwd=+0.15 right=-0.15 down=-0.00 m/s
+QGC port check failed, reporting UNKNOWN: (pid=50619)
+2026-09-01 11:47:42,489 [INFO] core.detection.vision_runtime: [VISION] detect() calisiyor -- bu karede 2 tespit: ['MAVI_ALTIGEN', 'MAVI_DIKDORTGEN']
+2026-09-01 11:47:42,837 [INFO] core.navigation.centering_controller: [CENTERING] MAVI_ALTIGEN 75/150 dx=-15px dy=-2px d=0.4m ex=-0.0234 ey=-0.0042 (tol +/-0.010) alt_err=-0.02m -> fwd=+0.00 right=-0.15 down=-0.01 m/s
+2026-09-01 11:47:43,423 [INFO] core.navigation.centering_controller: [CENTERING] MAVI_ALTIGEN 80/150 dx=-12px dy=+22px d=0.7m ex=-0.0187 ey=+0.0458 (tol +/-0.010) alt_err=-0.01m -> fwd=-0.15 right=-0.15 down=-0.01 m/s
+2026-09-01 11:47:44,029 [INFO] core.navigation.centering_controller: [CENTERING] MAVI_ALTIGEN 85/150 dx=-8px dy=+7px d=0.3m ex=-0.0125 ey=+0.0146 (tol +/-0.010) alt_err=-0.01m -> fwd=-0.15 right=-0.15 down=-0.00 m/s
+QGC port check failed, reporting UNKNOWN: (pid=50619)
+2026-09-01 11:47:44,459 [INFO] gz_system.main_gz: Dashboard paint loop: 0.0 FPS (main thread)
+2026-09-01 11:47:44,554 [INFO] core.navigation.centering_controller: Merkezleme tamamlandi. (attempt 89/150, dx=-6px dy=-4px ex=-0.0094 ey=-0.0083 alt_err=-0.00m)
+2026-09-01 11:47:45,538 [INFO] core.detection.vision_runtime: [VISION] detect() calisiyor -- bu karede 2 tespit: ['MAVI_ALTIGEN', 'MAVI_DIKDORTGEN']
+QGC port check failed, reporting UNKNOWN: (pid=50619)
+2026-09-01 11:47:47,601 [INFO] core.mission.gorev2_orchestrator: [POST_LOCK_DRIFT] MAVI_ALTIGEN 3s: peak=17.0px final=6.3px (47.21cm / 17.56cm), 25 ornek, 0 kayip
+2026-09-01 11:47:47,601 [INFO] core.navigation.centering_controller: 2.0 saniye hover yapiliyor (Konum dogrulama)...
+QGC port check failed, reporting UNKNOWN: (pid=50619)
+2026-09-01 11:47:48,572 [INFO] core.detection.vision_runtime: [VISION] detect() calisiyor -- bu karede 2 tespit: ['MAVI_ALTIGEN', 'MAVI_DIKDORTGEN']
+2026-09-01 11:47:49,466 [INFO] gz_system.main_gz: Dashboard paint loop: 0.0 FPS (main thread)
+2026-09-01 11:47:49,632 [INFO] core.position_log.position_store: Konum basariyla kaydedildi: MAVI_ALTIGEN (ilk)
+2026-09-01 11:47:49,632 [INFO] core.mission.gorev2_orchestrator: Mavi Altigen ortalandi -- KIRMIZI yuk hemen birakiliyor.
+2026-09-01 11:47:49,632 [INFO] core.mission.gorev2_fsm: PAYLOAD MISSION 1 basliyor (Mavi Altigen / RED payload)
+2026-09-01 11:47:49,633 [INFO] core.navigation.centering_controller: Kayitli GPS konumuna gidiliyor: lat=47.3983583, lon=8.5460692, alt=15.0m
+2026-09-01 11:47:49,633 [INFO] core.mission.payload_release: Yük bırakma başlatılıyor: MAVI_ALTIGEN
+2026-09-01 11:47:49,633 [INFO] core.navigation.centering_controller: MAVI_ALTIGEN hedefine merkezleniyor (irtifa hedefi: 10.0m, irtifa bandi +/-0.30m)...
+2026-09-01 11:47:49,635 [INFO] core.navigation.centering_controller: [CENTERING] MAVI_ALTIGEN 1/200 dx=-1px dy=-6px d=0.2m ex=-0.0016 ey=-0.0125 (tol +/-0.010) alt_err=+5.00m -> fwd=+0.15 right=+0.00 down=+0.15 m/s
+2026-09-01 11:47:50,282 [INFO] core.navigation.centering_controller: [CENTERING] MAVI_ALTIGEN 6/200 dx=+0px dy=-17px d=0.5m ex=+0.0000 ey=-0.0354 (tol +/-0.010) alt_err=+4.86m -> fwd=+0.15 right=+0.00 down=+0.90 m/s
+QGC port check failed, reporting UNKNOWN: (pid=50619)
+2026-09-01 11:47:50,866 [INFO] core.navigation.centering_controller: [CENTERING] MAVI_ALTIGEN 11/200 dx=+0px dy=-10px d=0.3m ex=+0.0000 ey=-0.0208 (tol +/-0.010) alt_err=+4.25m -> fwd=+0.15 right=+0.00 down=+1.65 m/s
+2026-09-01 11:47:51,370 [INFO] core.navigation.centering_controller: [CENTERING] MAVI_ALTIGEN 15/200 dx=-1px dy=-6px d=0.2m ex=-0.0016 ey=-0.0125 (tol +/-0.010) alt_err=+3.47m -> fwd=+0.15 right=+0.00 down=+1.74 m/s
+2026-09-01 11:47:51,620 [INFO] core.detection.vision_runtime: [VISION] detect() calisiyor -- bu karede 2 tespit: ['MAVI_ALTIGEN', 'MAVI_DIKDORTGEN']
+2026-09-01 11:47:51,875 [INFO] core.navigation.centering_controller: [CENTERING] MAVI_ALTIGEN 19/200 dx=-2px dy=+3px d=0.1m ex=-0.0031 ey=+0.0063 (tol +/-0.010) alt_err=+2.85m -> fwd=+0.00 right=+0.00 down=+1.43 m/s
+2026-09-01 11:47:52,386 [INFO] core.navigation.centering_controller: [CENTERING] MAVI_ALTIGEN 23/200 dx=-2px dy=+18px d=0.4m ex=-0.0031 ey=+0.0375 (tol +/-0.010) alt_err=+2.14m -> fwd=-0.15 right=+0.00 down=+1.07 m/s
+QGC port check failed, reporting UNKNOWN: (pid=50619)
+2026-09-01 11:47:53,029 [INFO] core.navigation.centering_controller: [CENTERING] MAVI_ALTIGEN 28/200 dx=-4px dy=+6px d=0.2m ex=-0.0063 ey=+0.0125 (tol +/-0.010) alt_err=+1.46m -> fwd=-0.15 right=+0.00 down=+0.73 m/s
+2026-09-01 11:47:53,532 [INFO] core.navigation.centering_controller: [CENTERING] MAVI_ALTIGEN 32/200 dx=-3px dy=-11px d=0.2m ex=-0.0047 ey=-0.0229 (tol +/-0.010) alt_err=+1.17m -> fwd=+0.15 right=+0.00 down=+0.58 m/s
+2026-09-01 11:47:54,132 [INFO] core.navigation.centering_controller: [CENTERING] MAVI_ALTIGEN 37/200 dx=-2px dy=-16px d=0.3m ex=-0.0031 ey=-0.0333 (tol +/-0.010) alt_err=+0.83m -> fwd=+0.15 right=+0.00 down=+0.42 m/s
+QGC port check failed, reporting UNKNOWN: (pid=50619)
+2026-09-01 11:47:54,501 [INFO] gz_system.main_gz: Dashboard paint loop: 0.0 FPS (main thread)
+2026-09-01 11:47:54,697 [INFO] core.detection.vision_runtime: [VISION] detect() calisiyor -- bu karede 1 tespit: ['MAVI_ALTIGEN']
+2026-09-01 11:47:54,699 [INFO] core.navigation.centering_controller: [CENTERING] MAVI_ALTIGEN 42/200 dx=-1px dy=-5px d=0.1m ex=-0.0016 ey=-0.0104 (tol +/-0.010) alt_err=+0.61m -> fwd=+0.15 right=+0.00 down=+0.31 m/s
+2026-09-01 11:47:55,261 [INFO] core.navigation.centering_controller: [CENTERING] MAVI_ALTIGEN 47/200 dx=-1px dy=+18px d=0.3m ex=-0.0016 ey=+0.0375 (tol +/-0.010) alt_err=+0.46m -> fwd=-0.15 right=+0.00 down=+0.23 m/s
+2026-09-01 11:47:55,821 [INFO] core.navigation.centering_controller: [CENTERING] MAVI_ALTIGEN 52/200 dx=-1px dy=+12px d=0.2m ex=-0.0016 ey=+0.0250 (tol +/-0.010) alt_err=+0.36m -> fwd=-0.15 right=+0.00 down=+0.18 m/s
+2026-09-01 11:47:56,263 [INFO] core.navigation.centering_controller: Merkezleme tamamlandi. (attempt 56/200, dx=-1px dy=+3px ex=-0.0016 ey=+0.0063 alt_err=+0.28m)
+2026-09-01 11:47:56,264 [INFO] core.navigation.centering_controller: MAVI_ALTIGEN hedefine merkezleniyor (irtifa hedefi: 5.0m, irtifa bandi +/-0.30m)...
+2026-09-01 11:47:56,265 [INFO] core.navigation.centering_controller: [CENTERING] MAVI_ALTIGEN 1/200 dx=-1px dy=+3px d=0.1m ex=-0.0016 ey=+0.0063 (tol +/-0.010) alt_err=+5.28m -> fwd=+0.00 right=+0.00 down=+0.15 m/s
+QGC port check failed, reporting UNKNOWN: (pid=50619)
+2026-09-01 11:47:56,822 [INFO] core.navigation.centering_controller: [CENTERING] MAVI_ALTIGEN 6/200 dx=-1px dy=-22px d=0.4m ex=-0.0016 ey=-0.0458 (tol +/-0.010) alt_err=+5.14m -> fwd=+0.15 right=+0.00 down=+0.90 m/s
+2026-09-01 11:47:57,386 [INFO] core.navigation.centering_controller: [CENTERING] MAVI_ALTIGEN 11/200 dx=-1px dy=-13px d=0.2m ex=-0.0016 ey=-0.0271 (tol +/-0.010) alt_err=+4.54m -> fwd=+0.15 right=+0.00 down=+1.65 m/s
+2026-09-01 11:47:57,721 [INFO] core.detection.vision_runtime: [VISION] detect() calisiyor -- bu karede 1 tespit: ['MAVI_ALTIGEN']
+2026-09-01 11:47:57,945 [INFO] core.navigation.centering_controller: [CENTERING] MAVI_ALTIGEN 16/200 dx=-1px dy=-3px d=0.1m ex=-0.0016 ey=-0.0063 (tol +/-0.010) alt_err=+3.76m -> fwd=+0.00 right=+0.00 down=+1.88 m/s
+QGC port check failed, reporting UNKNOWN: (pid=50619)
+2026-09-01 11:47:58,508 [INFO] core.navigation.centering_controller: [CENTERING] MAVI_ALTIGEN 21/200 dx=-2px dy=+24px d=0.3m ex=-0.0031 ey=+0.0500 (tol +/-0.010) alt_err=+2.83m -> fwd=-0.15 right=+0.00 down=+1.42 m/s
+2026-09-01 11:47:59,074 [INFO] core.navigation.centering_controller: [CENTERING] MAVI_ALTIGEN 26/200 dx=-3px dy=+13px d=0.2m ex=-0.0047 ey=+0.0271 (tol +/-0.010) alt_err=+2.01m -> fwd=-0.15 right=+0.00 down=+1.00 m/s
+2026-09-01 11:47:59,505 [INFO] gz_system.main_gz: Dashboard paint loop: 0.0 FPS (main thread)
+2026-09-01 11:47:59,642 [INFO] core.navigation.centering_controller: [CENTERING] MAVI_ALTIGEN 31/200 dx=-4px dy=+3px d=0.1m ex=-0.0063 ey=+0.0063 (tol +/-0.010) alt_err=+1.52m -> fwd=+0.00 right=+0.00 down=+0.76 m/s
+2026-09-01 11:48:00,255 [INFO] core.navigation.centering_controller: [CENTERING] MAVI_ALTIGEN 35/200 dx=-5px dy=-21px d=0.2m ex=-0.0078 ey=-0.0437 (tol +/-0.010) alt_err=+1.22m -> fwd=+0.15 right=+0.00 down=+0.61 m/s
+QGC port check failed, reporting UNKNOWN: (pid=50723)
+2026-09-01 11:48:00,758 [INFO] core.detection.vision_runtime: [VISION] detect() calisiyor -- bu karede 1 tespit: ['MAVI_ALTIGEN']
+2026-09-01 11:48:00,765 [INFO] core.navigation.centering_controller: [CENTERING] MAVI_ALTIGEN 39/200 dx=-6px dy=-15px d=0.2m ex=-0.0094 ey=-0.0312 (tol +/-0.010) alt_err=+0.93m -> fwd=+0.15 right=+0.00 down=+0.47 m/s
+2026-09-01 11:48:01,307 [INFO] core.navigation.centering_controller: [CENTERING] MAVI_ALTIGEN 43/200 dx=-7px dy=-2px d=0.1m ex=-0.0109 ey=-0.0042 (tol +/-0.010) alt_err=+0.71m -> fwd=+0.00 right=-0.15 down=+0.36 m/s
+2026-09-01 11:48:01,893 [INFO] core.navigation.centering_controller: [CENTERING] MAVI_ALTIGEN 46/200 dx=-10px dy=+19px d=0.2m ex=-0.0156 ey=+0.0396 (tol +/-0.010) alt_err=+0.61m -> fwd=-0.15 right=-0.15 down=+0.30 m/s
+QGC port check failed, reporting UNKNOWN: (pid=50731)
+2026-09-01 11:48:02,509 [INFO] core.navigation.centering_controller: [CENTERING] MAVI_ALTIGEN 51/200 dx=-7px dy=+16px d=0.2m ex=-0.0109 ey=+0.0333 (tol +/-0.010) alt_err=+0.44m -> fwd=-0.15 right=-0.15 down=+0.22 m/s
+2026-09-01 11:48:03,032 [INFO] core.navigation.centering_controller: [CENTERING] MAVI_ALTIGEN 55/200 dx=+14px dy=+4px d=0.1m ex=+0.0219 ey=+0.0083 (tol +/-0.010) alt_err=+0.34m -> fwd=+0.00 right=+0.15 down=+0.17 m/s
+2026-09-01 11:48:03,534 [INFO] core.navigation.centering_controller: [CENTERING] MAVI_ALTIGEN 59/200 dx=+27px dy=-21px d=0.3m ex=+0.0422 ey=-0.0437 (tol +/-0.010) alt_err=+0.27m -> fwd=+0.15 right=+0.15 down=+0.13 m/s
+2026-09-01 11:48:03,769 [INFO] core.detection.vision_runtime: [VISION] detect() calisiyor -- bu karede 1 tespit: ['MAVI_ALTIGEN']
+2026-09-01 11:48:04,131 [INFO] core.navigation.centering_controller: [CENTERING] MAVI_ALTIGEN 64/200 dx=+12px dy=-15px d=0.2m ex=+0.0187 ey=-0.0312 (tol +/-0.010) alt_err=+0.20m -> fwd=+0.15 right=+0.15 down=+0.10 m/s
+QGC port check failed, reporting UNKNOWN: (pid=50731)
+2026-09-01 11:48:04,512 [INFO] gz_system.main_gz: Dashboard paint loop: 0.0 FPS (main thread)
+2026-09-01 11:48:04,604 [INFO] core.navigation.centering_controller: Merkezleme tamamlandi. (attempt 68/200, dx=+3px dy=-4px ex=+0.0047 ey=-0.0083 alt_err=+0.15m)
+2026-09-01 11:48:04,606 [INFO] core.navigation.centering_controller: MAVI_ALTIGEN hedefine merkezleniyor (irtifa hedefi: 0.45m, irtifa bandi +/-0.05m)...
+2026-09-01 11:48:04,607 [INFO] core.navigation.centering_controller: [CENTERING] MAVI_ALTIGEN 1/200 dx=+3px dy=-4px d=0.0m ex=+0.0047 ey=-0.0083 (tol +/-0.010) alt_err=+4.70m -> fwd=+0.00 right=+0.00 down=+0.15 m/s
+2026-09-01 11:48:05,194 [INFO] core.navigation.centering_controller: [CENTERING] MAVI_ALTIGEN 6/200 dx=-21px dy=+26px d=0.3m ex=-0.0328 ey=+0.0542 (tol +/-0.010) alt_err=+4.52m -> fwd=-0.15 right=-0.15 down=+0.90 m/s
+2026-09-01 11:48:05,768 [INFO] core.navigation.centering_controller: [CENTERING] MAVI_ALTIGEN 11/200 dx=-9px dy=+16px d=0.2m ex=-0.0141 ey=+0.0333 (tol +/-0.010) alt_err=+4.03m -> fwd=-0.15 right=-0.15 down=+1.65 m/s
+2026-09-01 11:48:06,420 [INFO] core.navigation.centering_controller: [CENTERING] MAVI_ALTIGEN 16/200 dx=+14px dy=+2px d=0.1m ex=+0.0219 ey=+0.0042 (tol +/-0.010) alt_err=+3.11m -> fwd=+0.00 right=+0.15 down=+1.55 m/s
+QGC port check failed, reporting UNKNOWN: (pid=50731)
+2026-09-01 11:48:06,883 [INFO] core.detection.vision_runtime: [VISION] detect() calisiyor -- bu karede 1 tespit: ['MAVI_ALTIGEN']
+2026-09-01 11:48:07,003 [INFO] core.navigation.centering_controller: [CENTERING] MAVI_ALTIGEN 21/200 dx=+18px dy=-36px d=0.2m ex=+0.0281 ey=-0.0750 (tol +/-0.010) alt_err=+2.22m -> fwd=+0.12 right=+0.15 down=+1.11 m/s
+2026-09-01 11:48:07,599 [INFO] core.navigation.centering_controller: [CENTERING] MAVI_ALTIGEN 26/200 dx=-14px dy=-24px d=0.1m ex=-0.0219 ey=-0.0500 (tol +/-0.010) alt_err=+1.57m -> fwd=+0.09 right=-0.12 down=+0.79 m/s
+2026-09-01 11:48:08,205 [INFO] core.navigation.centering_controller: [CENTERING] MAVI_ALTIGEN 31/200 dx=-30px dy=-2px d=0.1m ex=-0.0477 ey=-0.0031 (tol +/-0.010) alt_err=+1.12m -> fwd=+0.00 right=-0.09 down=+0.56 m/s
+QGC port check failed, reporting UNKNOWN: (pid=50731)
+2026-09-01 11:48:08,797 [INFO] core.navigation.centering_controller: [CENTERING] MAVI_ALTIGEN 36/200 dx=-11px dy=+22px d=0.1m ex=-0.0172 ey=+0.0458 (tol +/-0.010) alt_err=+0.81m -> fwd=-0.07 right=-0.07 down=+0.41 m/s
+2026-09-01 11:48:09,378 [INFO] core.navigation.centering_controller: [CENTERING] MAVI_ALTIGEN 41/200 dx=+4px dy=+8px d=0.0m ex=+0.0055 ey=+0.0177 (tol +/-0.010) alt_err=+0.60m -> fwd=-0.05 right=+0.00 down=+0.30 m/s
+2026-09-01 11:48:09,513 [INFO] gz_system.main_gz: Dashboard paint loop: 0.0 FPS (main thread)
+2026-09-01 11:48:09,948 [INFO] core.detection.vision_runtime: [VISION] detect() calisiyor -- bu karede 1 tespit: ['MAVI_ALTIGEN']
+2026-09-01 11:48:09,950 [INFO] core.navigation.centering_controller: [CENTERING] MAVI_ALTIGEN 46/200 dx=+37px dy=+0px d=0.1m ex=+0.0578 ey=+0.0000 (tol +/-0.010) alt_err=+0.46m -> fwd=+0.00 right=+0.09 down=+0.23 m/s
+QGC port check failed, reporting UNKNOWN: (pid=50731)
+2026-09-01 11:48:10,521 [INFO] core.navigation.centering_controller: [CENTERING] MAVI_ALTIGEN 51/200 dx=+6px dy=+0px d=0.0m ex=+0.0102 ey=+0.0000 (tol +/-0.010) alt_err=+0.33m -> fwd=+0.00 right=+0.05 down=+0.17 m/s
+2026-09-01 11:48:11,082 [INFO] core.navigation.centering_controller: [CENTERING] MAVI_ALTIGEN 56/200 dx=+0px dy=+0px d=0.0m ex=+0.0000 ey=+0.0000 (tol +/-0.010) alt_err=+0.23m -> fwd=+0.00 right=+0.00 down=+0.12 m/s
+2026-09-01 11:48:11,639 [WARNING] core.navigation.centering_controller: [CENTERING] MAVI_ALTIGEN 61/200 hedef kayboldu (feed canli, hedef bu karede yok)
+2026-09-01 11:48:11,639 [WARNING] core.navigation.centering_controller: [LOW_ALT_OPEN_LOOP_DESCENT] MAVI_ALTIGEN: goruntu 0.64m'de kayboldu -- dondurulmus kestirime (47.3983603, 8.5460699, offset=0.0cm @ 0.64m) gore 0.45m'ye alcalmaya devam.
+QGC port check failed, reporting UNKNOWN: (pid=50731)
+2026-09-01 11:48:12,882 [INFO] core.navigation.centering_controller: [LOW_ALT_OPEN_LOOP_DESCENT] MAVI_ALTIGEN: 0.480m'ye ulasildi (hedef 0.45m).
+2026-09-01 11:48:12,882 [INFO] core.navigation.centering_controller: [AIM_OFFSET_APPLIED] MAVI_ALTIGEN: montaj (ileri=0.00, sag=0.04) m, yon=3.0 deg -> tutma noktasi (47.3983603, 8.5460694) olarak otelendi (kuzey +0.00, dogu -0.03 m).
+2026-09-01 11:48:12,885 [INFO] core.navigation.centering_controller: [MOUNT_TRANSLATE_DONE] MAVI_ALTIGEN: kalan 4.5 cm, sure 0.00 s (yakinsadi).
+2026-09-01 11:48:12,885 [WARNING] core.navigation.centering_controller: [LOW_ALT_OPEN_LOOP_DESCENT] MAVI_ALTIGEN: goruntu 0.48m'de kayboldu -- dondurulmus kestirime (47.3983603, 8.5460694, offset=0.0cm @ 0.64m) gore 0.45m'ye alcalmaya devam.
+2026-09-01 11:48:12,886 [INFO] core.navigation.centering_controller: [LOW_ALT_OPEN_LOOP_DESCENT] MAVI_ALTIGEN: 0.480m'ye ulasildi (hedef 0.45m).
+2026-09-01 11:48:12,886 [INFO] core.navigation.centering_controller: 0.1m ileri hareket ediliyor (0.3 m/s, 0.3s)...
+2026-09-01 11:48:12,994 [INFO] core.detection.vision_runtime: [VISION] detect() calisiyor -- bu karede 0 tespit: []
+2026-09-01 11:48:13,226 [INFO] core.mission.payload_release: [RELEASE_OFFSET] MAVI_ALTIGEN: {'shape_type': 'MAVI_ALTIGEN', 'altitude_m': 0.466, 'target_visible': False, 'best_known_offset_cm': 3.87, 'best_known_offset_alt_m': 5.154}
+2026-09-01 11:48:13,226 [INFO] core.mission.payload_release: [MOUNT_VECTOR_MEASURED] MAVI_ALTIGEN: {'world_dx': 0.035, 'world_dy': 0.0009, 'gazebo_yaw_deg': 89.69, 'body_forward_m': 0.0011, 'body_right_m': 0.035} (uygulanan: (0.0, 0.035))
+2026-09-01 11:48:13,227 [INFO] gz_system.gz_payload_actuator: Gazebo DetachableJoint tetikleniyor: /payload/detach/red
+I0901 11:48:13.228541 13598701 fork_posix.cc:71] Other threads are currently calling into gRPC, skipping fork() handlers
+I0901 11:48:13.286868 13598701 fork_posix.cc:71] Other threads are currently calling into gRPC, skipping fork() handlers
+I0901 11:48:13.380989 13598701 fork_posix.cc:71] Other threads are currently calling into gRPC, skipping fork() handlers
+I0901 11:48:13.388796 13598701 fork_posix.cc:71] Other threads are currently calling into gRPC, skipping fork() handlers
+I0901 11:48:13.436730 13598701 fork_posix.cc:71] Other threads are currently calling into gRPC, skipping fork() handlers
+QGC port check failed, reporting UNKNOWN: (pid=50731)
+2026-09-01 11:48:14,523 [INFO] gz_system.gz_payload_actuator: Yuk ayrildi (red), gecikme 1.274 s.
+2026-09-01 11:48:14,523 [INFO] core.mission.payload_release: [PAYLOAD_RELEASED] PAYLOAD 1 RELEASED @0.47m
+2026-09-01 11:48:14,526 [INFO] gz_system.main_gz: Dashboard paint loop: 0.0 FPS (main thread)
+2026-09-01 11:48:16,008 [INFO] core.detection.vision_runtime: [VISION] detect() calisiyor -- bu karede 1 tespit: ['KIRMIZI_DIKDORTGEN']
+QGC port check failed, reporting UNKNOWN: (pid=50769)
+2026-09-01 11:48:16,526 [INFO] core.mission.payload_release: [PAYLOAD_FINAL_POSE] MAVI_ALTIGEN: x=-7.036 y=43.352 z=0.035 merkeze 2921.2 cm egim 0.1 deg (HEDEF DISINDA)
+2026-09-01 11:48:16,526 [INFO] core.mission.payload_release: Doğrulama işareti aranıyor: KIRMIZI_DIKDORTGEN
+2026-09-01 11:48:16,526 [INFO] core.mission.payload_release: Yük bırakma DOĞRULANDI: KIRMIZI_DIKDORTGEN tespit edildi.
+2026-09-01 11:48:16,526 [INFO] core.navigation.centering_controller: 15.0m irtifasina tirmaniliyor (goruntuden bagimsiz)...
+QGC port check failed, reporting UNKNOWN: (pid=50769)
+2026-09-01 11:48:19,024 [INFO] core.detection.vision_runtime: [VISION] detect() calisiyor -- bu karede 1 tespit: ['MAVI_ALTIGEN']
+2026-09-01 11:48:19,545 [INFO] gz_system.main_gz: Dashboard paint loop: 0.0 FPS (main thread)
+QGC port check failed, reporting UNKNOWN: (pid=50769)
+2026-09-01 11:48:22,031 [INFO] core.detection.vision_runtime: [VISION] detect() calisiyor -- bu karede 1 tespit: ['MAVI_ALTIGEN']
+QGC port check failed, reporting UNKNOWN: (pid=50769)
+QGC port check failed, reporting UNKNOWN: (pid=50769)
+2026-09-01 11:48:24,552 [INFO] gz_system.main_gz: Dashboard paint loop: 0.0 FPS (main thread)
+2026-09-01 11:48:25,106 [INFO] core.detection.vision_runtime: [VISION] detect() calisiyor -- bu karede 2 tespit: ['MAVI_ALTIGEN', 'MAVI_DIKDORTGEN']
+2026-09-01 11:48:26,244 [INFO] core.mission.gorev2_orchestrator: [ROUTE_REJOIN] rota hattina donuluyor (sabit eksen=lon): hedef lat=47.3983611 lon=8.5461640 (mevcut lat=47.3983611 lon=8.5460704).
+2026-09-01 11:48:26,244 [INFO] core.navigation.centering_controller: Kayitli GPS konumuna gidiliyor: lat=47.398361099999995, lon=8.546164, alt=15.0m
+QGC port check failed, reporting UNKNOWN: (pid=50769)
+2026-09-01 11:48:28,195 [INFO] core.detection.vision_runtime: [VISION] detect() calisiyor -- bu karede 2 tespit: ['MAVI_ALTIGEN', 'MAVI_DIKDORTGEN']
+QGC port check failed, reporting UNKNOWN: (pid=50769)
+2026-09-01 11:48:29,481 [INFO] mavsdk_common.mavsdk_backend_base: Offboard durduruluyor...
+Received ack for not-existing command: 176! Ignoring... (mavlink_command_sender.cpp:304)
+2026-09-01 11:48:29,554 [INFO] gz_system.main_gz: Dashboard paint loop: 0.0 FPS (main thread)
+2026-09-01 11:48:30,124 [INFO] core.mission.gorev2_orchestrator: [MISSION_RESUME] rota 2. ogeden devam ettiriliyor.
+Received ack for not-existing command: 176! Ignoring... (mavlink_command_sender.cpp:304)
+QGC port check failed, reporting UNKNOWN: (pid=50769)
+2026-09-01 11:48:31,232 [INFO] core.detection.vision_runtime: [VISION] detect() calisiyor -- bu karede 2 tespit: ['MAVI_ALTIGEN', 'KIRMIZI_DIKDORTGEN']
+QGC port check failed, reporting UNKNOWN: (pid=50769)
+2026-09-01 11:48:34,260 [INFO] core.detection.vision_runtime: [VISION] detect() calisiyor -- bu karede 2 tespit: ['MAVI_ALTIGEN', 'MAVI_DIKDORTGEN']
+QGC port check failed, reporting UNKNOWN: (pid=50832)
+2026-09-01 11:48:34,564 [INFO] gz_system.main_gz: Dashboard paint loop: 0.0 FPS (main thread)
+2026-09-01 11:48:36,031 [INFO] core.navigation.centering_controller: Mission modu durduruluyor, Offboard'a geciliyor...
+2026-09-01 11:48:36,031 [INFO] mavsdk_common.mavsdk_backend_base: Mission'dan Offboard'a geçiş yapılıyor...
+Received ack for not-existing command: 176! Ignoring... (mavlink_command_sender.cpp:304)
+2026-09-01 11:48:36,049 [INFO] mavsdk_common.mavsdk_backend_base: Offboard başlatılıyor...
+Received ack for not-existing command: 176! Ignoring... (mavlink_command_sender.cpp:304)
+QGC port check failed, reporting UNKNOWN: (pid=50845)
+2026-09-01 11:48:36,879 [INFO] core.mission.gorev2_orchestrator: KIRMIZI_UCGEN kucuk bir hedef -- merkezleme icin 8.0 m'ye alcaliniyor.
+2026-09-01 11:48:36,879 [INFO] core.navigation.centering_controller: KIRMIZI_UCGEN hedefine merkezleniyor (irtifa hedefi: 8.0m, irtifa bandi +/-0.30m)...
+2026-09-01 11:48:36,881 [INFO] core.navigation.centering_controller: [CENTERING] KIRMIZI_UCGEN 1/200 dx=+379px dy=+79px d=10.9m ex=+0.5922 ey=+0.1646 (tol +/-0.010) alt_err=+7.15m -> fwd=-0.15 right=+0.15 down=+0.15 m/s
+2026-09-01 11:48:37,339 [INFO] core.detection.vision_runtime: [VISION] detect() calisiyor -- bu karede 1 tespit: ['KIRMIZI_UCGEN']
+2026-09-01 11:48:37,460 [INFO] core.navigation.centering_controller: [CENTERING] KIRMIZI_UCGEN 6/200 dx=+443px dy=-62px d=12.4m ex=+0.6922 ey=-0.1292 (tol +/-0.010) alt_err=+6.92m -> fwd=+0.19 right=+0.90 down=+0.90 m/s
+2026-09-01 11:48:38,035 [INFO] core.navigation.centering_controller: [CENTERING] KIRMIZI_UCGEN 11/200 dx=+501px dy=-152px d=14.0m ex=+0.7828 ey=-0.3167 (tol +/-0.010) alt_err=+6.39m -> fwd=+0.47 right=+1.17 down=+1.65 m/s
+QGC port check failed, reporting UNKNOWN: (pid=50845)
+2026-09-01 11:48:38,620 [INFO] core.navigation.centering_controller: [CENTERING] KIRMIZI_UCGEN 16/200 dx=+439px dy=-145px d=11.5m ex=+0.6859 ey=-0.3021 (tol +/-0.010) alt_err=+5.44m -> fwd=+0.45 right=+1.03 down=+2.40 m/s
+2026-09-01 11:48:39,220 [INFO] core.navigation.centering_controller: [CENTERING] KIRMIZI_UCGEN 21/200 dx=+410px dy=-124px d=9.9m ex=+0.6406 ey=-0.2583 (tol +/-0.010) alt_err=+4.50m -> fwd=+0.39 right=+0.96 down=+2.25 m/s
+2026-09-01 11:48:39,570 [INFO] gz_system.main_gz: Dashboard paint loop: 0.0 FPS (main thread)
+2026-09-01 11:48:39,830 [INFO] core.navigation.centering_controller: [CENTERING] KIRMIZI_UCGEN 26/200 dx=+423px dy=-122px d=9.4m ex=+0.6609 ey=-0.2542 (tol +/-0.010) alt_err=+3.58m -> fwd=+0.38 right=+0.99 down=+1.79 m/s
+2026-09-01 11:48:40,411 [INFO] core.detection.vision_runtime: [VISION] detect() calisiyor -- bu karede 1 tespit: ['KIRMIZI_UCGEN']
+2026-09-01 11:48:40,413 [INFO] core.navigation.centering_controller: [CENTERING] KIRMIZI_UCGEN 31/200 dx=+438px dy=-128px d=9.0m ex=+0.6844 ey=-0.2667 (tol +/-0.010) alt_err=+2.66m -> fwd=+0.40 right=+1.03 down=+1.33 m/s
+QGC port check failed, reporting UNKNOWN: (pid=50845)
+2026-09-01 11:48:41,005 [INFO] core.navigation.centering_controller: [CENTERING] KIRMIZI_UCGEN 36/200 dx=+436px dy=-131px d=8.3m ex=+0.6813 ey=-0.2729 (tol +/-0.010) alt_err=+1.87m -> fwd=+0.41 right=+1.02 down=+0.94 m/s
+2026-09-01 11:48:41,613 [INFO] core.navigation.centering_controller: [CENTERING] KIRMIZI_UCGEN 41/200 dx=+424px dy=-127px d=7.7m ex=+0.6625 ey=-0.2646 (tol +/-0.010) alt_err=+1.33m -> fwd=+0.40 right=+0.99 down=+0.67 m/s
+2026-09-01 11:48:42,194 [INFO] core.navigation.centering_controller: [CENTERING] KIRMIZI_UCGEN 46/200 dx=+402px dy=-122px d=7.0m ex=+0.6281 ey=-0.2542 (tol +/-0.010) alt_err=+0.96m -> fwd=+0.38 right=+0.94 down=+0.48 m/s
+QGC port check failed, reporting UNKNOWN: (pid=50845)
+2026-09-01 11:48:42,776 [INFO] core.navigation.centering_controller: [CENTERING] KIRMIZI_UCGEN 51/200 dx=+375px dy=-118px d=6.3m ex=+0.5859 ey=-0.2458 (tol +/-0.010) alt_err=+0.70m -> fwd=+0.37 right=+0.88 down=+0.35 m/s
+2026-09-01 11:48:43,347 [INFO] core.navigation.centering_controller: [CENTERING] KIRMIZI_UCGEN 56/200 dx=+347px dy=-114px d=5.8m ex=+0.5422 ey=-0.2375 (tol +/-0.010) alt_err=+0.54m -> fwd=+0.36 right=+0.81 down=+0.27 m/s
+2026-09-01 11:48:43,461 [INFO] core.detection.vision_runtime: [VISION] detect() calisiyor -- bu karede 1 tespit: ['KIRMIZI_UCGEN']
+2026-09-01 11:48:43,917 [INFO] core.navigation.centering_controller: [CENTERING] KIRMIZI_UCGEN 61/200 dx=+317px dy=-107px d=5.2m ex=+0.4953 ey=-0.2229 (tol +/-0.010) alt_err=+0.40m -> fwd=+0.33 right=+0.74 down=+0.20 m/s
+2026-09-01 11:48:44,485 [INFO] core.navigation.centering_controller: [CENTERING] KIRMIZI_UCGEN 66/200 dx=+291px dy=-98px d=4.7m ex=+0.4547 ey=-0.2042 (tol +/-0.010) alt_err=+0.30m -> fwd=+0.31 right=+0.68 down=+0.15 m/s
+QGC port check failed, reporting UNKNOWN: (pid=50845)
+2026-09-01 11:48:44,570 [INFO] gz_system.main_gz: Dashboard paint loop: 0.0 FPS (main thread)
+2026-09-01 11:48:45,051 [INFO] core.navigation.centering_controller: [CENTERING] KIRMIZI_UCGEN 71/200 dx=+264px dy=-90px d=4.3m ex=+0.4125 ey=-0.1875 (tol +/-0.010) alt_err=+0.24m -> fwd=+0.28 right=+0.62 down=+0.12 m/s
+2026-09-01 11:48:45,618 [INFO] core.navigation.centering_controller: [CENTERING] KIRMIZI_UCGEN 76/200 dx=+241px dy=-83px d=3.9m ex=+0.3766 ey=-0.1729 (tol +/-0.010) alt_err=+0.18m -> fwd=+0.26 right=+0.56 down=+0.09 m/s
+2026-09-01 11:48:46,186 [INFO] core.navigation.centering_controller: [CENTERING] KIRMIZI_UCGEN 81/200 dx=+218px dy=-78px d=3.5m ex=+0.3406 ey=-0.1625 (tol +/-0.010) alt_err=+0.14m -> fwd=+0.24 right=+0.51 down=+0.07 m/s
+2026-09-01 11:48:46,524 [INFO] core.detection.vision_runtime: [VISION] detect() calisiyor -- bu karede 1 tespit: ['KIRMIZI_UCGEN']
+QGC port check failed, reporting UNKNOWN: (pid=50845)
+2026-09-01 11:48:46,750 [INFO] core.navigation.centering_controller: [CENTERING] KIRMIZI_UCGEN 86/200 dx=+200px dy=-70px d=3.2m ex=+0.3125 ey=-0.1458 (tol +/-0.010) alt_err=+0.11m -> fwd=+0.22 right=+0.47 down=+0.05 m/s
+2026-09-01 11:48:47,322 [INFO] core.navigation.centering_controller: [CENTERING] KIRMIZI_UCGEN 91/200 dx=+183px dy=-65px d=2.9m ex=+0.2859 ey=-0.1354 (tol +/-0.010) alt_err=+0.08m -> fwd=+0.20 right=+0.43 down=+0.04 m/s
+2026-09-01 11:48:47,888 [INFO] core.navigation.centering_controller: [CENTERING] KIRMIZI_UCGEN 96/200 dx=+167px dy=-59px d=2.6m ex=+0.2609 ey=-0.1229 (tol +/-0.010) alt_err=+0.05m -> fwd=+0.18 right=+0.39 down=+0.03 m/s
+2026-09-01 11:48:48,456 [INFO] core.navigation.centering_controller: [CENTERING] KIRMIZI_UCGEN 101/200 dx=+153px dy=-55px d=2.4m ex=+0.2391 ey=-0.1146 (tol +/-0.010) alt_err=+0.05m -> fwd=+0.17 right=+0.36 down=+0.02 m/s
+QGC port check failed, reporting UNKNOWN: (pid=50845)
+2026-09-01 11:48:49,019 [INFO] core.navigation.centering_controller: [CENTERING] KIRMIZI_UCGEN 106/200 dx=+139px dy=-50px d=2.2m ex=+0.2172 ey=-0.1042 (tol +/-0.010) alt_err=+0.04m -> fwd=+0.16 right=+0.33 down=+0.02 m/s
+2026-09-01 11:48:49,585 [INFO] gz_system.main_gz: Dashboard paint loop: 0.0 FPS (main thread)
+2026-09-01 11:48:49,588 [INFO] core.detection.vision_runtime: [VISION] detect() calisiyor -- bu karede 1 tespit: ['KIRMIZI_UCGEN']
+2026-09-01 11:48:49,589 [INFO] core.navigation.centering_controller: [CENTERING] KIRMIZI_UCGEN 111/200 dx=+124px dy=-46px d=2.0m ex=+0.1938 ey=-0.0958 (tol +/-0.010) alt_err=+0.02m -> fwd=+0.15 right=+0.29 down=+0.01 m/s
+2026-09-01 11:48:50,159 [INFO] core.navigation.centering_controller: [CENTERING] KIRMIZI_UCGEN 116/200 dx=+112px dy=-42px d=1.8m ex=+0.1750 ey=-0.0875 (tol +/-0.010) alt_err=+0.02m -> fwd=+0.15 right=+0.26 down=+0.01 m/s
+QGC port check failed, reporting UNKNOWN: (pid=50881)
+2026-09-01 11:48:50,725 [INFO] core.navigation.centering_controller: [CENTERING] KIRMIZI_UCGEN 121/200 dx=+102px dy=-38px d=1.6m ex=+0.1594 ey=-0.0792 (tol +/-0.010) alt_err=+0.02m -> fwd=+0.15 right=+0.24 down=+0.01 m/s
+2026-09-01 11:48:51,329 [INFO] core.navigation.centering_controller: [CENTERING] KIRMIZI_UCGEN 126/200 dx=+93px dy=-35px d=1.5m ex=+0.1453 ey=-0.0729 (tol +/-0.010) alt_err=+0.00m -> fwd=+0.15 right=+0.22 down=+0.00 m/s
+2026-09-01 11:48:51,848 [INFO] core.navigation.centering_controller: [CENTERING] KIRMIZI_UCGEN 130/200 dx=+87px dy=-31px d=1.4m ex=+0.1359 ey=-0.0646 (tol +/-0.010) alt_err=-0.00m -> fwd=+0.15 right=+0.20 down=-0.00 m/s
+2026-09-01 11:48:52,367 [INFO] core.navigation.centering_controller: [CENTERING] KIRMIZI_UCGEN 134/200 dx=+81px dy=-27px d=1.3m ex=+0.1266 ey=-0.0563 (tol +/-0.010) alt_err=-0.01m -> fwd=+0.15 right=+0.19 down=-0.00 m/s
+QGC port check failed, reporting UNKNOWN: (pid=50886)
+2026-09-01 11:48:52,615 [INFO] core.detection.vision_runtime: [VISION] detect() calisiyor -- bu karede 1 tespit: ['KIRMIZI_UCGEN']
+2026-09-01 11:48:52,874 [INFO] core.navigation.centering_controller: [CENTERING] KIRMIZI_UCGEN 138/200 dx=+74px dy=-22px d=1.1m ex=+0.1156 ey=-0.0458 (tol +/-0.010) alt_err=-0.00m -> fwd=+0.15 right=+0.17 down=-0.00 m/s
+2026-09-01 11:48:53,380 [INFO] core.navigation.centering_controller: [CENTERING] KIRMIZI_UCGEN 142/200 dx=+67px dy=-16px d=1.0m ex=+0.1047 ey=-0.0333 (tol +/-0.010) alt_err=-0.00m -> fwd=+0.15 right=+0.16 down=-0.00 m/s
+2026-09-01 11:48:53,894 [INFO] core.navigation.centering_controller: [CENTERING] KIRMIZI_UCGEN 146/200 dx=+62px dy=-11px d=0.9m ex=+0.0969 ey=-0.0229 (tol +/-0.010) alt_err=-0.00m -> fwd=+0.15 right=+0.15 down=-0.00 m/s
+2026-09-01 11:48:54,502 [INFO] core.navigation.centering_controller: [CENTERING] KIRMIZI_UCGEN 151/200 dx=+58px dy=-3px d=0.9m ex=+0.0906 ey=-0.0063 (tol +/-0.010) alt_err=-0.02m -> fwd=+0.00 right=+0.15 down=-0.01 m/s
+QGC port check failed, reporting UNKNOWN: (pid=50893)
+2026-09-01 11:48:54,609 [INFO] gz_system.main_gz: Dashboard paint loop: 0.0 FPS (main thread)
+2026-09-01 11:48:55,120 [INFO] core.navigation.centering_controller: [CENTERING] KIRMIZI_UCGEN 156/200 dx=+54px dy=+23px d=0.9m ex=+0.0844 ey=+0.0479 (tol +/-0.010) alt_err=-0.02m -> fwd=-0.15 right=+0.15 down=-0.01 m/s
+2026-09-01 11:48:55,709 [INFO] core.detection.vision_runtime: [VISION] detect() calisiyor -- bu karede 1 tespit: ['KIRMIZI_UCGEN']
+2026-09-01 11:48:55,710 [INFO] core.navigation.centering_controller: [CENTERING] KIRMIZI_UCGEN 161/200 dx=+48px dy=+9px d=0.7m ex=+0.0750 ey=+0.0187 (tol +/-0.010) alt_err=-0.00m -> fwd=-0.15 right=+0.15 down=-0.00 m/s
+2026-09-01 11:48:56,292 [INFO] core.navigation.centering_controller: [CENTERING] KIRMIZI_UCGEN 166/200 dx=+41px dy=-13px d=0.6m ex=+0.0641 ey=-0.0271 (tol +/-0.010) alt_err=+0.01m -> fwd=+0.15 right=+0.15 down=+0.00 m/s
+QGC port check failed, reporting UNKNOWN: (pid=50893)
+2026-09-01 11:48:56,906 [INFO] core.navigation.centering_controller: [CENTERING] KIRMIZI_UCGEN 171/200 dx=+37px dy=-20px d=0.6m ex=+0.0578 ey=-0.0417 (tol +/-0.010) alt_err=-0.00m -> fwd=+0.15 right=+0.15 down=-0.00 m/s
+2026-09-01 11:48:57,449 [INFO] core.navigation.centering_controller: [CENTERING] KIRMIZI_UCGEN 175/200 dx=+33px dy=-8px d=0.5m ex=+0.0516 ey=-0.0167 (tol +/-0.010) alt_err=-0.01m -> fwd=+0.15 right=+0.15 down=-0.01 m/s
+2026-09-01 11:48:58,039 [INFO] core.navigation.centering_controller: [CENTERING] KIRMIZI_UCGEN 179/200 dx=+29px dy=-3px d=0.4m ex=+0.0453 ey=-0.0063 (tol +/-0.010) alt_err=-0.01m -> fwd=+0.00 right=+0.15 down=-0.01 m/s
+2026-09-01 11:48:58,574 [INFO] core.navigation.centering_controller: [CENTERING] KIRMIZI_UCGEN 183/200 dx=+25px dy=+18px d=0.5m ex=+0.0391 ey=+0.0375 (tol +/-0.010) alt_err=-0.01m -> fwd=-0.15 right=+0.15 down=-0.01 m/s
+QGC port check failed, reporting UNKNOWN: (pid=50904)
+2026-09-01 11:48:58,825 [INFO] core.detection.vision_runtime: [VISION] detect() calisiyor -- bu karede 1 tespit: ['KIRMIZI_UCGEN']
+2026-09-01 11:48:59,088 [INFO] core.navigation.centering_controller: [CENTERING] KIRMIZI_UCGEN 187/200 dx=+22px dy=+13px d=0.4m ex=+0.0344 ey=+0.0271 (tol +/-0.010) alt_err=-0.01m -> fwd=-0.15 right=+0.15 down=-0.01 m/s
+2026-09-01 11:48:59,638 [INFO] gz_system.main_gz: Dashboard paint loop: 0.0 FPS (main thread)
+2026-09-01 11:48:59,697 [INFO] core.navigation.centering_controller: [CENTERING] KIRMIZI_UCGEN 192/200 dx=+16px dy=-9px d=0.3m ex=+0.0250 ey=-0.0187 (tol +/-0.010) alt_err=-0.01m -> fwd=+0.15 right=+0.15 down=-0.00 m/s
+2026-09-01 11:49:00,307 [INFO] core.navigation.centering_controller: [CENTERING] KIRMIZI_UCGEN 197/200 dx=+9px dy=-23px d=0.4m ex=+0.0141 ey=-0.0479 (tol +/-0.010) alt_err=-0.01m -> fwd=+0.15 right=+0.15 down=-0.00 m/s
+QGC port check failed, reporting UNKNOWN: (pid=50904)
+2026-09-01 11:49:00,823 [ERROR] core.navigation.centering_controller: Merkezleme zaman asimina ugradi! (200 deneme / 20.0s butcesi doldu)
+2026-09-01 11:49:00,823 [WARNING] core.mission.gorev2_orchestrator: [RETRY_IN_PLACE] KIRMIZI_UCGEN 1/3 merkezlenemedi -- 5s yerinde beklenip tekrar denenecek (hedef goruniyor, d=0.30m).
+2026-09-01 11:49:01,949 [INFO] core.detection.vision_runtime: [VISION] detect() calisiyor -- bu karede 1 tespit: ['KIRMIZI_UCGEN']
+QGC port check failed, reporting UNKNOWN: (pid=50948)
+QGC port check failed, reporting UNKNOWN: (pid=50957)
+2026-09-01 11:49:04,645 [INFO] gz_system.main_gz: Dashboard paint loop: 0.0 FPS (main thread)
+2026-09-01 11:49:05,035 [INFO] core.detection.vision_runtime: [VISION] detect() calisiyor -- bu karede 1 tespit: ['KIRMIZI_UCGEN']
+2026-09-01 11:49:05,918 [INFO] core.navigation.centering_controller: KIRMIZI_UCGEN hedefine merkezleniyor (irtifa hedefi: 8.0m, irtifa bandi +/-0.30m)...
+2026-09-01 11:49:05,918 [INFO] core.navigation.centering_controller: Merkezleme tamamlandi. (attempt 1/150, dx=+3px dy=-2px ex=+0.0047 ey=-0.0042 alt_err=-0.02m)
+QGC port check failed, reporting UNKNOWN: (pid=50957)
+2026-09-01 11:49:08,112 [INFO] core.detection.vision_runtime: [VISION] detect() calisiyor -- bu karede 1 tespit: ['KIRMIZI_UCGEN']
+QGC port check failed, reporting UNKNOWN: (pid=50957)
+2026-09-01 11:49:08,926 [INFO] core.mission.gorev2_orchestrator: [POST_LOCK_DRIFT] KIRMIZI_UCGEN 3s: peak=3.6px final=2.8px (10.01cm / 7.85cm), 25 ornek, 0 kayip
+2026-09-01 11:49:08,926 [INFO] core.navigation.centering_controller: 2.0 saniye hover yapiliyor (Konum dogrulama)...
+2026-09-01 11:49:09,655 [INFO] gz_system.main_gz: Dashboard paint loop: 0.0 FPS (main thread)
+QGC port check failed, reporting UNKNOWN: (pid=50957)
+2026-09-01 11:49:10,948 [INFO] core.position_log.position_store: Konum basariyla kaydedildi: KIRMIZI_UCGEN (ikinci)
+2026-09-01 11:49:10,949 [INFO] core.mission.gorev2_orchestrator: Kirmizi Ucgen ortalandi -- MAVI yuk hemen birakiliyor.
+2026-09-01 11:49:10,949 [INFO] core.mission.gorev2_fsm: PAYLOAD MISSION 2 basliyor (Kirmizi Ucgen / BLUE payload)
+2026-09-01 11:49:10,949 [INFO] core.navigation.centering_controller: Kayitli GPS konumuna gidiliyor: lat=47.3986188, lon=8.5463088, alt=15.0m
+2026-09-01 11:49:11,190 [INFO] core.detection.vision_runtime: [VISION] detect() calisiyor -- bu karede 1 tespit: ['KIRMIZI_UCGEN']
+QGC port check failed, reporting UNKNOWN: (pid=50992)
+2026-09-01 11:49:14,299 [INFO] core.detection.vision_runtime: [VISION] detect() calisiyor -- bu karede 1 tespit: ['KIRMIZI_UCGEN']
+QGC port check failed, reporting UNKNOWN: (pid=50992)
+2026-09-01 11:49:14,673 [INFO] gz_system.main_gz: Dashboard paint loop: 0.0 FPS (main thread)
+2026-09-01 11:49:15,234 [INFO] core.mission.payload_release: Yük bırakma başlatılıyor: KIRMIZI_UCGEN
+2026-09-01 11:49:15,234 [INFO] core.navigation.centering_controller: KIRMIZI_UCGEN hedefine merkezleniyor (irtifa hedefi: 10.0m, irtifa bandi +/-0.30m)...
+2026-09-01 11:49:15,236 [INFO] core.navigation.centering_controller: [CENTERING] KIRMIZI_UCGEN 1/200 dx=+2px dy=-1px d=0.1m ex=+0.0031 ey=-0.0021 (tol +/-0.010) alt_err=+4.73m -> fwd=+0.00 right=+0.00 down=+0.15 m/s
+2026-09-01 11:49:15,822 [INFO] core.navigation.centering_controller: [CENTERING] KIRMIZI_UCGEN 6/200 dx=+1px dy=+0px d=0.0m ex=+0.0016 ey=+0.0000 (tol +/-0.010) alt_err=+4.62m -> fwd=+0.00 right=+0.00 down=+0.90 m/s
+2026-09-01 11:49:16,431 [INFO] core.navigation.centering_controller: [CENTERING] KIRMIZI_UCGEN 11/200 dx=+1px dy=-1px d=0.0m ex=+0.0016 ey=-0.0021 (tol +/-0.010) alt_err=+3.99m -> fwd=+0.00 right=+0.00 down=+1.65 m/s
+QGC port check failed, reporting UNKNOWN: (pid=50992)
+2026-09-01 11:49:17,304 [INFO] core.navigation.centering_controller: [CENTERING] KIRMIZI_UCGEN 15/200 dx=+1px dy=-1px d=0.0m ex=+0.0016 ey=-0.0021 (tol +/-0.010) alt_err=+3.20m -> fwd=+0.00 right=+0.00 down=+1.60 m/s
+2026-09-01 11:49:17,431 [INFO] core.detection.vision_runtime: [VISION] detect() calisiyor -- bu karede 1 tespit: ['KIRMIZI_UCGEN']
+2026-09-01 11:49:17,841 [INFO] core.navigation.centering_controller: [CENTERING] KIRMIZI_UCGEN 19/200 dx=+1px dy=-1px d=0.0m ex=+0.0016 ey=-0.0021 (tol +/-0.010) alt_err=+2.59m -> fwd=+0.00 right=+0.00 down=+1.30 m/s
+2026-09-01 11:49:18,449 [INFO] core.navigation.centering_controller: [CENTERING] KIRMIZI_UCGEN 24/200 dx=+2px dy=-3px d=0.1m ex=+0.0031 ey=-0.0063 (tol +/-0.010) alt_err=+1.72m -> fwd=+0.00 right=+0.00 down=+0.86 m/s
+QGC port check failed, reporting UNKNOWN: (pid=50992)
+2026-09-01 11:49:19,035 [INFO] core.navigation.centering_controller: [CENTERING] KIRMIZI_UCGEN 29/200 dx=+3px dy=-2px d=0.1m ex=+0.0047 ey=-0.0042 (tol +/-0.010) alt_err=+1.30m -> fwd=+0.00 right=+0.00 down=+0.65 m/s
+2026-09-01 11:49:19,618 [INFO] core.navigation.centering_controller: [CENTERING] KIRMIZI_UCGEN 34/200 dx=+2px dy=-2px d=0.1m ex=+0.0031 ey=-0.0042 (tol +/-0.010) alt_err=+0.92m -> fwd=+0.00 right=+0.00 down=+0.46 m/s
+2026-09-01 11:49:19,690 [INFO] gz_system.main_gz: Dashboard paint loop: 0.0 FPS (main thread)
+2026-09-01 11:49:20,207 [INFO] core.navigation.centering_controller: [CENTERING] KIRMIZI_UCGEN 39/200 dx=+3px dy=-1px d=0.1m ex=+0.0047 ey=-0.0021 (tol +/-0.010) alt_err=+0.66m -> fwd=+0.00 right=+0.00 down=+0.33 m/s
+2026-09-01 11:49:20,440 [INFO] core.detection.vision_runtime: [VISION] detect() calisiyor -- bu karede 1 tespit: ['KIRMIZI_UCGEN']
+QGC port check failed, reporting UNKNOWN: (pid=50992)
+2026-09-01 11:49:20,794 [INFO] core.navigation.centering_controller: [CENTERING] KIRMIZI_UCGEN 44/200 dx=+3px dy=+0px d=0.1m ex=+0.0047 ey=+0.0000 (tol +/-0.010) alt_err=+0.48m -> fwd=+0.00 right=+0.00 down=+0.24 m/s
+2026-09-01 11:49:21,385 [INFO] core.navigation.centering_controller: [CENTERING] KIRMIZI_UCGEN 49/200 dx=+3px dy=+1px d=0.1m ex=+0.0047 ey=+0.0021 (tol +/-0.010) alt_err=+0.35m -> fwd=+0.00 right=+0.00 down=+0.18 m/s
+2026-09-01 11:49:21,856 [INFO] core.navigation.centering_controller: Merkezleme tamamlandi. (attempt 53/200, dx=+3px dy=+2px ex=+0.0047 ey=+0.0042 alt_err=+0.27m)
+2026-09-01 11:49:21,859 [INFO] core.navigation.centering_controller: KIRMIZI_UCGEN hedefine merkezleniyor (irtifa hedefi: 5.0m, irtifa bandi +/-0.30m)...
+2026-09-01 11:49:21,860 [INFO] core.navigation.centering_controller: [CENTERING] KIRMIZI_UCGEN 1/200 dx=+3px dy=+2px d=0.1m ex=+0.0047 ey=+0.0042 (tol +/-0.010) alt_err=+5.27m -> fwd=+0.00 right=+0.00 down=+0.15 m/s
+2026-09-01 11:49:22,459 [INFO] core.navigation.centering_controller: [CENTERING] KIRMIZI_UCGEN 6/200 dx=+2px dy=+3px d=0.1m ex=+0.0031 ey=+0.0063 (tol +/-0.010) alt_err=+5.09m -> fwd=+0.00 right=+0.00 down=+0.90 m/s
+QGC port check failed, reporting UNKNOWN: (pid=50992)
+2026-09-01 11:49:23,045 [INFO] core.navigation.centering_controller: [CENTERING] KIRMIZI_UCGEN 11/200 dx=+1px dy=+4px d=0.1m ex=+0.0016 ey=+0.0083 (tol +/-0.010) alt_err=+4.44m -> fwd=+0.00 right=+0.00 down=+1.65 m/s
+2026-09-01 11:49:23,513 [INFO] core.detection.vision_runtime: [VISION] detect() calisiyor -- bu karede 1 tespit: ['KIRMIZI_UCGEN']
+2026-09-01 11:49:23,632 [INFO] core.navigation.centering_controller: [CENTERING] KIRMIZI_UCGEN 16/200 dx=+3px dy=+2px d=0.1m ex=+0.0047 ey=+0.0042 (tol +/-0.010) alt_err=+3.66m -> fwd=+0.00 right=+0.00 down=+1.83 m/s
+2026-09-01 11:49:24,244 [INFO] core.navigation.centering_controller: [CENTERING] KIRMIZI_UCGEN 21/200 dx=+3px dy=+3px d=0.1m ex=+0.0047 ey=+0.0063 (tol +/-0.010) alt_err=+2.75m -> fwd=+0.00 right=+0.00 down=+1.37 m/s
+QGC port check failed, reporting UNKNOWN: (pid=50992)
+2026-09-01 11:49:24,719 [INFO] gz_system.main_gz: Dashboard paint loop: 0.0 FPS (main thread)
+2026-09-01 11:49:24,775 [INFO] core.navigation.centering_controller: [CENTERING] KIRMIZI_UCGEN 25/200 dx=+4px dy=+4px d=0.1m ex=+0.0063 ey=+0.0083 (tol +/-0.010) alt_err=+1.94m -> fwd=+0.00 right=+0.00 down=+0.97 m/s
+2026-09-01 11:49:25,283 [INFO] core.navigation.centering_controller: [CENTERING] KIRMIZI_UCGEN 29/200 dx=+5px dy=+3px d=0.1m ex=+0.0078 ey=+0.0063 (tol +/-0.010) alt_err=+1.48m -> fwd=+0.00 right=+0.00 down=+0.74 m/s
+2026-09-01 11:49:25,799 [INFO] core.navigation.centering_controller: [CENTERING] KIRMIZI_UCGEN 33/200 dx=+5px dy=+7px d=0.1m ex=+0.0078 ey=+0.0146 (tol +/-0.010) alt_err=+1.13m -> fwd=-0.15 right=+0.00 down=+0.56 m/s
+2026-09-01 11:49:26,315 [INFO] core.navigation.centering_controller: [CENTERING] KIRMIZI_UCGEN 37/200 dx=+4px dy=+8px d=0.1m ex=+0.0063 ey=+0.0167 (tol +/-0.010) alt_err=+0.85m -> fwd=-0.15 right=+0.00 down=+0.42 m/s
+2026-09-01 11:49:26,560 [INFO] core.detection.vision_runtime: [VISION] detect() calisiyor -- bu karede 1 tespit: ['KIRMIZI_UCGEN']
+QGC port check failed, reporting UNKNOWN: (pid=50992)
+2026-09-01 11:49:26,932 [INFO] core.navigation.centering_controller: [CENTERING] KIRMIZI_UCGEN 42/200 dx=+3px dy=-24px d=0.3m ex=+0.0047 ey=-0.0500 (tol +/-0.010) alt_err=+0.61m -> fwd=+0.15 right=+0.00 down=+0.30 m/s
+2026-09-01 11:49:27,542 [INFO] core.navigation.centering_controller: [CENTERING] KIRMIZI_UCGEN 47/200 dx=+3px dy=-16px d=0.2m ex=+0.0047 ey=-0.0333 (tol +/-0.010) alt_err=+0.45m -> fwd=+0.15 right=+0.00 down=+0.22 m/s
+2026-09-01 11:49:28,132 [INFO] core.navigation.centering_controller: [CENTERING] KIRMIZI_UCGEN 52/200 dx=+3px dy=-2px d=0.0m ex=+0.0047 ey=-0.0042 (tol +/-0.010) alt_err=+0.34m -> fwd=+0.00 right=+0.00 down=+0.17 m/s
+QGC port check failed, reporting UNKNOWN: (pid=50992)
+2026-09-01 11:49:28,715 [INFO] core.navigation.centering_controller: [CENTERING] KIRMIZI_UCGEN 57/200 dx=+3px dy=+24px d=0.2m ex=+0.0047 ey=+0.0500 (tol +/-0.010) alt_err=+0.26m -> fwd=-0.15 right=+0.00 down=+0.13 m/s
+2026-09-01 11:49:29,297 [INFO] core.navigation.centering_controller: Merkezleme tamamlandi. (attempt 62/200, dx=+3px dy=+4px ex=+0.0047 ey=+0.0083 alt_err=+0.19m)
+2026-09-01 11:49:29,300 [INFO] core.navigation.centering_controller: KIRMIZI_UCGEN hedefine merkezleniyor (irtifa hedefi: 0.45m, irtifa bandi +/-0.05m)...
+2026-09-01 11:49:29,301 [INFO] core.navigation.centering_controller: [CENTERING] KIRMIZI_UCGEN 1/200 dx=+3px dy=+4px d=0.0m ex=+0.0047 ey=+0.0083 (tol +/-0.010) alt_err=+4.74m -> fwd=+0.00 right=+0.00 down=+0.15 m/s
+2026-09-01 11:49:29,647 [INFO] core.detection.vision_runtime: [VISION] detect() calisiyor -- bu karede 1 tespit: ['KIRMIZI_UCGEN']
+2026-09-01 11:49:29,743 [INFO] gz_system.main_gz: Dashboard paint loop: 0.0 FPS (main thread)
+2026-09-01 11:49:29,881 [INFO] core.navigation.centering_controller: [CENTERING] KIRMIZI_UCGEN 6/200 dx=+4px dy=-29px d=0.3m ex=+0.0063 ey=-0.0604 (tol +/-0.010) alt_err=+4.58m -> fwd=+0.15 right=+0.00 down=+0.90 m/s
+2026-09-01 11:49:30,467 [INFO] core.navigation.centering_controller: [CENTERING] KIRMIZI_UCGEN 11/200 dx=+4px dy=-16px d=0.1m ex=+0.0063 ey=-0.0333 (tol +/-0.010) alt_err=+4.07m -> fwd=+0.15 right=+0.00 down=+1.65 m/s
+QGC port check failed, reporting UNKNOWN: (pid=50992)
+2026-09-01 11:49:31,057 [INFO] core.navigation.centering_controller: [CENTERING] KIRMIZI_UCGEN 16/200 dx=+6px dy=-3px d=0.0m ex=+0.0094 ey=-0.0063 (tol +/-0.010) alt_err=+3.14m -> fwd=+0.00 right=+0.00 down=+1.57 m/s
+2026-09-01 11:49:31,664 [INFO] core.navigation.centering_controller: [CENTERING] KIRMIZI_UCGEN 21/200 dx=+24px dy=+32px d=0.2m ex=+0.0375 ey=+0.0667 (tol +/-0.010) alt_err=+2.26m -> fwd=-0.12 right=+0.15 down=+1.13 m/s
+2026-09-01 11:49:32,289 [INFO] core.navigation.centering_controller: [CENTERING] KIRMIZI_UCGEN 26/200 dx=+3px dy=+15px d=0.1m ex=+0.0047 ey=+0.0312 (tol +/-0.010) alt_err=+1.60m -> fwd=-0.09 right=+0.00 down=+0.80 m/s
+QGC port check failed, reporting UNKNOWN: (pid=51054)
+2026-09-01 11:49:32,759 [INFO] core.detection.vision_runtime: [VISION] detect() calisiyor -- bu karede 1 tespit: ['KIRMIZI_UCGEN']
+2026-09-01 11:49:32,882 [INFO] core.navigation.centering_controller: [CENTERING] KIRMIZI_UCGEN 31/200 dx=-32px dy=+46px d=0.2m ex=-0.0492 ey=+0.0948 (tol +/-0.010) alt_err=+1.14m -> fwd=-0.14 right=-0.09 down=+0.57 m/s
+2026-09-01 11:49:33,472 [INFO] core.navigation.centering_controller: [CENTERING] KIRMIZI_UCGEN 36/200 dx=-14px dy=+21px d=0.1m ex=-0.0227 ey=+0.0437 (tol +/-0.010) alt_err=+0.82m -> fwd=-0.07 right=-0.08 down=+0.41 m/s
+2026-09-01 11:49:34,053 [INFO] core.navigation.centering_controller: [CENTERING] KIRMIZI_UCGEN 41/200 dx=+6px dy=-8px d=0.0m ex=+0.0086 ey=-0.0177 (tol +/-0.010) alt_err=+0.60m -> fwd=+0.05 right=+0.00 down=+0.30 m/s
+2026-09-01 11:49:34,654 [INFO] core.navigation.centering_controller: [CENTERING] KIRMIZI_UCGEN 46/200 dx=+21px dy=-20px d=0.0m ex=+0.0328 ey=-0.0417 (tol +/-0.010) alt_err=+0.44m -> fwd=+0.06 right=+0.05 down=+0.22 m/s
+QGC port check failed, reporting UNKNOWN: (pid=51054)
+2026-09-01 11:49:34,755 [INFO] gz_system.main_gz: Dashboard paint loop: 0.0 FPS (main thread)
+2026-09-01 11:49:35,242 [INFO] core.navigation.centering_controller: [CENTERING] KIRMIZI_UCGEN 51/200 dx=+0px dy=+4px d=0.0m ex=+0.0008 ey=+0.0083 (tol +/-0.010) alt_err=+0.32m -> fwd=+0.00 right=+0.00 down=+0.16 m/s
+2026-09-01 11:49:35,824 [INFO] core.detection.vision_runtime: [VISION] detect() calisiyor -- bu karede 1 tespit: ['KIRMIZI_UCGEN']
+2026-09-01 11:49:35,826 [INFO] core.navigation.centering_controller: [CENTERING] KIRMIZI_UCGEN 56/200 dx=-22px dy=+36px d=0.1m ex=-0.0352 ey=+0.0750 (tol +/-0.010) alt_err=+0.24m -> fwd=-0.11 right=-0.05 down=+0.12 m/s
+2026-09-01 11:49:36,411 [INFO] core.navigation.centering_controller: [CENTERING] KIRMIZI_UCGEN 61/200 dx=-10px dy=+26px d=0.0m ex=-0.0164 ey=+0.0542 (tol +/-0.010) alt_err=+0.18m -> fwd=-0.08 right=-0.04 down=+0.09 m/s
+QGC port check failed, reporting UNKNOWN: (pid=51054)
+2026-09-01 11:49:37,011 [INFO] core.navigation.centering_controller: [CENTERING] KIRMIZI_UCGEN 66/200 dx=+12px dy=-37px d=0.0m ex=+0.0187 ey=-0.0771 (tol +/-0.010) alt_err=+0.13m -> fwd=+0.12 right=+0.03 down=+0.06 m/s
+2026-09-01 11:49:37,603 [INFO] core.navigation.centering_controller: [CENTERING] KIRMIZI_UCGEN 71/200 dx=+12px dy=-47px d=0.0m ex=+0.0187 ey=-0.0979 (tol +/-0.010) alt_err=+0.09m -> fwd=+0.15 right=+0.03 down=+0.05 m/s
+2026-09-01 11:49:38,194 [INFO] core.navigation.centering_controller: [CENTERING] KIRMIZI_UCGEN 76/200 dx=-14px dy=+52px d=0.1m ex=-0.0227 ey=+0.1094 (tol +/-0.010) alt_err=+0.06m -> fwd=-0.16 right=-0.03 down=+0.03 m/s
+QGC port check failed, reporting UNKNOWN: (pid=51054)
+2026-09-01 11:49:38,784 [INFO] core.navigation.centering_controller: [CENTERING] KIRMIZI_UCGEN 81/200 dx=-24px dy=+60px d=0.1m ex=-0.0383 ey=+0.1240 (tol +/-0.010) alt_err=+0.05m -> fwd=-0.19 right=-0.06 down=+0.02 m/s
+2026-09-01 11:49:38,896 [INFO] core.detection.vision_runtime: [VISION] detect() calisiyor -- bu karede 1 tespit: ['KIRMIZI_UCGEN']
+2026-09-01 11:49:39,368 [INFO] core.navigation.centering_controller: [CENTERING] KIRMIZI_UCGEN 86/200 dx=+14px dy=-40px d=0.0m ex=+0.0227 ey=-0.0833 (tol +/-0.010) alt_err=+0.04m -> fwd=+0.12 right=+0.03 down=+0.02 m/s
+2026-09-01 11:49:39,761 [INFO] gz_system.main_gz: Dashboard paint loop: 0.0 FPS (main thread)
+2026-09-01 11:49:39,948 [INFO] core.navigation.centering_controller: [CENTERING] KIRMIZI_UCGEN 91/200 dx=+39px dy=-66px d=0.1m ex=+0.0609 ey=-0.1385 (tol +/-0.010) alt_err=+0.03m -> fwd=+0.21 right=+0.09 down=+0.01 m/s
+2026-09-01 11:49:40,534 [INFO] core.navigation.centering_controller: [CENTERING] KIRMIZI_UCGEN 96/200 dx=-10px dy=-12px d=0.0m ex=-0.0156 ey=-0.0260 (tol +/-0.010) alt_err=+0.02m -> fwd=+0.04 right=-0.03 down=+0.01 m/s
+QGC port check failed, reporting UNKNOWN: (pid=51054)
+2026-09-01 11:49:41,127 [INFO] core.navigation.centering_controller: [CENTERING] KIRMIZI_UCGEN 101/200 dx=-66px dy=+42px d=0.1m ex=-0.1031 ey=+0.0885 (tol +/-0.010) alt_err=+0.02m -> fwd=-0.13 right=-0.15 down=+0.01 m/s
+2026-09-01 11:49:41,716 [INFO] core.navigation.centering_controller: [CENTERING] KIRMIZI_UCGEN 106/200 dx=-7px dy=+30px d=0.0m ex=-0.0109 ey=+0.0625 (tol +/-0.010) alt_err=+0.01m -> fwd=-0.09 right=-0.03 down=+0.00 m/s
+2026-09-01 11:49:41,952 [INFO] core.detection.vision_runtime: [VISION] detect() calisiyor -- bu karede 1 tespit: ['KIRMIZI_UCGEN']
+2026-09-01 11:49:42,305 [INFO] core.navigation.centering_controller: [CENTERING] KIRMIZI_UCGEN 111/200 dx=+86px dy=-3px d=0.1m ex=+0.1352 ey=-0.0063 (tol +/-0.010) alt_err=+0.00m -> fwd=+0.00 right=+0.20 down=+0.00 m/s
+QGC port check failed, reporting UNKNOWN: (pid=51054)
+2026-09-01 11:49:42,887 [INFO] core.navigation.centering_controller: [CENTERING] KIRMIZI_UCGEN 116/200 dx=+36px dy=-16px d=0.0m ex=+0.0563 ey=-0.0344 (tol +/-0.010) alt_err=+0.00m -> fwd=+0.05 right=+0.08 down=+0.00 m/s
+2026-09-01 11:49:43,462 [INFO] core.navigation.centering_controller: [CENTERING] KIRMIZI_UCGEN 121/200 dx=-99px dy=+0px d=0.1m ex=-0.1547 ey=+0.0000 (tol +/-0.010) alt_err=+0.01m -> fwd=+0.00 right=-0.23 down=+0.01 m/s
+2026-09-01 11:49:44,043 [INFO] core.navigation.centering_controller: [CENTERING] KIRMIZI_UCGEN 126/200 dx=-74px dy=+0px d=0.1m ex=-0.1164 ey=+0.0000 (tol +/-0.010) alt_err=+0.01m -> fwd=+0.00 right=-0.17 down=+0.00 m/s
+2026-09-01 11:49:44,276 [INFO] core.navigation.centering_controller: Merkezleme tamamlandi. (attempt 128/200, dx=-2px dy=+0px ex=-0.0039 ey=+0.0000 alt_err=+0.00m)
+2026-09-01 11:49:44,277 [INFO] core.navigation.centering_controller: [AIM_OFFSET_APPLIED] KIRMIZI_UCGEN: montaj (ileri=0.00, sag=-0.04) m, yon=-0.7 deg -> tutma noktasi (47.3986181, 8.5463106) olarak otelendi (kuzey +0.00, dogu +0.03 m).
+QGC port check failed, reporting UNKNOWN: (pid=51054)
+2026-09-01 11:49:44,772 [INFO] gz_system.main_gz: Dashboard paint loop: 0.0 FPS (main thread)
+2026-09-01 11:49:44,983 [INFO] core.detection.vision_runtime: [VISION] detect() calisiyor -- bu karede 1 tespit: ['KIRMIZI_UCGEN']
+2026-09-01 11:49:46,274 [INFO] core.navigation.centering_controller: [MOUNT_TRANSLATE_DONE] KIRMIZI_UCGEN: kalan 5.0 cm, sure 2.00 s (yakinsadi).
+2026-09-01 11:49:46,275 [WARNING] core.navigation.centering_controller: [LOW_ALT_OPEN_LOOP_DESCENT] KIRMIZI_UCGEN: goruntu 0.44m'de kayboldu -- dondurulmus kestirime (47.3986181, 8.5463106, offset=0.2cm @ 0.45m) gore 0.45m'ye alcalmaya devam.
+2026-09-01 11:49:46,276 [INFO] core.navigation.centering_controller: [LOW_ALT_OPEN_LOOP_DESCENT] KIRMIZI_UCGEN: 0.435m'ye ulasildi (hedef 0.45m).
+2026-09-01 11:49:46,276 [INFO] core.navigation.centering_controller: 0.1m ileri hareket ediliyor (0.3 m/s, 0.3s)...
+2026-09-01 11:49:46,635 [INFO] core.mission.payload_release: [RELEASE_OFFSET] KIRMIZI_UCGEN: {'shape_type': 'KIRMIZI_UCGEN', 'altitude_m': 0.427, 'target_visible': True, 'best_known_offset_cm': 6.67, 'best_known_offset_alt_m': 0.435, 'dx_cm': -3.22, 'dy_cm': -10.6, 'offset_cm': 11.08}
+2026-09-01 11:49:46,635 [INFO] core.mission.payload_release: [MOUNT_VECTOR_MEASURED] KIRMIZI_UCGEN: {'world_dx': -0.0357, 'world_dy': 0.0004, 'gazebo_yaw_deg': 92.21, 'body_forward_m': 0.0018, 'body_right_m': -0.0357} (uygulanan: (0.0, -0.035))
+2026-09-01 11:49:46,635 [INFO] gz_system.gz_payload_actuator: Gazebo DetachableJoint tetikleniyor: /payload/detach/blue
+I0901 11:49:46.636828 13598701 fork_posix.cc:71] Other threads are currently calling into gRPC, skipping fork() handlers
+I0901 11:49:46.694101 13598701 fork_posix.cc:71] Other threads are currently calling into gRPC, skipping fork() handlers
+QGC port check failed, reporting UNKNOWN: (pid=51054)
+I0901 11:49:46.761036 13598701 fork_posix.cc:71] Other threads are currently calling into gRPC, skipping fork() handlers
+I0901 11:49:46.794428 13598701 fork_posix.cc:71] Other threads are currently calling into gRPC, skipping fork() handlers
+I0901 11:49:46.797252 13616709 ev_poll_posix.cc:593] FD from fork parent still in poll list: fd(44, generation: 1)
+I0901 11:49:46.848739 13598701 fork_posix.cc:71] Other threads are currently calling into gRPC, skipping fork() handlers
+2026-09-01 11:49:47,995 [INFO] core.detection.vision_runtime: [VISION] detect() calisiyor -- bu karede 1 tespit: ['KIRMIZI_UCGEN']
+2026-09-01 11:49:48,046 [INFO] gz_system.gz_payload_actuator: Yuk ayrildi (blue), gecikme 1.410 s.
+2026-09-01 11:49:48,046 [INFO] core.mission.payload_release: [PAYLOAD_RELEASED] PAYLOAD 2 RELEASED @0.43m
+QGC port check failed, reporting UNKNOWN: (pid=51054)
+2026-09-01 11:49:49,781 [INFO] gz_system.main_gz: Dashboard paint loop: 0.0 FPS (main thread)
+2026-09-01 11:49:50,048 [INFO] core.mission.payload_release: [PAYLOAD_FINAL_POSE] KIRMIZI_UCGEN: x=11.116 y=71.972 z=0.033 merkeze 3384.9 cm egim 0.1 deg (HEDEF DISINDA)
+2026-09-01 11:49:50,048 [INFO] core.mission.payload_release: Doğrulama işareti aranıyor: MAVI_DIKDORTGEN
+2026-09-01 11:49:50,048 [INFO] core.mission.payload_release: Yük bırakma DOĞRULANDI: MAVI_DIKDORTGEN tespit edildi.
+2026-09-01 11:49:50,048 [INFO] core.navigation.centering_controller: 1.5m irtifasina tirmaniliyor (goruntuden bagimsiz)...
+QGC port check failed, reporting UNKNOWN: (pid=51054)
+2026-09-01 11:49:51,092 [INFO] core.detection.vision_runtime: [VISION] detect() calisiyor -- bu karede 2 tespit: ['KIRMIZI_UCGEN', 'MAVI_DIKDORTGEN']
+2026-09-01 11:49:52,181 [INFO] core.mission.gorev2_orchestrator: SEARCH COMPLETE: MAVI_ALTIGEN ve KIRMIZI_UCGEN ikisi de kaydedildi. Mission kalici olarak sona erdi, Offboard tek yetkili.
+2026-09-01 11:49:52,311 [INFO] core.mission.gorev2_orchestrator: Gorev 2 tamamlandi (Payload Mission 1 + 2 basariyla calisti).
+2026-09-01 11:49:52,311 [INFO] core.mission.master_fsm: Görev 2 akışı bitti, doğrudan Görev 3'e geçiliyor...
+2026-09-01 11:49:52,312 [INFO] core.mission.gorev3_pickup: Görev 3 Faz 1 (Alma) Başlatıldı.
+2026-09-01 11:49:52,312 [INFO] core.mission.gorev3_pickup: Mavi Altıgen konumuna 1.5m irtifada gidiliyor: 47.3983583, 8.5460692
+2026-09-01 11:49:52,312 [INFO] core.navigation.centering_controller: Kayitli GPS konumuna gidiliyor: lat=47.3983583, lon=8.5460692, alt=1.5m
+QGC port check failed, reporting UNKNOWN: (pid=51119)
+2026-09-01 11:49:54,205 [INFO] core.detection.vision_runtime: [VISION] detect() calisiyor -- bu karede 0 tespit: []
+QGC port check failed, reporting UNKNOWN: (pid=51119)
+2026-09-01 11:49:54,806 [INFO] gz_system.main_gz: Dashboard paint loop: 0.0 FPS (main thread)
+QGC port check failed, reporting UNKNOWN: (pid=51119)
+2026-09-01 11:49:57,233 [INFO] core.detection.vision_runtime: [VISION] detect() calisiyor -- bu karede 0 tespit: []
+2026-09-01 11:49:57,766 [INFO] core.mission.gorev3_pickup: Kırmızı Dikdörtgenin uzun kenarına dik hizalanılıyor: 2.1 -> 3.9 derece
+QGC port check failed, reporting UNKNOWN: (pid=51119)
+2026-09-01 11:49:59,809 [INFO] gz_system.main_gz: Dashboard paint loop: 0.0 FPS (main thread)
+2026-09-01 11:49:59,821 [INFO] core.mission.gorev3_pickup: 1.2m irtifada (gorus dostu) hedefe ortalanıyor...
+2026-09-01 11:49:59,821 [INFO] core.navigation.centering_controller: KIRMIZI_DIKDORTGEN hedefine merkezleniyor (irtifa hedefi: 1.2m, irtifa bandi +/-0.30m)...
+2026-09-01 11:49:59,824 [INFO] core.navigation.centering_controller: [CENTERING] KIRMIZI_DIKDORTGEN 1/200 dx=+213px dy=-229px d=0.9m ex=+0.3328 ey=-0.4771 (tol +/-0.010) alt_err=+0.37m -> fwd=+0.15 right=+0.15 down=+0.15 m/s
+2026-09-01 11:50:00,284 [INFO] core.detection.vision_runtime: [VISION] detect() calisiyor -- bu karede 2 tespit: ['MAVI_ALTIGEN', 'KIRMIZI_DIKDORTGEN']
+2026-09-01 11:50:00,401 [INFO] core.navigation.centering_controller: [CENTERING] KIRMIZI_DIKDORTGEN 6/200 dx=+244px dy=-265px d=1.0m ex=+0.3812 ey=-0.5521 (tol +/-0.010) alt_err=+0.31m -> fwd=+0.83 right=+0.57 down=+0.15 m/s
+QGC port check failed, reporting UNKNOWN: (pid=51119)
+2026-09-01 11:50:00,975 [WARNING] core.navigation.centering_controller: [CENTERING] KIRMIZI_DIKDORTGEN 11/200 hedef kayboldu (feed canli, hedef bu karede yok)
+2026-09-01 11:50:01,558 [WARNING] core.navigation.centering_controller: [CENTERING] KIRMIZI_DIKDORTGEN 16/200 hedef kayboldu (feed canli, hedef bu karede yok)
+2026-09-01 11:50:02,141 [INFO] core.navigation.centering_controller: [CENTERING] KIRMIZI_DIKDORTGEN 21/200 dx=-91px dy=+266px d=0.7m ex=-0.1422 ey=+0.5542 (tol +/-0.010) alt_err=+0.14m -> fwd=-0.75 right=-0.21 down=+0.07 m/s
+2026-09-01 11:50:02,719 [INFO] core.navigation.centering_controller: [CENTERING] KIRMIZI_DIKDORTGEN 26/200 dx=-105px dy=+291px d=0.7m ex=-0.1641 ey=+0.6062 (tol +/-0.010) alt_err=+0.09m -> fwd=-0.91 right=-0.25 down=+0.04 m/s
+QGC port check failed, reporting UNKNOWN: (pid=51119)
+2026-09-01 11:50:03,310 [INFO] core.detection.vision_runtime: [VISION] detect() calisiyor -- bu karede 2 tespit: ['MAVI_ALTIGEN', 'KIRMIZI_DIKDORTGEN']
+2026-09-01 11:50:03,313 [INFO] core.navigation.centering_controller: [CENTERING] KIRMIZI_DIKDORTGEN 31/200 dx=-83px dy=+108px d=0.3m ex=-0.1297 ey=+0.2250 (tol +/-0.010) alt_err=+0.07m -> fwd=-0.34 right=-0.19 down=+0.04 m/s
+2026-09-01 11:50:03,899 [INFO] core.navigation.centering_controller: [CENTERING] KIRMIZI_DIKDORTGEN 36/200 dx=-81px dy=-27px d=0.2m ex=-0.1266 ey=-0.0563 (tol +/-0.010) alt_err=+0.06m -> fwd=+0.08 right=-0.19 down=+0.03 m/s
+2026-09-01 11:50:04,483 [INFO] core.navigation.centering_controller: [CENTERING] KIRMIZI_DIKDORTGEN 41/200 dx=-65px dy=-16px d=0.2m ex=-0.1016 ey=-0.0333 (tol +/-0.010) alt_err=+0.06m -> fwd=+0.06 right=-0.15 down=+0.03 m/s
+QGC port check failed, reporting UNKNOWN: (pid=51119)
+2026-09-01 11:50:04,819 [INFO] gz_system.main_gz: Dashboard paint loop: 0.0 FPS (main thread)
+2026-09-01 11:50:05,117 [INFO] core.navigation.centering_controller: [CENTERING] KIRMIZI_DIKDORTGEN 46/200 dx=-49px dy=+60px d=0.2m ex=-0.0766 ey=+0.1250 (tol +/-0.010) alt_err=+0.04m -> fwd=-0.19 right=-0.11 down=+0.02 m/s
+2026-09-01 11:50:05,718 [INFO] core.navigation.centering_controller: [CENTERING] KIRMIZI_DIKDORTGEN 51/200 dx=-37px dy=+112px d=0.3m ex=-0.0578 ey=+0.2333 (tol +/-0.010) alt_err=+0.02m -> fwd=-0.35 right=-0.09 down=+0.01 m/s
+2026-09-01 11:50:06,329 [INFO] core.detection.vision_runtime: [VISION] detect() calisiyor -- bu karede 2 tespit: ['MAVI_ALTIGEN', 'KIRMIZI_DIKDORTGEN']
+2026-09-01 11:50:06,332 [INFO] core.navigation.centering_controller: [CENTERING] KIRMIZI_DIKDORTGEN 56/200 dx=-34px dy=+77px d=0.2m ex=-0.0531 ey=+0.1604 (tol +/-0.010) alt_err=+0.01m -> fwd=-0.24 right=-0.08 down=+0.00 m/s
+QGC port check failed, reporting UNKNOWN: (pid=51119)
+2026-09-01 11:50:06,925 [INFO] core.navigation.centering_controller: [CENTERING] KIRMIZI_DIKDORTGEN 61/200 dx=-34px dy=+17px d=0.1m ex=-0.0531 ey=+0.0354 (tol +/-0.010) alt_err=-0.00m -> fwd=-0.05 right=-0.08 down=-0.00 m/s
+2026-09-01 11:50:07,528 [INFO] core.navigation.centering_controller: [CENTERING] KIRMIZI_DIKDORTGEN 66/200 dx=-27px dy=+0px d=0.1m ex=-0.0422 ey=+0.0000 (tol +/-0.010) alt_err=-0.01m -> fwd=+0.00 right=-0.07 down=-0.00 m/s
+2026-09-01 11:50:08,138 [INFO] core.navigation.centering_controller: [CENTERING] KIRMIZI_DIKDORTGEN 71/200 dx=-20px dy=+26px d=0.1m ex=-0.0312 ey=+0.0542 (tol +/-0.010) alt_err=+0.00m -> fwd=-0.08 right=-0.07 down=+0.00 m/s
+2026-09-01 11:50:08,749 [INFO] core.navigation.centering_controller: [CENTERING] KIRMIZI_DIKDORTGEN 76/200 dx=-14px dy=+40px d=0.1m ex=-0.0219 ey=+0.0833 (tol +/-0.010) alt_err=+0.01m -> fwd=-0.12 right=-0.07 down=+0.00 m/s
+QGC port check failed, reporting UNKNOWN: (pid=51179)
+2026-09-01 11:50:09,280 [INFO] core.navigation.centering_controller: [CENTERING] KIRMIZI_DIKDORTGEN 80/200 dx=-11px dy=+33px d=0.1m ex=-0.0172 ey=+0.0688 (tol +/-0.010) alt_err=+0.00m -> fwd=-0.10 right=-0.07 down=+0.00 m/s
+2026-09-01 11:50:09,395 [INFO] core.detection.vision_runtime: [VISION] detect() calisiyor -- bu karede 2 tespit: ['MAVI_ALTIGEN', 'KIRMIZI_DIKDORTGEN']
+2026-09-01 11:50:09,851 [INFO] gz_system.main_gz: Dashboard paint loop: 0.0 FPS (main thread)
+2026-09-01 11:50:09,872 [INFO] core.navigation.centering_controller: [CENTERING] KIRMIZI_DIKDORTGEN 85/200 dx=-4px dy=+14px d=0.0m ex=-0.0063 ey=+0.0292 (tol +/-0.010) alt_err=-0.00m -> fwd=-0.05 right=+0.00 down=-0.00 m/s
+2026-09-01 11:50:10,451 [INFO] core.navigation.centering_controller: [CENTERING] KIRMIZI_DIKDORTGEN 90/200 dx=+6px dy=+6px d=0.0m ex=+0.0094 ey=+0.0125 (tol +/-0.010) alt_err=-0.00m -> fwd=-0.05 right=+0.00 down=-0.00 m/s
+QGC port check failed, reporting UNKNOWN: (pid=51119)
+2026-09-01 11:50:11,040 [INFO] core.navigation.centering_controller: [CENTERING] KIRMIZI_DIKDORTGEN 95/200 dx=-3px dy=+6px d=0.0m ex=-0.0047 ey=+0.0125 (tol +/-0.010) alt_err=+0.00m -> fwd=-0.05 right=+0.00 down=+0.00 m/s
+2026-09-01 11:50:11,619 [INFO] core.navigation.centering_controller: [CENTERING] KIRMIZI_DIKDORTGEN 100/200 dx=-8px dy=+6px d=0.0m ex=-0.0125 ey=+0.0125 (tol +/-0.010) alt_err=-0.00m -> fwd=-0.05 right=-0.07 down=-0.00 m/s
+2026-09-01 11:50:12,195 [INFO] core.navigation.centering_controller: [CENTERING] KIRMIZI_DIKDORTGEN 105/200 dx=-13px dy=-1px d=0.0m ex=-0.0203 ey=-0.0021 (tol +/-0.010) alt_err=+0.00m -> fwd=+0.00 right=-0.07 down=+0.00 m/s
+2026-09-01 11:50:12,428 [INFO] core.detection.vision_runtime: [VISION] detect() calisiyor -- bu karede 2 tespit: ['MAVI_ALTIGEN', 'KIRMIZI_DIKDORTGEN']
+2026-09-01 11:50:12,545 [INFO] core.navigation.centering_controller: Merkezleme tamamlandi. (attempt 108/200, dx=-6px dy=-4px ex=-0.0094 ey=-0.0083 alt_err=+0.01m)
+2026-09-01 11:50:12,775 [INFO] core.mission.gorev3_pickup: Kanca hedefin uzerine getiriliyor (govde +0.175m ileri)...
+QGC port check failed, reporting UNKNOWN: (pid=51119)
+QGC port check failed, reporting UNKNOWN: (pid=51119)
+2026-09-01 11:50:14,886 [INFO] gz_system.main_gz: Dashboard paint loop: 0.0 FPS (main thread)
+2026-09-01 11:50:15,542 [INFO] core.detection.vision_runtime: [VISION] detect() calisiyor -- bu karede 2 tespit: ['MAVI_ALTIGEN', 'KIRMIZI_DIKDORTGEN']
+2026-09-01 11:50:16,823 [INFO] core.mission.gorev3_pickup: 0.9m hizalama irtifasina dikey iniliyor...
+QGC port check failed, reporting UNKNOWN: (pid=51119)
+2026-09-01 11:50:18,638 [INFO] core.detection.vision_runtime: [VISION] detect() calisiyor -- bu karede 2 tespit: ['MAVI_ALTIGEN', 'KIRMIZI_DIKDORTGEN']
+QGC port check failed, reporting UNKNOWN: (pid=51119)
+2026-09-01 11:50:19,891 [INFO] gz_system.main_gz: Dashboard paint loop: 0.0 FPS (main thread)
+QGC port check failed, reporting UNKNOWN: (pid=51119)
+2026-09-01 11:50:21,658 [INFO] core.detection.vision_runtime: [VISION] detect() calisiyor -- bu karede 2 tespit: ['MAVI_ALTIGEN', 'KIRMIZI_DIKDORTGEN']
+2026-09-01 11:50:21,899 [INFO] core.mission.gorev3_pickup: [HIZA_KALIBRASYON] goruntu=6.2 cm  gercek=6.1 cm  irtifa=0.98 m
+2026-09-01 11:50:21,899 [WARNING] core.mission.gorev3_pickup: [GORUNTU] kanca yukun ortasinda DEGIL: sapma 6.2 cm (tol 5 cm) -- alma yine de denenecek; oturma kapisi gercek kanca pozundan kendi kararini veriyor.
+QGC port check failed, reporting UNKNOWN: (pid=51119)
+2026-09-01 11:50:24,019 [INFO] core.mission.visual_alignment: [GORSEL_HIZA_TANI] it=1 alt_m=0.967 focal_px=539.94 depth_img_m=0.9339 depth_tel_m=0.947 depth_used_m=0.9339 depth_src=image u=654.92 v=542.4 radius_px=13.44 long_px=83.1 conf=1.0 method=payload-topface-deshadow yaw_deg=3.95 body_fwd_m=-0.0229 body_right_m=0.0258 hook_off_n=-0.09 hook_off_e=-0.0047 err_raw_m=0.0714 truth_lateral_m=0.0728
+2026-09-01 11:50:24,150 [INFO] core.mission.visual_alignment: [GORSEL_HIZA_TANI] it=2 alt_m=0.965 focal_px=539.94 depth_img_m=0.9303 depth_tel_m=0.945 depth_used_m=0.9303 depth_src=image u=654.37 v=542.16 radius_px=13.49 long_px=83.41 conf=1.0 method=payload-topface-deshadow yaw_deg=3.95 body_fwd_m=-0.0221 body_right_m=0.0248 hook_off_n=-0.09 hook_off_e=-0.0048 err_raw_m=0.0719 truth_lateral_m=0.0726
+2026-09-01 11:50:24,281 [INFO] core.mission.visual_alignment: [GORSEL_HIZA_TANI] it=3 alt_m=0.964 focal_px=539.94 depth_img_m=0.9303 depth_tel_m=0.944 depth_used_m=0.9303 depth_src=image u=654.05 v=542.13 radius_px=13.49 long_px=83.41 conf=1.0 method=payload-topface-deshadow yaw_deg=3.95 body_fwd_m=-0.0221 body_right_m=0.0242 hook_off_n=-0.0899 hook_off_e=-0.0049 err_raw_m=0.0717 truth_lateral_m=0.0723
+2026-09-01 11:50:24,697 [INFO] core.detection.vision_runtime: [VISION] detect() calisiyor -- bu karede 2 tespit: ['MAVI_ALTIGEN', 'KIRMIZI_DIKDORTGEN']
+QGC port check failed, reporting UNKNOWN: (pid=51119)
+2026-09-01 11:50:24,918 [INFO] gz_system.main_gz: Dashboard paint loop: 0.0 FPS (main thread)
+2026-09-01 11:50:25,517 [INFO] core.mission.visual_alignment: [GORSEL_HIZA_TANI] it=4 alt_m=0.971 focal_px=539.94 depth_img_m=0.9404 depth_tel_m=0.951 depth_used_m=0.9404 depth_src=image u=653.78 v=558.36 radius_px=13.35 long_px=82.53 conf=0.998 method=payload-topface-deshadow yaw_deg=3.93 body_fwd_m=-0.0515 body_right_m=0.024 hook_off_n=-0.0895 hook_off_e=-0.0046 err_raw_m=0.0442 truth_lateral_m=0.0473
+2026-09-01 11:50:26,791 [INFO] core.mission.visual_alignment: [GORSEL_HIZA_TANI] it=5 alt_m=0.965 focal_px=539.94 depth_img_m=0.9203 depth_tel_m=0.945 depth_used_m=0.9203 depth_src=image u=639.83 v=578.51 radius_px=13.64 long_px=84.31 conf=0.999 method=payload-topface-deshadow yaw_deg=3.95 body_fwd_m=-0.0829 body_right_m=-0.0003 hook_off_n=-0.0901 hook_off_e=-0.0048 err_raw_m=0.0075 truth_lateral_m=0.0127
+QGC port check failed, reporting UNKNOWN: (pid=51119)
+2026-09-01 11:50:27,709 [INFO] core.detection.vision_runtime: [VISION] detect() calisiyor -- bu karede 2 tespit: ['MAVI_ALTIGEN', 'KIRMIZI_DIKDORTGEN']
+2026-09-01 11:50:28,064 [INFO] core.mission.visual_alignment: [GORSEL_HIZA_TANI] it=6 alt_m=0.96 focal_px=539.94 depth_img_m=0.8989 depth_tel_m=0.94 depth_used_m=0.8989 depth_src=image u=633.72 v=583.49 radius_px=13.97 long_px=86.29 conf=1.0 method=payload-topface-deshadow yaw_deg=3.94 body_fwd_m=-0.0873 body_right_m=-0.0104 hook_off_n=-0.0897 hook_off_e=-0.0047 err_raw_m=0.0122 truth_lateral_m=0.0109
+2026-09-01 11:50:28,065 [INFO] core.mission.visual_alignment: [GORSEL_HIZA] yakinsadi: 11.9 mm, 6 iterasyon, 6 tespit, 0.091 m hareket
+2026-09-01 11:50:28,065 [INFO] core.mission.gorev3_pickup: [GORSEL_HIZA] converged: son hata=11.9 mm, 6 iterasyon, 6 tespit, 0.091 m hareket
+2026-09-01 11:50:28,065 [INFO] core.mission.gorev3_pickup: [GORSEL_HIZA] yuva GORUNTUDEN olculdu: NED=(68.406, -7.009)
+2026-09-01 11:50:28,065 [INFO] core.mission.gorev3_pickup: Vinc salinacak (hedef irtifa 0.30 m icin) -- ARAC HALA 0.96 m'de, kanca serbest asili kalacak.
+2026-09-01 11:50:28,065 [INFO] gz_system.gz_payload_actuator: [HOOK] vinc salimi: 0.330 m  (irtifa=0.300 m, guverte=0.070, zincir ofseti=0.060, pay=0.040)
+2026-09-01 11:50:28,065 [INFO] gz_system.gz_payload_actuator: [HOOK] vinc -> 0.33 m
+I0901 11:50:28.066457 13598701 fork_posix.cc:71] Other threads are currently calling into gRPC, skipping fork() handlers
+QGC port check failed, reporting UNKNOWN: (pid=51119)
+2026-09-01 11:50:29,919 [INFO] gz_system.main_gz: Dashboard paint loop: 0.0 FPS (main thread)
+2026-09-01 11:50:30,739 [INFO] core.detection.vision_runtime: [VISION] detect() calisiyor -- bu karede 1 tespit: ['KIRMIZI_DIKDORTGEN']
+QGC port check failed, reporting UNKNOWN: (pid=51119)
+QGC port check failed, reporting UNKNOWN: (pid=51119)
+2026-09-01 11:50:33,098 [INFO] core.mission.gorev3_pickup: [SON_DUZELTME] 1/6 yanal 3.7 mm -- hedefin icinde.
+2026-09-01 11:50:33,098 [INFO] core.mission.gorev3_pickup: [KANCA_DENGE] INIS ONCESI irtifa=0.953 m kanca_ofset=(-0.0910, -0.0045)
+2026-09-01 11:50:33,098 [INFO] core.mission.gorev3_pickup: Hizalandi -- 0.30 m alma irtifasina SAF DIKEY iniliyor (yanal hareket yok).
+2026-09-01 11:50:33,098 [INFO] core.mission.gorev3_pickup: [KANCA_IZ] t=0.00 alt=0.953 off_n=-0.0910 off_e=-0.0045 nose_z=+0.6486
+2026-09-01 11:50:33,199 [INFO] core.mission.gorev3_pickup: [KANCA_IZ] t=0.10 alt=0.952 off_n=-0.0916 off_e=-0.0041 nose_z=+0.6422
+2026-09-01 11:50:33,299 [INFO] core.mission.gorev3_pickup: [KANCA_IZ] t=0.20 alt=0.943 off_n=-0.0919 off_e=-0.0038 nose_z=+0.6101
+2026-09-01 11:50:33,402 [INFO] core.mission.gorev3_pickup: [KANCA_IZ] t=0.30 alt=0.908 off_n=-0.0920 off_e=-0.0036 nose_z=+0.5736
+2026-09-01 11:50:33,521 [INFO] core.mission.gorev3_pickup: [KANCA_IZ] t=0.42 alt=0.796 off_n=-0.0918 off_e=-0.0036 nose_z=+0.5172
+2026-09-01 11:50:33,638 [INFO] core.mission.gorev3_pickup: [KANCA_IZ] t=0.54 alt=0.738 off_n=-0.0915 off_e=-0.0038 nose_z=+0.4585
+2026-09-01 11:50:33,757 [INFO] core.detection.vision_runtime: [VISION] detect() calisiyor -- bu karede 1 tespit: ['KIRMIZI_DIKDORTGEN']
+2026-09-01 11:50:33,757 [INFO] core.mission.gorev3_pickup: [KANCA_IZ] t=0.66 alt=0.690 off_n=-0.0914 off_e=-0.0040 nose_z=+0.4060
+2026-09-01 11:50:33,872 [INFO] core.mission.gorev3_pickup: [KANCA_IZ] t=0.77 alt=0.646 off_n=-0.0915 off_e=-0.0044 nose_z=+0.3625
+2026-09-01 11:50:33,989 [INFO] core.mission.gorev3_pickup: [KANCA_IZ] t=0.89 alt=0.611 off_n=-0.0915 off_e=-0.0046 nose_z=+0.3257
+2026-09-01 11:50:34,110 [INFO] core.mission.gorev3_pickup: [KANCA_IZ] t=1.01 alt=0.580 off_n=-0.0914 off_e=-0.0048 nose_z=+0.2938
+2026-09-01 11:50:34,226 [INFO] core.mission.gorev3_pickup: [KANCA_IZ] t=1.13 alt=0.534 off_n=-0.0913 off_e=-0.0051 nose_z=+0.2652
+2026-09-01 11:50:34,349 [INFO] core.mission.gorev3_pickup: [KANCA_IZ] t=1.25 alt=0.518 off_n=-0.0911 off_e=-0.0053 nose_z=+0.2460
+2026-09-01 11:50:34,468 [INFO] core.mission.gorev3_pickup: [KANCA_IZ] t=1.37 alt=0.502 off_n=-0.0908 off_e=-0.0055 nose_z=+0.2240
+2026-09-01 11:50:34,590 [INFO] core.mission.gorev3_pickup: [KANCA_IZ] t=1.49 alt=0.490 off_n=-0.0904 off_e=-0.0054 nose_z=+0.2066
+2026-09-01 11:50:34,711 [INFO] core.mission.gorev3_pickup: [KANCA_IZ] t=1.61 alt=0.478 off_n=-0.0900 off_e=-0.0050 nose_z=+0.1916
+2026-09-01 11:50:34,828 [INFO] core.mission.gorev3_pickup: [KANCA_IZ] t=1.73 alt=0.457 off_n=-0.0897 off_e=-0.0043 nose_z=+0.1784
+QGC port check failed, reporting UNKNOWN: (pid=51119)
+2026-09-01 11:50:34,919 [INFO] gz_system.main_gz: Dashboard paint loop: 0.0 FPS (main thread)
+2026-09-01 11:50:34,946 [INFO] core.mission.gorev3_pickup: [KANCA_IZ] t=1.85 alt=0.447 off_n=-0.0895 off_e=-0.0034 nose_z=+0.1663
+2026-09-01 11:50:35,062 [INFO] core.mission.gorev3_pickup: [KANCA_IZ] t=1.96 alt=0.437 off_n=-0.0895 off_e=-0.0026 nose_z=+0.1559
+2026-09-01 11:50:35,181 [INFO] core.mission.gorev3_pickup: [KANCA_IZ] t=2.08 alt=0.428 off_n=-0.0897 off_e=-0.0024 nose_z=+0.1471
+2026-09-01 11:50:35,298 [INFO] core.mission.gorev3_pickup: [KANCA_IZ] t=2.20 alt=0.420 off_n=-0.0897 off_e=-0.0027 nose_z=+0.1399
+2026-09-01 11:50:35,424 [INFO] core.mission.gorev3_pickup: [KANCA_IZ] t=2.33 alt=0.414 off_n=-0.0895 off_e=-0.0034 nose_z=+0.1339
+2026-09-01 11:50:35,541 [INFO] core.mission.gorev3_pickup: [KANCA_IZ] t=2.44 alt=0.404 off_n=-0.0891 off_e=-0.0042 nose_z=+0.1282
+2026-09-01 11:50:35,656 [INFO] core.mission.gorev3_pickup: [KANCA_IZ] t=2.56 alt=0.400 off_n=-0.0888 off_e=-0.0045 nose_z=+0.1239
+2026-09-01 11:50:35,778 [INFO] core.mission.gorev3_pickup: [KANCA_IZ] t=2.68 alt=0.397 off_n=-0.0885 off_e=-0.0045 nose_z=+0.1209
+2026-09-01 11:50:35,893 [INFO] core.mission.gorev3_pickup: [KANCA_IZ] t=2.79 alt=0.394 off_n=-0.0885 off_e=-0.0043 nose_z=+0.1172
+2026-09-01 11:50:36,011 [INFO] core.mission.gorev3_pickup: [KANCA_IZ] t=2.91 alt=0.390 off_n=-0.0887 off_e=-0.0042 nose_z=+0.1147
+2026-09-01 11:50:36,125 [INFO] core.mission.gorev3_pickup: [KANCA_IZ] t=3.03 alt=0.388 off_n=-0.0892 off_e=-0.0042 nose_z=+0.1123
+2026-09-01 11:50:36,238 [INFO] core.mission.gorev3_pickup: [KANCA_IZ] t=3.14 alt=0.386 off_n=-0.0896 off_e=-0.0043 nose_z=+0.1102
+2026-09-01 11:50:36,351 [INFO] core.mission.gorev3_pickup: [KANCA_IZ] t=3.25 alt=0.384 off_n=-0.0899 off_e=-0.0045 nose_z=+0.1086
+2026-09-01 11:50:36,466 [INFO] core.mission.gorev3_pickup: [KANCA_IZ] t=3.37 alt=0.382 off_n=-0.0899 off_e=-0.0046 nose_z=+0.1071
+2026-09-01 11:50:36,579 [INFO] core.mission.gorev3_pickup: [KANCA_IZ] t=3.48 alt=0.380 off_n=-0.0899 off_e=-0.0045 nose_z=+0.1056
+2026-09-01 11:50:36,697 [INFO] core.mission.gorev3_pickup: [KANCA_IZ] t=3.60 alt=0.377 off_n=-0.0900 off_e=-0.0044 nose_z=+0.1046
+2026-09-01 11:50:36,811 [INFO] core.detection.vision_runtime: [VISION] detect() calisiyor -- bu karede 0 tespit: []
+2026-09-01 11:50:36,811 [INFO] core.mission.gorev3_pickup: [KANCA_IZ] t=3.71 alt=0.376 off_n=-0.0901 off_e=-0.0043 nose_z=+0.1038
+QGC port check failed, reporting UNKNOWN: (pid=51119)
+2026-09-01 11:50:36,924 [INFO] core.mission.gorev3_pickup: [KANCA_IZ] t=3.83 alt=0.375 off_n=-0.0903 off_e=-0.0043 nose_z=+0.1032
+2026-09-01 11:50:37,035 [INFO] core.mission.gorev3_pickup: [KANCA_IZ] t=3.94 alt=0.375 off_n=-0.0904 off_e=-0.0044 nose_z=+0.1028
+2026-09-01 11:50:37,148 [INFO] core.mission.gorev3_pickup: [KANCA_IZ] t=4.05 alt=0.375 off_n=-0.0903 off_e=-0.0046 nose_z=+0.1023
+2026-09-01 11:50:37,260 [INFO] core.mission.gorev3_pickup: [KANCA_IZ] t=4.16 alt=0.375 off_n=-0.0898 off_e=-0.0045 nose_z=+0.1018
+2026-09-01 11:50:37,372 [INFO] core.mission.gorev3_pickup: [KANCA_IZ] t=4.27 alt=0.376 off_n=-0.0893 off_e=-0.0043 nose_z=+0.1014
+2026-09-01 11:50:37,484 [INFO] core.mission.gorev3_pickup: [KANCA_IZ] t=4.39 alt=0.376 off_n=-0.0887 off_e=-0.0041 nose_z=+0.1008
+2026-09-01 11:50:37,598 [INFO] core.mission.gorev3_pickup: [KANCA_IZ] t=4.50 alt=0.377 off_n=-0.0884 off_e=-0.0040 nose_z=+0.1000
+2026-09-01 11:50:37,711 [INFO] core.mission.gorev3_pickup: [KANCA_IZ] t=4.61 alt=0.377 off_n=-0.0885 off_e=-0.0040 nose_z=+0.0993
+2026-09-01 11:50:37,839 [INFO] core.mission.gorev3_pickup: [KANCA_IZ] t=4.74 alt=0.379 off_n=-0.0888 off_e=-0.0041 nose_z=+0.0985
+2026-09-01 11:50:37,957 [INFO] core.mission.gorev3_pickup: [KANCA_IZ] t=4.86 alt=0.379 off_n=-0.0893 off_e=-0.0042 nose_z=+0.0972
+2026-09-01 11:50:38,070 [INFO] core.mission.gorev3_pickup: [KANCA_IZ] t=4.97 alt=0.380 off_n=-0.0897 off_e=-0.0041 nose_z=+0.0959
+2026-09-01 11:50:38,184 [INFO] core.mission.gorev3_pickup: [KANCA_IZ] t=5.09 alt=0.380 off_n=-0.0897 off_e=-0.0040 nose_z=+0.0943
+2026-09-01 11:50:38,298 [INFO] core.mission.gorev3_pickup: [KANCA_IZ] t=5.20 alt=0.380 off_n=-0.0896 off_e=-0.0040 nose_z=+0.0929
+2026-09-01 11:50:38,412 [INFO] core.mission.gorev3_pickup: [KANCA_IZ] t=5.31 alt=0.379 off_n=-0.0895 off_e=-0.0041 nose_z=+0.0912
+2026-09-01 11:50:38,526 [INFO] core.mission.gorev3_pickup: [KANCA_IZ] t=5.43 alt=0.378 off_n=-0.0895 off_e=-0.0044 nose_z=+0.0894
+2026-09-01 11:50:38,639 [INFO] core.mission.gorev3_pickup: [KANCA_IZ] t=5.54 alt=0.377 off_n=-0.0897 off_e=-0.0046 nose_z=+0.0878
+2026-09-01 11:50:38,751 [INFO] core.mission.gorev3_pickup: [KANCA_IZ] t=5.65 alt=0.375 off_n=-0.0899 off_e=-0.0045 nose_z=+0.0863
+2026-09-01 11:50:38,864 [INFO] core.mission.gorev3_pickup: [KANCA_IZ] t=5.77 alt=0.374 off_n=-0.0901 off_e=-0.0042 nose_z=+0.0851
+QGC port check failed, reporting UNKNOWN: (pid=51119)
+2026-09-01 11:50:38,976 [INFO] core.mission.gorev3_pickup: [KANCA_IZ] t=5.88 alt=0.373 off_n=-0.0902 off_e=-0.0037 nose_z=+0.0839
+2026-09-01 11:50:39,090 [INFO] core.mission.gorev3_pickup: [KANCA_IZ] t=5.99 alt=0.371 off_n=-0.0903 off_e=-0.0033 nose_z=+0.0831
+2026-09-01 11:50:39,202 [INFO] core.mission.gorev3_pickup: [KANCA_IZ] t=6.10 alt=0.370 off_n=-0.0904 off_e=-0.0028 nose_z=+0.0822
+2026-09-01 11:50:39,202 [INFO] core.mission.gorev3_pickup: Yük alma mekanizması aktifleşiyor...
+2026-09-01 11:50:39,202 [INFO] core.mission.gorev3_pickup: [KANCA_DENGE] INIS SONRASI irtifa=0.370 m kanca_ofset=(-0.0904, -0.0028)  ->  DEGISIM=(+0.5, +1.6) mm  |1.7 mm|
+2026-09-01 11:50:39,203 [INFO] gz_system.gz_payload_actuator: [HOOK] alma denemesi 1/3
+2026-09-01 11:50:39,203 [INFO] gz_system.gz_payload_actuator: [HOOK] vinc salimi: 0.400 m  (irtifa=0.370 m, guverte=0.070, zincir ofseti=0.060, pay=0.040)
+2026-09-01 11:50:39,203 [INFO] gz_system.gz_payload_actuator: [HOOK] vinc -> 0.40 m
+I0901 11:50:39.203949 13598701 fork_posix.cc:71] Other threads are currently calling into gRPC, skipping fork() handlers
+2026-09-01 11:50:39,317 [INFO] core.mission.gorev3_pickup: [KANCA_IZ] t=6.22 alt=0.369 off_n=-0.0904 off_e=-0.0027 nose_z=+0.0816
+2026-09-01 11:50:39,431 [INFO] core.mission.gorev3_pickup: [KANCA_IZ] t=6.33 alt=0.367 off_n=-0.0903 off_e=-0.0029 nose_z=+0.0813
+2026-09-01 11:50:39,544 [INFO] core.mission.gorev3_pickup: [KANCA_IZ] t=6.44 alt=0.366 off_n=-0.0901 off_e=-0.0038 nose_z=+0.0812
+2026-09-01 11:50:39,656 [INFO] core.mission.gorev3_pickup: [KANCA_IZ] t=6.56 alt=0.366 off_n=-0.0901 off_e=-0.0048 nose_z=+0.0812
+2026-09-01 11:50:39,771 [INFO] core.mission.gorev3_pickup: [KANCA_IZ] t=6.67 alt=0.366 off_n=-0.0900 off_e=-0.0058 nose_z=+0.0814
+2026-09-01 11:50:39,883 [INFO] core.detection.vision_runtime: [VISION] detect() calisiyor -- bu karede 0 tespit: []
+2026-09-01 11:50:39,883 [INFO] core.mission.gorev3_pickup: [KANCA_IZ] t=6.78 alt=0.366 off_n=-0.0897 off_e=-0.0060 nose_z=+0.0816
+2026-09-01 11:50:39,929 [INFO] gz_system.main_gz: Dashboard paint loop: 0.0 FPS (main thread)
+2026-09-01 11:50:39,998 [INFO] core.mission.gorev3_pickup: [KANCA_IZ] t=6.90 alt=0.366 off_n=-0.0894 off_e=-0.0055 nose_z=+0.0820
+2026-09-01 11:50:40,110 [INFO] core.mission.gorev3_pickup: [KANCA_IZ] t=7.01 alt=0.366 off_n=-0.0893 off_e=-0.0046 nose_z=+0.0823
+2026-09-01 11:50:40,224 [INFO] core.mission.gorev3_pickup: [KANCA_IZ] t=7.13 alt=0.366 off_n=-0.0895 off_e=-0.0039 nose_z=+0.0827
+2026-09-01 11:50:40,239 [INFO] gz_system.gz_payload_actuator: [HOOK] APPROACHING  lat=  27.2mm ins=   -7.5mm tilt=  0.1deg v=  infm/s age=0.01s  [lateral(27.2mm>10.2mm), too_high(-7.5mm<-4.0mm), rel_speed(inf>0.05m/s)]
+2026-09-01 11:50:40,337 [INFO] core.mission.gorev3_pickup: [KANCA_IZ] t=7.24 alt=0.369 off_n=-0.0860 off_e=-0.0036 nose_z=+0.0750
+2026-09-01 11:50:40,449 [INFO] core.mission.gorev3_pickup: [KANCA_IZ] t=7.35 alt=0.378 off_n=-0.0825 off_e=-0.0036 nose_z=+0.0765
+2026-09-01 11:50:40,567 [INFO] core.mission.gorev3_pickup: [KANCA_IZ] t=7.47 alt=0.385 off_n=-0.0922 off_e=-0.0047 nose_z=+0.0808
+2026-09-01 11:50:40,678 [INFO] core.mission.gorev3_pickup: [KANCA_IZ] t=7.58 alt=0.386 off_n=-0.1008 off_e=-0.0053 nose_z=+0.0804
+2026-09-01 11:50:40,791 [INFO] core.mission.gorev3_pickup: [KANCA_IZ] t=7.69 alt=0.384 off_n=-0.0994 off_e=-0.0052 nose_z=+0.0785
+QGC port check failed, reporting UNKNOWN: (pid=51253)
+2026-09-01 11:50:40,904 [INFO] core.mission.gorev3_pickup: [KANCA_IZ] t=7.81 alt=0.379 off_n=-0.0902 off_e=-0.0044 nose_z=+0.0757
+2026-09-01 11:50:41,016 [INFO] core.mission.gorev3_pickup: [KANCA_IZ] t=7.92 alt=0.371 off_n=-0.0901 off_e=-0.0047 nose_z=+0.0757
+2026-09-01 11:50:41,131 [INFO] core.mission.gorev3_pickup: [KANCA_IZ] t=8.03 alt=0.369 off_n=-0.0902 off_e=-0.0053 nose_z=+0.0758
+2026-09-01 11:50:41,242 [INFO] core.mission.gorev3_pickup: [KANCA_IZ] t=8.14 alt=0.366 off_n=-0.0897 off_e=-0.0060 nose_z=+0.0759
+2026-09-01 11:50:41,242 [INFO] gz_system.gz_payload_actuator: [HOOK] APPROACHING  lat=  39.5mm ins=   -0.1mm tilt=  0.1deg v=0.001m/s age=0.02s  [lateral(39.5mm>10.2mm)]
+2026-09-01 11:50:41,354 [INFO] core.mission.gorev3_pickup: [KANCA_IZ] t=8.26 alt=0.364 off_n=-0.0883 off_e=-0.0070 nose_z=+0.0761
+2026-09-01 11:50:41,467 [INFO] core.mission.gorev3_pickup: [KANCA_IZ] t=8.37 alt=0.362 off_n=-0.0865 off_e=-0.0078 nose_z=+0.0762
+2026-09-01 11:50:41,579 [INFO] core.mission.gorev3_pickup: [KANCA_IZ] t=8.48 alt=0.360 off_n=-0.0855 off_e=-0.0072 nose_z=+0.0766
+2026-09-01 11:50:41,692 [INFO] core.mission.gorev3_pickup: [KANCA_IZ] t=8.59 alt=0.357 off_n=-0.0868 off_e=-0.0050 nose_z=+0.0773
+2026-09-01 11:50:41,804 [INFO] core.mission.gorev3_pickup: [KANCA_IZ] t=8.71 alt=0.356 off_n=-0.0890 off_e=-0.0030 nose_z=+0.0783
+2026-09-01 11:50:41,917 [INFO] core.mission.gorev3_pickup: [KANCA_IZ] t=8.82 alt=0.355 off_n=-0.0918 off_e=-0.0018 nose_z=+0.0797
+2026-09-01 11:50:42,027 [INFO] core.mission.gorev3_pickup: [KANCA_IZ] t=8.93 alt=0.356 off_n=-0.0933 off_e=-0.0025 nose_z=+0.0812
+2026-09-01 11:50:42,141 [INFO] core.mission.gorev3_pickup: [KANCA_IZ] t=9.04 alt=0.357 off_n=-0.0934 off_e=-0.0041 nose_z=+0.0827
+2026-09-01 11:50:42,255 [INFO] core.mission.gorev3_pickup: [KANCA_IZ] t=9.16 alt=0.358 off_n=-0.0925 off_e=-0.0063 nose_z=+0.0843
+2026-09-01 11:50:42,256 [INFO] gz_system.gz_payload_actuator: [HOOK] APPROACHING  lat=  14.5mm ins=   -8.3mm tilt=  0.7deg v=0.032m/s age=0.02s  [lateral(14.5mm>10.2mm), too_high(-8.3mm<-4.0mm)]
+2026-09-01 11:50:42,367 [INFO] core.mission.gorev3_pickup: [KANCA_IZ] t=9.27 alt=0.359 off_n=-0.0918 off_e=-0.0072 nose_z=+0.0857
+2026-09-01 11:50:42,479 [INFO] core.mission.gorev3_pickup: [KANCA_IZ] t=9.38 alt=0.361 off_n=-0.0916 off_e=-0.0068 nose_z=+0.0867
+2026-09-01 11:50:42,595 [INFO] core.mission.gorev3_pickup: [KANCA_IZ] t=9.50 alt=0.362 off_n=-0.0920 off_e=-0.0054 nose_z=+0.0875
+2026-09-01 11:50:42,708 [INFO] core.mission.gorev3_pickup: [KANCA_IZ] t=9.61 alt=0.364 off_n=-0.0923 off_e=-0.0037 nose_z=+0.0881
+2026-09-01 11:50:42,821 [INFO] core.mission.gorev3_pickup: [KANCA_IZ] t=9.72 alt=0.364 off_n=-0.0923 off_e=-0.0027 nose_z=+0.0885
+QGC port check failed, reporting UNKNOWN: (pid=51253)
+2026-09-01 11:50:42,934 [INFO] core.detection.vision_runtime: [VISION] detect() calisiyor -- bu karede 1 tespit: ['KIRMIZI_DIKDORTGEN']
+2026-09-01 11:50:42,935 [INFO] core.mission.gorev3_pickup: [KANCA_IZ] t=9.84 alt=0.365 off_n=-0.0919 off_e=-0.0023 nose_z=+0.0887
+2026-09-01 11:50:43,048 [INFO] core.mission.gorev3_pickup: [KANCA_IZ] t=9.95 alt=0.365 off_n=-0.0912 off_e=-0.0027 nose_z=+0.0889
+2026-09-01 11:50:43,162 [INFO] core.mission.gorev3_pickup: [KANCA_IZ] t=10.06 alt=0.365 off_n=-0.0906 off_e=-0.0031 nose_z=+0.0891
+2026-09-01 11:50:43,274 [INFO] core.mission.gorev3_pickup: [KANCA_IZ] t=10.18 alt=0.366 off_n=-0.0904 off_e=-0.0031 nose_z=+0.0892
+2026-09-01 11:50:43,274 [INFO] gz_system.gz_payload_actuator: [HOOK] APPROACHING  lat=  44.9mm ins=  -13.2mm tilt=  0.1deg v=0.026m/s age=0.02s  [lateral(44.9mm>10.2mm), too_high(-13.2mm<-4.0mm)]
+2026-09-01 11:50:43,390 [INFO] core.mission.gorev3_pickup: [KANCA_IZ] t=10.29 alt=0.367 off_n=-0.0905 off_e=-0.0028 nose_z=+0.0892
+2026-09-01 11:50:43,503 [INFO] core.mission.gorev3_pickup: [KANCA_IZ] t=10.40 alt=0.367 off_n=-0.0908 off_e=-0.0020 nose_z=+0.0891
+2026-09-01 11:50:43,616 [INFO] core.mission.gorev3_pickup: [KANCA_IZ] t=10.52 alt=0.367 off_n=-0.0911 off_e=-0.0015 nose_z=+0.0890
+2026-09-01 11:50:43,727 [INFO] core.mission.gorev3_pickup: [KANCA_IZ] t=10.63 alt=0.367 off_n=-0.0911 off_e=-0.0015 nose_z=+0.0888
+2026-09-01 11:50:43,839 [INFO] core.mission.gorev3_pickup: [KANCA_IZ] t=10.74 alt=0.367 off_n=-0.0909 off_e=-0.0021 nose_z=+0.0887
+2026-09-01 11:50:43,951 [INFO] core.mission.gorev3_pickup: [KANCA_IZ] t=10.85 alt=0.367 off_n=-0.0905 off_e=-0.0030 nose_z=+0.0885
+2026-09-01 11:50:44,065 [INFO] core.mission.gorev3_pickup: [KANCA_IZ] t=10.97 alt=0.367 off_n=-0.0901 off_e=-0.0036 nose_z=+0.0883
+2026-09-01 11:50:44,179 [INFO] core.mission.gorev3_pickup: [KANCA_IZ] t=11.08 alt=0.367 off_n=-0.0897 off_e=-0.0041 nose_z=+0.0882
+2026-09-01 11:50:44,293 [INFO] core.mission.gorev3_pickup: [KANCA_IZ] t=11.19 alt=0.368 off_n=-0.0895 off_e=-0.0042 nose_z=+0.0880
+2026-09-01 11:50:44,293 [INFO] gz_system.gz_payload_actuator: [HOOK] APPROACHING  lat=  44.1mm ins=  -12.0mm tilt=  0.2deg v=0.032m/s age=0.02s  [lateral(44.1mm>10.2mm), too_high(-12.0mm<-4.0mm)]
+2026-09-01 11:50:44,404 [INFO] core.mission.gorev3_pickup: [KANCA_IZ] t=11.31 alt=0.369 off_n=-0.0895 off_e=-0.0041 nose_z=+0.0878
+2026-09-01 11:50:44,519 [INFO] core.mission.gorev3_pickup: [KANCA_IZ] t=11.42 alt=0.369 off_n=-0.0896 off_e=-0.0040 nose_z=+0.0874
+2026-09-01 11:50:44,633 [INFO] core.mission.gorev3_pickup: [KANCA_IZ] t=11.53 alt=0.369 off_n=-0.0898 off_e=-0.0039 nose_z=+0.0869
+2026-09-01 11:50:44,747 [INFO] core.mission.gorev3_pickup: [KANCA_IZ] t=11.65 alt=0.368 off_n=-0.0898 off_e=-0.0041 nose_z=+0.0864
+2026-09-01 11:50:44,858 [INFO] core.mission.gorev3_pickup: [KANCA_IZ] t=11.76 alt=0.368 off_n=-0.0896 off_e=-0.0043 nose_z=+0.0860
+QGC port check failed, reporting UNKNOWN: (pid=51264)
+2026-09-01 11:50:44,953 [INFO] gz_system.main_gz: Dashboard paint loop: 0.0 FPS (main thread)
+2026-09-01 11:50:44,972 [INFO] core.mission.gorev3_pickup: [KANCA_IZ] t=11.87 alt=0.369 off_n=-0.0894 off_e=-0.0045 nose_z=+0.0856
+2026-09-01 11:50:45,085 [INFO] core.mission.gorev3_pickup: [KANCA_IZ] t=11.99 alt=0.370 off_n=-0.0893 off_e=-0.0045 nose_z=+0.0852
+2026-09-01 11:50:45,197 [INFO] core.mission.gorev3_pickup: [KANCA_IZ] t=12.10 alt=0.370 off_n=-0.0897 off_e=-0.0043 nose_z=+0.0848
+2026-09-01 11:50:45,315 [INFO] core.mission.gorev3_pickup: [KANCA_IZ] t=12.22 alt=0.372 off_n=-0.0905 off_e=-0.0040 nose_z=+0.0840
+2026-09-01 11:50:45,316 [INFO] gz_system.gz_payload_actuator: [HOOK] APPROACHING  lat=  31.4mm ins=   -8.0mm tilt=  0.0deg v=0.023m/s age=0.03s  [lateral(31.4mm>10.2mm), too_high(-8.0mm<-4.0mm)]
+2026-09-01 11:50:45,429 [INFO] core.mission.gorev3_pickup: [KANCA_IZ] t=12.33 alt=0.376 off_n=-0.0913 off_e=-0.0037 nose_z=+0.0830
+2026-09-01 11:50:45,544 [INFO] core.mission.gorev3_pickup: [KANCA_IZ] t=12.45 alt=0.378 off_n=-0.0916 off_e=-0.0036 nose_z=+0.0816
+2026-09-01 11:50:45,654 [INFO] core.mission.gorev3_pickup: [KANCA_IZ] t=12.56 alt=0.380 off_n=-0.0914 off_e=-0.0039 nose_z=+0.0798
+2026-09-01 11:50:45,768 [INFO] core.mission.gorev3_pickup: [KANCA_IZ] t=12.67 alt=0.380 off_n=-0.0911 off_e=-0.0043 nose_z=+0.0780
+2026-09-01 11:50:45,882 [INFO] core.mission.gorev3_pickup: [KANCA_IZ] t=12.78 alt=0.380 off_n=-0.0904 off_e=-0.0045 nose_z=+0.0761
+2026-09-01 11:50:45,994 [INFO] core.detection.vision_runtime: [VISION] detect() calisiyor -- bu karede 0 tespit: []
+2026-09-01 11:50:45,994 [INFO] core.mission.gorev3_pickup: [KANCA_IZ] t=12.90 alt=0.379 off_n=-0.0904 off_e=-0.0029 nose_z=+0.0760
+2026-09-01 11:50:46,107 [INFO] core.mission.gorev3_pickup: [KANCA_IZ] t=13.01 alt=0.378 off_n=-0.0915 off_e=-0.0021 nose_z=+0.0760
+2026-09-01 11:50:46,218 [INFO] core.mission.gorev3_pickup: [KANCA_IZ] t=13.12 alt=0.376 off_n=-0.0933 off_e=-0.0017 nose_z=+0.0760
+2026-09-01 11:50:46,332 [INFO] core.mission.gorev3_pickup: [KANCA_IZ] t=13.23 alt=0.375 off_n=-0.0953 off_e=-0.0019 nose_z=+0.0760
+2026-09-01 11:50:46,333 [INFO] gz_system.gz_payload_actuator: [HOOK] APPROACHING  lat=  27.2mm ins=   -0.0mm tilt=  0.0deg v=0.000m/s age=0.03s  [lateral(27.2mm>10.2mm)]
+2026-09-01 11:50:46,445 [INFO] core.mission.gorev3_pickup: [KANCA_IZ] t=13.35 alt=0.375 off_n=-0.0980 off_e=-0.0026 nose_z=+0.0761
+2026-09-01 11:50:46,558 [INFO] core.mission.gorev3_pickup: [KANCA_IZ] t=13.46 alt=0.375 off_n=-0.1008 off_e=-0.0039 nose_z=+0.0762
+2026-09-01 11:50:46,670 [INFO] core.mission.gorev3_pickup: [KANCA_IZ] t=13.57 alt=0.375 off_n=-0.1035 off_e=-0.0057 nose_z=+0.0763
+2026-09-01 11:50:46,783 [INFO] core.mission.gorev3_pickup: [KANCA_IZ] t=13.68 alt=0.374 off_n=-0.1055 off_e=-0.0078 nose_z=+0.0765
+2026-09-01 11:50:46,895 [INFO] core.mission.gorev3_pickup: [KANCA_IZ] t=13.80 alt=0.373 off_n=-0.1070 off_e=-0.0103 nose_z=+0.0767
+QGC port check failed, reporting UNKNOWN: (pid=51264)
+2026-09-01 11:50:47,007 [INFO] core.mission.gorev3_pickup: [KANCA_IZ] t=13.91 alt=0.373 off_n=-0.1079 off_e=-0.0124 nose_z=+0.0768
+2026-09-01 11:50:47,120 [INFO] core.mission.gorev3_pickup: [KANCA_IZ] t=14.02 alt=0.373 off_n=-0.1083 off_e=-0.0149 nose_z=+0.0770
+2026-09-01 11:50:47,234 [INFO] core.mission.gorev3_pickup: [KANCA_IZ] t=14.13 alt=0.373 off_n=-0.1080 off_e=-0.0170 nose_z=+0.0770
+2026-09-01 11:50:47,349 [INFO] core.mission.gorev3_pickup: [KANCA_IZ] t=14.25 alt=0.373 off_n=-0.1075 off_e=-0.0186 nose_z=+0.0771
+2026-09-01 11:50:47,350 [INFO] gz_system.gz_payload_actuator: [HOOK] APPROACHING  lat=  27.3mm ins=   -1.1mm tilt=  4.6deg v=0.003m/s age=0.04s  [lateral(27.3mm>10.2mm)]
+2026-09-01 11:50:47,460 [INFO] core.mission.gorev3_pickup: [KANCA_IZ] t=14.36 alt=0.374 off_n=-0.1065 off_e=-0.0201 nose_z=+0.0770
+2026-09-01 11:50:47,572 [INFO] core.mission.gorev3_pickup: [KANCA_IZ] t=14.47 alt=0.375 off_n=-0.1053 off_e=-0.0215 nose_z=+0.0770
+2026-09-01 11:50:47,686 [INFO] core.mission.gorev3_pickup: [KANCA_IZ] t=14.59 alt=0.376 off_n=-0.1042 off_e=-0.0224 nose_z=+0.0769
+2026-09-01 11:50:47,798 [INFO] core.mission.gorev3_pickup: [KANCA_IZ] t=14.70 alt=0.377 off_n=-0.1030 off_e=-0.0232 nose_z=+0.0768
+2026-09-01 11:50:47,912 [INFO] core.mission.gorev3_pickup: [KANCA_IZ] t=14.81 alt=0.378 off_n=-0.1020 off_e=-0.0240 nose_z=+0.0767
+2026-09-01 11:50:48,024 [INFO] core.mission.gorev3_pickup: [KANCA_IZ] t=14.93 alt=0.380 off_n=-0.1008 off_e=-0.0249 nose_z=+0.0766
+2026-09-01 11:50:48,136 [INFO] core.mission.gorev3_pickup: [KANCA_IZ] t=15.04 alt=0.385 off_n=-0.1000 off_e=-0.0260 nose_z=+0.0764
+2026-09-01 11:50:48,250 [INFO] core.mission.gorev3_pickup: [KANCA_IZ] t=15.15 alt=0.387 off_n=-0.0988 off_e=-0.0273 nose_z=+0.0763
+2026-09-01 11:50:48,361 [INFO] core.mission.gorev3_pickup: [KANCA_IZ] t=15.26 alt=0.389 off_n=-0.0978 off_e=-0.0290 nose_z=+0.0761
+2026-09-01 11:50:48,361 [INFO] gz_system.gz_payload_actuator: [HOOK] APPROACHING  lat=  27.2mm ins=   -0.1mm tilt=  0.5deg v=0.009m/s age=0.01s  [lateral(27.2mm>10.2mm)]
+2026-09-01 11:50:48,474 [INFO] core.mission.gorev3_pickup: [KANCA_IZ] t=15.38 alt=0.390 off_n=-0.0971 off_e=-0.0308 nose_z=+0.0760
+2026-09-01 11:50:48,586 [INFO] core.mission.gorev3_pickup: [KANCA_IZ] t=15.49 alt=0.392 off_n=-0.0965 off_e=-0.0335 nose_z=+0.0760
+2026-09-01 11:50:48,700 [INFO] core.mission.gorev3_pickup: [KANCA_IZ] t=15.60 alt=0.393 off_n=-0.0962 off_e=-0.0361 nose_z=+0.0760
+2026-09-01 11:50:48,817 [INFO] core.mission.gorev3_pickup: [KANCA_IZ] t=15.72 alt=0.397 off_n=-0.0961 off_e=-0.0389 nose_z=+0.0760
+QGC port check failed, reporting UNKNOWN: (pid=51264)
+2026-09-01 11:50:48,932 [INFO] core.mission.gorev3_pickup: [KANCA_IZ] t=15.83 alt=0.399 off_n=-0.0962 off_e=-0.0412 nose_z=+0.0760
+2026-09-01 11:50:49,048 [INFO] core.detection.vision_runtime: [VISION] detect() calisiyor -- bu karede 1 tespit: ['KIRMIZI_UCGEN']
+2026-09-01 11:50:49,048 [INFO] core.mission.gorev3_pickup: [KANCA_IZ] t=15.95 alt=0.401 off_n=-0.0963 off_e=-0.0439 nose_z=+0.0760
+2026-09-01 11:50:49,161 [INFO] core.mission.gorev3_pickup: [KANCA_IZ] t=16.06 alt=0.403 off_n=-0.0965 off_e=-0.0465 nose_z=+0.0760
+2026-09-01 11:50:49,274 [INFO] core.mission.gorev3_pickup: [KANCA_IZ] t=16.18 alt=0.404 off_n=-0.0966 off_e=-0.0486 nose_z=+0.0760
+2026-09-01 11:50:49,391 [INFO] core.mission.gorev3_pickup: [KANCA_IZ] t=16.29 alt=0.404 off_n=-0.0965 off_e=-0.0501 nose_z=+0.0760
+2026-09-01 11:50:49,391 [INFO] gz_system.gz_payload_actuator: [HOOK] APPROACHING  lat=  27.1mm ins=   -0.1mm tilt=  0.0deg v=0.000m/s age=0.02s  [lateral(27.1mm>10.2mm)]
+2026-09-01 11:50:49,505 [INFO] core.mission.gorev3_pickup: [KANCA_IZ] t=16.41 alt=0.403 off_n=-0.0963 off_e=-0.0508 nose_z=+0.0760
+2026-09-01 11:50:49,618 [INFO] core.mission.gorev3_pickup: [KANCA_IZ] t=16.52 alt=0.402 off_n=-0.0962 off_e=-0.0509 nose_z=+0.0760
+2026-09-01 11:50:49,732 [INFO] core.mission.gorev3_pickup: [KANCA_IZ] t=16.63 alt=0.401 off_n=-0.0964 off_e=-0.0500 nose_z=+0.0761
+2026-09-01 11:50:49,845 [INFO] core.mission.gorev3_pickup: [KANCA_IZ] t=16.75 alt=0.401 off_n=-0.0969 off_e=-0.0482 nose_z=+0.0763
+2026-09-01 11:50:49,963 [INFO] core.mission.gorev3_pickup: [KANCA_IZ] t=16.86 alt=0.401 off_n=-0.0979 off_e=-0.0460 nose_z=+0.0761
+2026-09-01 11:50:49,986 [INFO] gz_system.main_gz: Dashboard paint loop: 0.0 FPS (main thread)
+2026-09-01 11:50:50,076 [INFO] core.mission.gorev3_pickup: [KANCA_IZ] t=16.98 alt=0.400 off_n=-0.0989 off_e=-0.0419 nose_z=+0.0770
+2026-09-01 11:50:50,192 [INFO] core.mission.gorev3_pickup: [KANCA_IZ] t=17.09 alt=0.399 off_n=-0.0995 off_e=-0.0387 nose_z=+0.0777
+2026-09-01 11:50:50,308 [INFO] core.mission.gorev3_pickup: [KANCA_IZ] t=17.21 alt=0.397 off_n=-0.0997 off_e=-0.0354 nose_z=+0.0786
+2026-09-01 11:50:50,426 [INFO] core.mission.gorev3_pickup: [KANCA_IZ] t=17.33 alt=0.394 off_n=-0.0992 off_e=-0.0336 nose_z=+0.0793
+2026-09-01 11:50:50,426 [INFO] gz_system.gz_payload_actuator: [HOOK] APPROACHING  lat=  28.4mm ins=   -3.4mm tilt= 15.1deg v=0.032m/s age=0.03s  [lateral(28.4mm>10.2mm), tilt(15.1deg>15.0deg)]
+2026-09-01 11:50:50,540 [INFO] core.mission.gorev3_pickup: [KANCA_IZ] t=17.44 alt=0.388 off_n=-0.0979 off_e=-0.0338 nose_z=+0.0799
+2026-09-01 11:50:50,656 [INFO] core.mission.gorev3_pickup: [KANCA_IZ] t=17.56 alt=0.385 off_n=-0.0958 off_e=-0.0358 nose_z=+0.0803
+2026-09-01 11:50:50,774 [INFO] core.mission.gorev3_pickup: [KANCA_IZ] t=17.67 alt=0.383 off_n=-0.0929 off_e=-0.0394 nose_z=+0.0807
+2026-09-01 11:50:50,886 [INFO] core.mission.gorev3_pickup: [KANCA_IZ] t=17.79 alt=0.380 off_n=-0.0896 off_e=-0.0442 nose_z=+0.0804
+QGC port check failed, reporting UNKNOWN: (pid=51264)
+2026-09-01 11:50:50,999 [INFO] core.mission.gorev3_pickup: [KANCA_IZ] t=17.90 alt=0.378 off_n=-0.0863 off_e=-0.0482 nose_z=+0.0804
+2026-09-01 11:50:51,115 [INFO] core.mission.gorev3_pickup: [KANCA_IZ] t=18.02 alt=0.376 off_n=-0.0828 off_e=-0.0510 nose_z=+0.0803
+2026-09-01 11:50:51,231 [INFO] core.mission.gorev3_pickup: [KANCA_IZ] t=18.13 alt=0.372 off_n=-0.0792 off_e=-0.0529 nose_z=+0.0808
+2026-09-01 11:50:51,350 [INFO] core.mission.gorev3_pickup: [KANCA_IZ] t=18.25 alt=0.370 off_n=-0.0763 off_e=-0.0535 nose_z=+0.0812
+2026-09-01 11:50:51,462 [INFO] core.mission.gorev3_pickup: [KANCA_IZ] t=18.36 alt=0.367 off_n=-0.0739 off_e=-0.0535 nose_z=+0.0816
+2026-09-01 11:50:51,463 [INFO] gz_system.gz_payload_actuator: [HOOK] APPROACHING  lat=  26.8mm ins=   -5.6mm tilt= 38.5deg v=0.022m/s age=0.02s  [lateral(26.8mm>10.2mm), too_high(-5.6mm<-4.0mm), tilt(38.5deg>15.0deg)]
+2026-09-01 11:50:51,576 [INFO] core.mission.gorev3_pickup: [KANCA_IZ] t=18.48 alt=0.365 off_n=-0.0724 off_e=-0.0534 nose_z=+0.0819
+2026-09-01 11:50:51,690 [INFO] core.mission.gorev3_pickup: [KANCA_IZ] t=18.59 alt=0.362 off_n=-0.0711 off_e=-0.0533 nose_z=+0.0821
+2026-09-01 11:50:51,803 [INFO] core.mission.gorev3_pickup: [KANCA_IZ] t=18.70 alt=0.360 off_n=-0.0700 off_e=-0.0531 nose_z=+0.0823
+2026-09-01 11:50:51,919 [INFO] core.mission.gorev3_pickup: [KANCA_IZ] t=18.82 alt=0.357 off_n=-0.0690 off_e=-0.0529 nose_z=+0.0825
+2026-09-01 11:50:52,036 [INFO] core.mission.gorev3_pickup: [KANCA_IZ] t=18.94 alt=0.356 off_n=-0.0679 off_e=-0.0525 nose_z=+0.0826
+2026-09-01 11:50:52,149 [INFO] core.detection.vision_runtime: [VISION] detect() calisiyor -- bu karede 1 tespit: ['KIRMIZI_DIKDORTGEN']
+2026-09-01 11:50:52,151 [INFO] core.mission.gorev3_pickup: [KANCA_IZ] t=19.05 alt=0.357 off_n=-0.0666 off_e=-0.0519 nose_z=+0.0827
+2026-09-01 11:50:52,269 [INFO] core.mission.gorev3_pickup: [KANCA_IZ] t=19.17 alt=0.357 off_n=-0.0654 off_e=-0.0510 nose_z=+0.0827
+2026-09-01 11:50:52,269 [INFO] gz_system.gz_payload_actuator: [KANCA_DENGE] oturma penceresi ortalama kanca_ofset=(-0.0923, -0.0192)  (212 ornek)
+2026-09-01 11:50:52,269 [WARNING] gz_system.gz_payload_actuator: [HOOK] OTURMADI (12.0 s). En iyi ESZAMANLI ornek: lat=  24.3mm ins=   -3.8mm tilt=  2.9deg v=0.037m/s age=0.01s (1 kapi ihlali). CAPTURE_CANDIDATE ornegi: 0/212. Kapi retleri: lateral=212, too_high=97, tilt=32, rel_speed=16. Sinirlar: yanal<=10.2 mm, dwell 0.30 s.
+2026-09-01 11:50:52,269 [WARNING] gz_system.gz_payload_actuator: [HOOK] oturma dogrulanmadi (12.0s) -- /hook/attach YAYINLANMADI, vinc cekiliyor, tekrar denenecek
+2026-09-01 11:50:52,269 [INFO] gz_system.gz_payload_actuator: [HOOK] vinc -> 0.00 m
+I0901 11:50:52.270484 13598701 fork_posix.cc:71] Other threads are currently calling into gRPC, skipping fork() handlers
+2026-09-01 11:50:52,387 [INFO] core.mission.gorev3_pickup: [KANCA_IZ] t=19.29 alt=0.358 off_n=-0.0642 off_e=-0.0497 nose_z=+0.0820
+2026-09-01 11:50:52,505 [INFO] core.mission.gorev3_pickup: [KANCA_IZ] t=19.41 alt=0.359 off_n=-0.0629 off_e=-0.0476 nose_z=+0.0819
+2026-09-01 11:50:52,620 [INFO] core.mission.gorev3_pickup: [KANCA_IZ] t=19.52 alt=0.359 off_n=-0.0618 off_e=-0.0448 nose_z=+0.0817
+2026-09-01 11:50:52,764 [INFO] core.mission.gorev3_pickup: [KANCA_IZ] t=19.66 alt=0.359 off_n=-0.0609 off_e=-0.0415 nose_z=+0.0816
+2026-09-01 11:50:52,883 [INFO] core.mission.gorev3_pickup: [KANCA_IZ] t=19.78 alt=0.360 off_n=-0.0602 off_e=-0.0365 nose_z=+0.0817
+QGC port check failed, reporting UNKNOWN: (pid=51264)
+2026-09-01 11:50:53,007 [INFO] core.mission.gorev3_pickup: [KANCA_IZ] t=19.91 alt=0.360 off_n=-0.0599 off_e=-0.0324 nose_z=+0.0818
+2026-09-01 11:50:53,126 [INFO] core.mission.gorev3_pickup: [KANCA_IZ] t=20.03 alt=0.360 off_n=-0.0599 off_e=-0.0280 nose_z=+0.0818
+2026-09-01 11:50:53,241 [INFO] core.mission.gorev3_pickup: [KANCA_IZ] t=20.14 alt=0.359 off_n=-0.0604 off_e=-0.0232 nose_z=+0.0819
+2026-09-01 11:50:53,362 [INFO] core.mission.gorev3_pickup: [KANCA_IZ] t=20.26 alt=0.358 off_n=-0.0613 off_e=-0.0188 nose_z=+0.0819
+2026-09-01 11:50:53,479 [INFO] core.mission.gorev3_pickup: [KANCA_IZ] t=20.38 alt=0.355 off_n=-0.0781 off_e=+0.0058 nose_z=+0.1964
+2026-09-01 11:50:53,595 [INFO] core.mission.gorev3_pickup: [KANCA_IZ] t=20.50 alt=0.351 off_n=-0.1161 off_e=+0.0074 nose_z=+0.2488
+2026-09-01 11:50:53,713 [INFO] core.mission.gorev3_pickup: [KANCA_IZ] t=20.61 alt=0.346 off_n=-0.1531 off_e=-0.0144 nose_z=+0.3032
+2026-09-01 11:50:53,826 [INFO] core.mission.gorev3_pickup: [KANCA_IZ] t=20.73 alt=0.343 off_n=-0.1536 off_e=-0.0551 nose_z=+0.3584
+2026-09-01 11:50:53,944 [INFO] core.mission.gorev3_pickup: [KANCA_IZ] t=20.84 alt=0.339 off_n=-0.1261 off_e=-0.0674 nose_z=+0.3913
+2026-09-01 11:50:54,058 [INFO] core.mission.gorev3_pickup: [KANCA_IZ] t=20.96 alt=0.335 off_n=-0.0841 off_e=-0.0499 nose_z=+0.3875
+2026-09-01 11:50:54,172 [INFO] core.mission.gorev3_pickup: [KANCA_IZ] t=21.07 alt=0.335 off_n=-0.0480 off_e=-0.0117 nose_z=+0.3826
+2026-09-01 11:50:54,285 [INFO] core.mission.gorev3_pickup: [KANCA_IZ] t=21.19 alt=0.335 off_n=-0.0417 off_e=+0.0184 nose_z=+0.3817
+2026-09-01 11:50:54,340 [INFO] core.mission.gorev3_pickup: [YENIDEN_HIZA] deneme 2 oncesi, kanca havada -- duzeltme yeniden kosuluyor
+2026-09-01 11:50:54,340 [INFO] core.mission.gorev3_pickup: [SON_DUZELTME] 1/6 yanal 46.8 mm -> (kuzey -0.003, dogu -0.023)  | kanca_ofset=(-0.0530, +0.0318) arac_ned=(68.4652, -6.9940) kanca_mutlak=(68.4122, -6.9622)
+2026-09-01 11:50:54,399 [INFO] core.mission.gorev3_pickup: [KANCA_IZ] t=21.30 alt=0.334 off_n=-0.0626 off_e=+0.0338 nose_z=+0.3762
+2026-09-01 11:50:54,514 [INFO] core.mission.gorev3_pickup: [KANCA_IZ] t=21.41 alt=0.334 off_n=-0.0959 off_e=+0.0220 nose_z=+0.3710
+2026-09-01 11:50:54,628 [INFO] core.mission.gorev3_pickup: [KANCA_IZ] t=21.53 alt=0.334 off_n=-0.1150 off_e=+0.0005 nose_z=+0.3703
+2026-09-01 11:50:54,741 [INFO] core.mission.gorev3_pickup: [KANCA_IZ] t=21.64 alt=0.333 off_n=-0.1163 off_e=-0.0222 nose_z=+0.3713
+2026-09-01 11:50:54,854 [INFO] core.mission.gorev3_pickup: [KANCA_IZ] t=21.76 alt=0.334 off_n=-0.0985 off_e=-0.0284 nose_z=+0.3712
+QGC port check failed, reporting UNKNOWN: (pid=51264)
+2026-09-01 11:50:54,968 [INFO] core.mission.gorev3_pickup: [KANCA_IZ] t=21.87 alt=0.334 off_n=-0.0798 off_e=-0.0201 nose_z=+0.3714
+2026-09-01 11:50:54,997 [INFO] gz_system.main_gz: Dashboard paint loop: 0.0 FPS (main thread)
+2026-09-01 11:50:55,081 [INFO] core.mission.gorev3_pickup: [KANCA_IZ] t=21.98 alt=0.335 off_n=-0.0665 off_e=-0.0022 nose_z=+0.3731
+2026-09-01 11:50:55,193 [INFO] core.detection.vision_runtime: [VISION] detect() calisiyor -- bu karede 1 tespit: ['KIRMIZI_DIKDORTGEN']
+2026-09-01 11:50:55,193 [INFO] core.mission.gorev3_pickup: [KANCA_IZ] t=22.09 alt=0.335 off_n=-0.0690 off_e=+0.0113 nose_z=+0.3749
+2026-09-01 11:50:55,305 [INFO] core.mission.gorev3_pickup: [KANCA_IZ] t=22.21 alt=0.335 off_n=-0.0829 off_e=+0.0135 nose_z=+0.3759
+2026-09-01 11:50:55,416 [INFO] core.mission.gorev3_pickup: [KANCA_IZ] t=22.32 alt=0.336 off_n=-0.0981 off_e=+0.0049 nose_z=+0.3773
+2026-09-01 11:50:55,529 [INFO] core.mission.gorev3_pickup: [KANCA_IZ] t=22.43 alt=0.336 off_n=-0.1050 off_e=-0.0061 nose_z=+0.3791
+2026-09-01 11:50:55,640 [INFO] core.mission.gorev3_pickup: [KANCA_IZ] t=22.54 alt=0.337 off_n=-0.1030 off_e=-0.0152 nose_z=+0.3811
+2026-09-01 11:50:55,752 [INFO] core.mission.gorev3_pickup: [KANCA_IZ] t=22.65 alt=0.338 off_n=-0.0927 off_e=-0.0164 nose_z=+0.3829
+2026-09-01 11:50:55,866 [INFO] core.mission.gorev3_pickup: [KANCA_IZ] t=22.77 alt=0.339 off_n=-0.0837 off_e=-0.0114 nose_z=+0.3845
+2026-09-01 11:50:55,977 [INFO] core.mission.gorev3_pickup: [KANCA_IZ] t=22.88 alt=0.340 off_n=-0.0778 off_e=-0.0025 nose_z=+0.3868
+2026-09-01 11:50:56,091 [INFO] core.mission.gorev3_pickup: [KANCA_IZ] t=22.99 alt=0.343 off_n=-0.0800 off_e=+0.0040 nose_z=+0.3891
+2026-09-01 11:50:56,202 [INFO] core.mission.gorev3_pickup: [KANCA_IZ] t=23.10 alt=0.346 off_n=-0.0876 off_e=+0.0043 nose_z=+0.3908
+2026-09-01 11:50:56,315 [INFO] core.mission.gorev3_pickup: [KANCA_IZ] t=23.22 alt=0.349 off_n=-0.0951 off_e=-0.0007 nose_z=+0.3922
+2026-09-01 11:50:56,425 [INFO] core.mission.gorev3_pickup: [KANCA_IZ] t=23.33 alt=0.352 off_n=-0.0981 off_e=-0.0062 nose_z=+0.3933
+2026-09-01 11:50:56,538 [INFO] core.mission.gorev3_pickup: [KANCA_IZ] t=23.44 alt=0.355 off_n=-0.0961 off_e=-0.0105 nose_z=+0.3940
+2026-09-01 11:50:56,649 [INFO] core.mission.gorev3_pickup: [KANCA_IZ] t=23.55 alt=0.358 off_n=-0.0914 off_e=-0.0106 nose_z=+0.3942
+2026-09-01 11:50:56,759 [INFO] core.mission.gorev3_pickup: [KANCA_IZ] t=23.66 alt=0.360 off_n=-0.0860 off_e=-0.0071 nose_z=+0.3941
+2026-09-01 11:50:56,870 [INFO] core.mission.gorev3_pickup: [KANCA_IZ] t=23.77 alt=0.361 off_n=-0.0837 off_e=-0.0024 nose_z=+0.3939
+QGC port check failed, reporting UNKNOWN: (pid=51264)
+2026-09-01 11:50:56,981 [INFO] core.mission.gorev3_pickup: [KANCA_IZ] t=23.88 alt=0.362 off_n=-0.0849 off_e=+0.0002 nose_z=+0.3935
+2026-09-01 11:50:57,091 [INFO] core.mission.gorev3_pickup: [KANCA_IZ] t=23.99 alt=0.362 off_n=-0.0888 off_e=+0.0002 nose_z=+0.3929
+2026-09-01 11:50:57,121 [INFO] core.mission.gorev3_pickup: [SON_DUZELTME] 2/6 yanal 48.8 mm -> (kuzey +0.007, dogu +0.023)  | kanca_ofset=(-0.0903, -0.0004) arac_ned=(68.4821, -7.0549) kanca_mutlak=(68.3918, -7.0553)
+2026-09-01 11:50:57,203 [INFO] core.mission.gorev3_pickup: [KANCA_IZ] t=24.10 alt=0.362 off_n=-0.0926 off_e=-0.0023 nose_z=+0.3923
+2026-09-01 11:50:57,315 [INFO] core.mission.gorev3_pickup: [KANCA_IZ] t=24.22 alt=0.362 off_n=-0.0939 off_e=-0.0054 nose_z=+0.3919
+2026-09-01 11:50:57,428 [INFO] core.mission.gorev3_pickup: [KANCA_IZ] t=24.33 alt=0.363 off_n=-0.0929 off_e=-0.0076 nose_z=+0.3912
+2026-09-01 11:50:57,542 [INFO] core.mission.gorev3_pickup: [KANCA_IZ] t=24.44 alt=0.364 off_n=-0.0902 off_e=-0.0072 nose_z=+0.3904
+2026-09-01 11:50:57,653 [INFO] core.mission.gorev3_pickup: [KANCA_IZ] t=24.55 alt=0.365 off_n=-0.0882 off_e=-0.0052 nose_z=+0.3896
+2026-09-01 11:50:57,768 [INFO] core.mission.gorev3_pickup: [KANCA_IZ] t=24.67 alt=0.365 off_n=-0.0872 off_e=-0.0027 nose_z=+0.3886
+2026-09-01 11:50:57,878 [INFO] core.mission.gorev3_pickup: [KANCA_IZ] t=24.78 alt=0.366 off_n=-0.0880 off_e=-0.0015 nose_z=+0.3876
+2026-09-01 11:50:57,994 [INFO] core.mission.gorev3_pickup: [KANCA_IZ] t=24.90 alt=0.366 off_n=-0.0895 off_e=-0.0019 nose_z=+0.3868
+2026-09-01 11:50:58,105 [INFO] core.mission.gorev3_pickup: [KANCA_IZ] t=25.01 alt=0.366 off_n=-0.0912 off_e=-0.0036 nose_z=+0.3856
+2026-09-01 11:50:58,217 [INFO] core.detection.vision_runtime: [VISION] detect() calisiyor -- bu karede 1 tespit: ['KIRMIZI_DIKDORTGEN']
+2026-09-01 11:50:58,218 [INFO] core.mission.gorev3_pickup: [KANCA_IZ] t=25.12 alt=0.365 off_n=-0.0918 off_e=-0.0053 nose_z=+0.3845
+2026-09-01 11:50:58,329 [INFO] core.mission.gorev3_pickup: [KANCA_IZ] t=25.23 alt=0.364 off_n=-0.0910 off_e=-0.0059 nose_z=+0.3837
+2026-09-01 11:50:58,440 [INFO] core.mission.gorev3_pickup: [KANCA_IZ] t=25.34 alt=0.363 off_n=-0.0899 off_e=-0.0055 nose_z=+0.3831
+2026-09-01 11:50:58,552 [INFO] core.mission.gorev3_pickup: [KANCA_IZ] t=25.45 alt=0.361 off_n=-0.0888 off_e=-0.0044 nose_z=+0.3827
+2026-09-01 11:50:58,663 [INFO] core.mission.gorev3_pickup: [KANCA_IZ] t=25.56 alt=0.360 off_n=-0.0885 off_e=-0.0034 nose_z=+0.3826
+2026-09-01 11:50:58,773 [INFO] core.mission.gorev3_pickup: [KANCA_IZ] t=25.67 alt=0.359 off_n=-0.0890 off_e=-0.0028 nose_z=+0.3826
+2026-09-01 11:50:58,884 [INFO] core.mission.gorev3_pickup: [KANCA_IZ] t=25.79 alt=0.359 off_n=-0.0900 off_e=-0.0031 nose_z=+0.3827
+QGC port check failed, reporting UNKNOWN: (pid=51264)
+2026-09-01 11:50:58,995 [INFO] core.mission.gorev3_pickup: [KANCA_IZ] t=25.90 alt=0.359 off_n=-0.0907 off_e=-0.0038 nose_z=+0.3830
+2026-09-01 11:50:59,106 [INFO] core.mission.gorev3_pickup: [KANCA_IZ] t=26.01 alt=0.358 off_n=-0.0909 off_e=-0.0046 nose_z=+0.3834
+2026-09-01 11:50:59,217 [INFO] core.mission.gorev3_pickup: [KANCA_IZ] t=26.12 alt=0.358 off_n=-0.0905 off_e=-0.0049 nose_z=+0.3839
+2026-09-01 11:50:59,327 [INFO] core.mission.gorev3_pickup: [KANCA_IZ] t=26.23 alt=0.358 off_n=-0.0899 off_e=-0.0047 nose_z=+0.3843
+2026-09-01 11:50:59,439 [INFO] core.mission.gorev3_pickup: [KANCA_IZ] t=26.34 alt=0.359 off_n=-0.0893 off_e=-0.0041 nose_z=+0.3849
+2026-09-01 11:50:59,549 [INFO] core.mission.gorev3_pickup: [KANCA_IZ] t=26.45 alt=0.358 off_n=-0.0892 off_e=-0.0037 nose_z=+0.3854
+2026-09-01 11:50:59,658 [INFO] core.mission.gorev3_pickup: [KANCA_IZ] t=26.56 alt=0.358 off_n=-0.0895 off_e=-0.0034 nose_z=+0.3862
+2026-09-01 11:50:59,658 [INFO] core.mission.gorev3_pickup: [SON_DUZELTME] 3/6 yanal 35.0 mm -> (kuzey -0.008, dogu +0.016)  | kanca_ofset=(-0.0895, -0.0034) arac_ned=(68.5109, -7.0364) kanca_mutlak=(68.4214, -7.0397)
+2026-09-01 11:50:59,769 [INFO] core.mission.gorev3_pickup: [KANCA_IZ] t=26.67 alt=0.359 off_n=-0.0900 off_e=-0.0034 nose_z=+0.3868
+2026-09-01 11:50:59,878 [INFO] core.mission.gorev3_pickup: [KANCA_IZ] t=26.78 alt=0.359 off_n=-0.0902 off_e=-0.0038 nose_z=+0.3877
+2026-09-01 11:50:59,988 [INFO] core.mission.gorev3_pickup: [KANCA_IZ] t=26.89 alt=0.360 off_n=-0.0903 off_e=-0.0041 nose_z=+0.3884
+2026-09-01 11:51:00,000 [INFO] gz_system.main_gz: Dashboard paint loop: 0.0 FPS (main thread)
+2026-09-01 11:51:00,097 [INFO] core.mission.gorev3_pickup: [KANCA_IZ] t=27.00 alt=0.361 off_n=-0.0903 off_e=-0.0044 nose_z=+0.3891
+2026-09-01 11:51:00,208 [INFO] core.mission.gorev3_pickup: [KANCA_IZ] t=27.11 alt=0.361 off_n=-0.0902 off_e=-0.0044 nose_z=+0.3895
+2026-09-01 11:51:00,316 [INFO] core.mission.gorev3_pickup: [KANCA_IZ] t=27.22 alt=0.362 off_n=-0.0899 off_e=-0.0041 nose_z=+0.3899
+2026-09-01 11:51:00,428 [INFO] core.mission.gorev3_pickup: [KANCA_IZ] t=27.33 alt=0.362 off_n=-0.0897 off_e=-0.0038 nose_z=+0.3903
+2026-09-01 11:51:00,540 [INFO] core.mission.gorev3_pickup: [KANCA_IZ] t=27.44 alt=0.362 off_n=-0.0897 off_e=-0.0036 nose_z=+0.3906
+2026-09-01 11:51:00,653 [INFO] core.mission.gorev3_pickup: [KANCA_IZ] t=27.55 alt=0.360 off_n=-0.0898 off_e=-0.0035 nose_z=+0.3911
+2026-09-01 11:51:00,766 [INFO] core.mission.gorev3_pickup: [KANCA_IZ] t=27.67 alt=0.358 off_n=-0.0899 off_e=-0.0037 nose_z=+0.3917
+2026-09-01 11:51:00,878 [INFO] core.mission.gorev3_pickup: [KANCA_IZ] t=27.78 alt=0.357 off_n=-0.0901 off_e=-0.0039 nose_z=+0.3927
+QGC port check failed, reporting UNKNOWN: (pid=51264)
+2026-09-01 11:51:00,989 [INFO] core.mission.gorev3_pickup: [KANCA_IZ] t=27.89 alt=0.356 off_n=-0.0902 off_e=-0.0041 nose_z=+0.3941
+2026-09-01 11:51:01,101 [INFO] core.mission.gorev3_pickup: [KANCA_IZ] t=28.00 alt=0.355 off_n=-0.0902 off_e=-0.0042 nose_z=+0.3954
+2026-09-01 11:51:01,213 [INFO] core.mission.gorev3_pickup: [KANCA_IZ] t=28.11 alt=0.355 off_n=-0.0901 off_e=-0.0041 nose_z=+0.3971
+2026-09-01 11:51:01,324 [INFO] core.detection.vision_runtime: [VISION] detect() calisiyor -- bu karede 1 tespit: ['KIRMIZI_DIKDORTGEN']
+2026-09-01 11:51:01,325 [INFO] core.mission.gorev3_pickup: [KANCA_IZ] t=28.23 alt=0.356 off_n=-0.0900 off_e=-0.0039 nose_z=+0.3987
+2026-09-01 11:51:01,437 [INFO] core.mission.gorev3_pickup: [KANCA_IZ] t=28.34 alt=0.357 off_n=-0.0898 off_e=-0.0037 nose_z=+0.4006
+2026-09-01 11:51:01,548 [INFO] core.mission.gorev3_pickup: [KANCA_IZ] t=28.45 alt=0.363 off_n=-0.0898 off_e=-0.0037 nose_z=+0.4022
+2026-09-01 11:51:01,665 [INFO] core.mission.gorev3_pickup: [KANCA_IZ] t=28.57 alt=0.366 off_n=-0.0899 off_e=-0.0037 nose_z=+0.4032
+2026-09-01 11:51:01,777 [INFO] core.mission.gorev3_pickup: [KANCA_IZ] t=28.68 alt=0.369 off_n=-0.0900 off_e=-0.0039 nose_z=+0.4039
+2026-09-01 11:51:01,892 [INFO] core.mission.gorev3_pickup: [KANCA_IZ] t=28.79 alt=0.372 off_n=-0.0902 off_e=-0.0041 nose_z=+0.4040
+2026-09-01 11:51:02,002 [INFO] core.mission.gorev3_pickup: [KANCA_IZ] t=28.90 alt=0.375 off_n=-0.0901 off_e=-0.0042 nose_z=+0.4036
+2026-09-01 11:51:02,114 [INFO] core.mission.gorev3_pickup: [KANCA_IZ] t=29.01 alt=0.376 off_n=-0.0898 off_e=-0.0041 nose_z=+0.4027
+2026-09-01 11:51:02,225 [INFO] core.mission.gorev3_pickup: [KANCA_IZ] t=29.13 alt=0.376 off_n=-0.0896 off_e=-0.0040 nose_z=+0.4017
+2026-09-01 11:51:02,226 [INFO] core.mission.gorev3_pickup: [SON_DUZELTME] 4/6 yanal 5.5 mm -- hedefin icinde.
+2026-09-01 11:51:02,226 [INFO] core.mission.gorev3_pickup: [YENIDEN_HIZA] deneme 2 icin yeni yanal: 5.5 mm
+2026-09-01 11:51:02,226 [INFO] gz_system.gz_payload_actuator: [HOOK] alma denemesi 2/3
+2026-09-01 11:51:02,226 [INFO] gz_system.gz_payload_actuator: [HOOK] vinc salimi: 0.400 m  (irtifa=0.370 m, guverte=0.070, zincir ofseti=0.060, pay=0.040)
+2026-09-01 11:51:02,226 [INFO] gz_system.gz_payload_actuator: [HOOK] vinc -> 0.40 m
+I0901 11:51:02.227006 13598701 fork_posix.cc:71] Other threads are currently calling into gRPC, skipping fork() handlers
+2026-09-01 11:51:02,339 [INFO] core.mission.gorev3_pickup: [KANCA_IZ] t=29.24 alt=0.376 off_n=-0.0896 off_e=-0.0039 nose_z=+0.4004
+2026-09-01 11:51:02,451 [INFO] core.mission.gorev3_pickup: [KANCA_IZ] t=29.35 alt=0.372 off_n=-0.0897 off_e=-0.0036 nose_z=+0.3990
+2026-09-01 11:51:02,564 [INFO] core.mission.gorev3_pickup: [KANCA_IZ] t=29.46 alt=0.370 off_n=-0.0898 off_e=-0.0037 nose_z=+0.3981
+2026-09-01 11:51:02,676 [INFO] core.mission.gorev3_pickup: [KANCA_IZ] t=29.58 alt=0.368 off_n=-0.0900 off_e=-0.0040 nose_z=+0.3973
+2026-09-01 11:51:02,788 [INFO] core.mission.gorev3_pickup: [KANCA_IZ] t=29.69 alt=0.366 off_n=-0.0901 off_e=-0.0043 nose_z=+0.3968
+2026-09-01 11:51:02,900 [INFO] core.mission.gorev3_pickup: [KANCA_IZ] t=29.80 alt=0.364 off_n=-0.0901 off_e=-0.0044 nose_z=+0.3967
+QGC port check failed, reporting UNKNOWN: (pid=51264)
+2026-09-01 11:51:03,012 [INFO] core.mission.gorev3_pickup: [KANCA_IZ] t=29.91 alt=0.362 off_n=-0.0898 off_e=-0.0042 nose_z=+0.3970
+2026-09-01 11:51:03,124 [INFO] core.mission.gorev3_pickup: [KANCA_IZ] t=30.02 alt=0.360 off_n=-0.0897 off_e=-0.0040 nose_z=+0.3977
+2026-09-01 11:51:03,199 [INFO] gz_system.gz_payload_actuator: [HOOK] APPROACHING  lat=  11.0mm ins= -322.4mm tilt=  0.2deg v=  infm/s age=0.01s  [lateral(11.0mm>10.2mm), too_high(-322.4mm<-4.0mm), rel_speed(inf>0.05m/s)]
+2026-09-01 11:51:03,236 [INFO] core.mission.gorev3_pickup: [KANCA_IZ] t=30.14 alt=0.358 off_n=-0.0894 off_e=-0.0038 nose_z=+0.3870
+2026-09-01 11:51:03,349 [INFO] core.mission.gorev3_pickup: [KANCA_IZ] t=30.25 alt=0.359 off_n=-0.0898 off_e=-0.0036 nose_z=+0.3387
+2026-09-01 11:51:03,460 [INFO] core.mission.gorev3_pickup: [KANCA_IZ] t=30.36 alt=0.359 off_n=-0.0907 off_e=-0.0036 nose_z=+0.2804
+2026-09-01 11:51:03,574 [INFO] core.mission.gorev3_pickup: [KANCA_IZ] t=30.47 alt=0.360 off_n=-0.0912 off_e=-0.0035 nose_z=+0.2317
+2026-09-01 11:51:03,685 [INFO] core.mission.gorev3_pickup: [KANCA_IZ] t=30.59 alt=0.359 off_n=-0.0911 off_e=-0.0035 nose_z=+0.1732
+2026-09-01 11:51:03,797 [INFO] core.mission.gorev3_pickup: [KANCA_IZ] t=30.70 alt=0.359 off_n=-0.0904 off_e=-0.0032 nose_z=+0.1147
+2026-09-01 11:51:03,907 [INFO] core.mission.gorev3_pickup: [KANCA_IZ] t=30.81 alt=0.359 off_n=-0.0896 off_e=-0.0026 nose_z=+0.0758
+2026-09-01 11:51:04,015 [INFO] core.mission.gorev3_pickup: [KANCA_IZ] t=30.92 alt=0.360 off_n=-0.0865 off_e=+0.0010 nose_z=+0.0772
+2026-09-01 11:51:04,127 [INFO] core.mission.gorev3_pickup: [KANCA_IZ] t=31.03 alt=0.370 off_n=-0.0973 off_e=+0.0032 nose_z=+0.0831
+2026-09-01 11:51:04,238 [INFO] core.mission.gorev3_pickup: [KANCA_IZ] t=31.14 alt=0.377 off_n=-0.1037 off_e=+0.0002 nose_z=+0.0853
+2026-09-01 11:51:04,238 [INFO] gz_system.gz_payload_actuator: [HOOK] APPROACHING  lat=  17.6mm ins=   -9.3mm tilt=  3.8deg v=0.052m/s age=0.03s  [lateral(17.6mm>10.2mm), too_high(-9.3mm<-4.0mm), rel_speed(0.052>0.05m/s)]
+2026-09-01 11:51:04,352 [INFO] core.detection.vision_runtime: [VISION] detect() calisiyor -- bu karede 1 tespit: ['KIRMIZI_DIKDORTGEN']
+2026-09-01 11:51:04,352 [INFO] core.mission.gorev3_pickup: [KANCA_IZ] t=31.25 alt=0.378 off_n=-0.0980 off_e=-0.0049 nose_z=+0.0845
+2026-09-01 11:51:04,464 [INFO] core.mission.gorev3_pickup: [KANCA_IZ] t=31.36 alt=0.376 off_n=-0.0871 off_e=-0.0081 nose_z=+0.0831
+2026-09-01 11:51:04,577 [INFO] core.mission.gorev3_pickup: [KANCA_IZ] t=31.48 alt=0.374 off_n=-0.0753 off_e=-0.0087 nose_z=+0.0820
+2026-09-01 11:51:04,688 [INFO] core.mission.gorev3_pickup: [KANCA_IZ] t=31.59 alt=0.372 off_n=-0.0720 off_e=-0.0063 nose_z=+0.0809
+2026-09-01 11:51:04,802 [INFO] core.mission.gorev3_pickup: [KANCA_IZ] t=31.70 alt=0.371 off_n=-0.0768 off_e=-0.0032 nose_z=+0.0798
+2026-09-01 11:51:04,913 [INFO] core.mission.gorev3_pickup: [KANCA_IZ] t=31.81 alt=0.370 off_n=-0.0875 off_e=-0.0005 nose_z=+0.0788
+QGC port check failed, reporting UNKNOWN: (pid=51264)
+2026-09-01 11:51:05,020 [INFO] gz_system.main_gz: Dashboard paint loop: 0.0 FPS (main thread)
+2026-09-01 11:51:05,027 [INFO] core.mission.gorev3_pickup: [KANCA_IZ] t=31.93 alt=0.371 off_n=-0.0972 off_e=-0.0000 nose_z=+0.0784
+2026-09-01 11:51:05,137 [INFO] core.mission.gorev3_pickup: [KANCA_IZ] t=32.04 alt=0.372 off_n=-0.1013 off_e=-0.0017 nose_z=+0.0777
+2026-09-01 11:51:05,248 [INFO] core.mission.gorev3_pickup: [KANCA_IZ] t=32.15 alt=0.376 off_n=-0.0993 off_e=-0.0038 nose_z=+0.0767
+2026-09-01 11:51:05,249 [INFO] gz_system.gz_payload_actuator: [HOOK] APPROACHING  lat=  48.4mm ins=   -0.7mm tilt=  2.1deg v=0.061m/s age=0.02s  [lateral(48.4mm>10.2mm), rel_speed(0.061>0.05m/s)]
+2026-09-01 11:51:05,359 [INFO] core.mission.gorev3_pickup: [KANCA_IZ] t=32.26 alt=0.377 off_n=-0.0932 off_e=-0.0058 nose_z=+0.0752
+2026-09-01 11:51:05,470 [INFO] core.mission.gorev3_pickup: [KANCA_IZ] t=32.37 alt=0.377 off_n=-0.0884 off_e=-0.0066 nose_z=+0.0737
+2026-09-01 11:51:05,582 [INFO] core.mission.gorev3_pickup: [KANCA_IZ] t=32.48 alt=0.377 off_n=-0.0860 off_e=-0.0063 nose_z=+0.0716
+2026-09-01 11:51:05,692 [INFO] core.mission.gorev3_pickup: [KANCA_IZ] t=32.59 alt=0.377 off_n=-0.0878 off_e=-0.0053 nose_z=+0.0695
+2026-09-01 11:51:05,803 [INFO] core.mission.gorev3_pickup: [KANCA_IZ] t=32.70 alt=0.376 off_n=-0.0912 off_e=-0.0046 nose_z=+0.0676
+2026-09-01 11:51:05,916 [INFO] core.mission.gorev3_pickup: [KANCA_IZ] t=32.82 alt=0.375 off_n=-0.0948 off_e=-0.0045 nose_z=+0.0655
+2026-09-01 11:51:06,026 [INFO] core.mission.gorev3_pickup: [KANCA_IZ] t=32.93 alt=0.373 off_n=-0.0960 off_e=-0.0049 nose_z=+0.0639
+2026-09-01 11:51:06,138 [INFO] core.mission.gorev3_pickup: [KANCA_IZ] t=33.04 alt=0.371 off_n=-0.0945 off_e=-0.0059 nose_z=+0.0623
+2026-09-01 11:51:06,250 [INFO] core.mission.gorev3_pickup: [KANCA_IZ] t=33.15 alt=0.369 off_n=-0.0914 off_e=-0.0067 nose_z=+0.0608
+2026-09-01 11:51:06,251 [INFO] gz_system.gz_payload_actuator: [HOOK] APPROACHING  lat=  75.5mm ins=  +15.2mm tilt=  0.6deg v=0.017m/s age=0.01s  [lateral(75.5mm>10.2mm)]
+2026-09-01 11:51:06,361 [INFO] core.mission.gorev3_pickup: [KANCA_IZ] t=33.26 alt=0.369 off_n=-0.0890 off_e=-0.0068 nose_z=+0.0596
+2026-09-01 11:51:06,472 [INFO] core.mission.gorev3_pickup: [KANCA_IZ] t=33.37 alt=0.369 off_n=-0.0879 off_e=-0.0063 nose_z=+0.0584
+2026-09-01 11:51:06,582 [INFO] core.mission.gorev3_pickup: [KANCA_IZ] t=33.48 alt=0.368 off_n=-0.0886 off_e=-0.0056 nose_z=+0.0574
+2026-09-01 11:51:06,697 [INFO] core.mission.gorev3_pickup: [KANCA_IZ] t=33.60 alt=0.368 off_n=-0.0907 off_e=-0.0048 nose_z=+0.0563
+2026-09-01 11:51:06,807 [INFO] core.mission.gorev3_pickup: [KANCA_IZ] t=33.71 alt=0.368 off_n=-0.0924 off_e=-0.0045 nose_z=+0.0552
+2026-09-01 11:51:06,921 [INFO] core.mission.gorev3_pickup: [KANCA_IZ] t=33.82 alt=0.368 off_n=-0.0929 off_e=-0.0046 nose_z=+0.0543
+QGC port check failed, reporting UNKNOWN: (pid=51264)
+2026-09-01 11:51:07,032 [INFO] core.mission.gorev3_pickup: [KANCA_IZ] t=33.93 alt=0.368 off_n=-0.0921 off_e=-0.0048 nose_z=+0.0532
+2026-09-01 11:51:07,144 [INFO] core.mission.gorev3_pickup: [KANCA_IZ] t=34.04 alt=0.369 off_n=-0.0904 off_e=-0.0050 nose_z=+0.0519
+2026-09-01 11:51:07,255 [INFO] core.mission.gorev3_pickup: [KANCA_IZ] t=34.16 alt=0.369 off_n=-0.0901 off_e=-0.0091 nose_z=+0.0509
+2026-09-01 11:51:07,256 [INFO] gz_system.gz_payload_actuator: [HOOK] APPROACHING  lat=  47.6mm ins=  +25.1mm tilt=  1.4deg v=0.023m/s age=0.03s  [lateral(47.6mm>10.2mm), too_deep(+25.1mm>+19.9mm)]
+2026-09-01 11:51:07,367 [INFO] core.detection.vision_runtime: [VISION] detect() calisiyor -- bu karede 1 tespit: ['KIRMIZI_DIKDORTGEN']
+2026-09-01 11:51:07,367 [INFO] core.mission.gorev3_pickup: [KANCA_IZ] t=34.27 alt=0.370 off_n=-0.0902 off_e=-0.0160 nose_z=+0.0497
+2026-09-01 11:51:07,479 [INFO] core.mission.gorev3_pickup: [KANCA_IZ] t=34.38 alt=0.370 off_n=-0.0902 off_e=-0.0220 nose_z=+0.0488
+2026-09-01 11:51:07,591 [INFO] core.mission.gorev3_pickup: [KANCA_IZ] t=34.49 alt=0.370 off_n=-0.0899 off_e=-0.0291 nose_z=+0.0479
+2026-09-01 11:51:07,704 [INFO] core.mission.gorev3_pickup: [KANCA_IZ] t=34.61 alt=0.370 off_n=-0.0893 off_e=-0.0362 nose_z=+0.0472
+2026-09-01 11:51:07,815 [INFO] core.mission.gorev3_pickup: [KANCA_IZ] t=34.72 alt=0.370 off_n=-0.0883 off_e=-0.0435 nose_z=+0.0468
+2026-09-01 11:51:07,927 [INFO] core.mission.gorev3_pickup: [KANCA_IZ] t=34.83 alt=0.371 off_n=-0.0869 off_e=-0.0508 nose_z=+0.0466
+2026-09-01 11:51:08,039 [INFO] core.mission.gorev3_pickup: [KANCA_IZ] t=34.94 alt=0.372 off_n=-0.0855 off_e=-0.0563 nose_z=+0.0464
+2026-09-01 11:51:08,150 [INFO] core.mission.gorev3_pickup: [KANCA_IZ] t=35.05 alt=0.372 off_n=-0.0835 off_e=-0.0625 nose_z=+0.0460
+2026-09-01 11:51:08,265 [INFO] core.mission.gorev3_pickup: [KANCA_IZ] t=35.17 alt=0.372 off_n=-0.0812 off_e=-0.0681 nose_z=+0.0455
+2026-09-01 11:51:08,265 [INFO] gz_system.gz_payload_actuator: [HOOK] APPROACHING  lat=  51.1mm ins=  +30.5mm tilt= 17.2deg v=0.015m/s age=0.02s  [lateral(51.1mm>10.2mm), too_deep(+30.5mm>+19.9mm), tilt(17.2deg>15.0deg)]
+2026-09-01 11:51:08,381 [INFO] core.mission.gorev3_pickup: [KANCA_IZ] t=35.28 alt=0.371 off_n=-0.0790 off_e=-0.0720 nose_z=+0.0450
+2026-09-01 11:51:08,493 [INFO] core.mission.gorev3_pickup: [KANCA_IZ] t=35.39 alt=0.370 off_n=-0.0762 off_e=-0.0760 nose_z=+0.0444
+2026-09-01 11:51:08,605 [INFO] core.mission.gorev3_pickup: [KANCA_IZ] t=35.51 alt=0.368 off_n=-0.0736 off_e=-0.0787 nose_z=+0.0438
+2026-09-01 11:51:08,716 [INFO] core.mission.gorev3_pickup: [KANCA_IZ] t=35.62 alt=0.368 off_n=-0.0708 off_e=-0.0807 nose_z=+0.0431
+2026-09-01 11:51:08,829 [INFO] core.mission.gorev3_pickup: [KANCA_IZ] t=35.73 alt=0.367 off_n=-0.0684 off_e=-0.0821 nose_z=+0.0424
+QGC port check failed, reporting UNKNOWN: (pid=51264)
+2026-09-01 11:51:08,941 [INFO] core.mission.gorev3_pickup: [KANCA_IZ] t=35.84 alt=0.366 off_n=-0.0668 off_e=-0.0827 nose_z=+0.0417
+2026-09-01 11:51:09,054 [INFO] core.mission.gorev3_pickup: [KANCA_IZ] t=35.95 alt=0.364 off_n=-0.0656 off_e=-0.0828 nose_z=+0.0407
+2026-09-01 11:51:09,166 [INFO] core.mission.gorev3_pickup: [KANCA_IZ] t=36.07 alt=0.363 off_n=-0.0652 off_e=-0.0825 nose_z=+0.0397
+2026-09-01 11:51:09,278 [INFO] core.mission.gorev3_pickup: [KANCA_IZ] t=36.18 alt=0.363 off_n=-0.0656 off_e=-0.0819 nose_z=+0.0387
+2026-09-01 11:51:09,278 [INFO] gz_system.gz_payload_actuator: [HOOK] APPROACHING  lat=  51.3mm ins=  +37.3mm tilt= 21.9deg v=0.008m/s age=0.03s  [lateral(51.3mm>10.2mm), too_deep(+37.3mm>+19.9mm), tilt(21.9deg>15.0deg)]
+2026-09-01 11:51:09,392 [INFO] core.mission.gorev3_pickup: [KANCA_IZ] t=36.29 alt=0.363 off_n=-0.0669 off_e=-0.0811 nose_z=+0.0374
+2026-09-01 11:51:09,502 [INFO] core.mission.gorev3_pickup: [KANCA_IZ] t=36.40 alt=0.363 off_n=-0.0691 off_e=-0.0802 nose_z=+0.0359
+2026-09-01 11:51:09,620 [INFO] core.mission.gorev3_pickup: [KANCA_IZ] t=36.52 alt=0.364 off_n=-0.0715 off_e=-0.0793 nose_z=+0.0345
+2026-09-01 11:51:09,731 [INFO] core.mission.gorev3_pickup: [KANCA_IZ] t=36.63 alt=0.364 off_n=-0.0751 off_e=-0.0783 nose_z=+0.0328
+2026-09-01 11:51:09,844 [INFO] core.mission.gorev3_pickup: [KANCA_IZ] t=36.74 alt=0.363 off_n=-0.0792 off_e=-0.0773 nose_z=+0.0310
+2026-09-01 11:51:09,955 [INFO] core.mission.gorev3_pickup: [KANCA_IZ] t=36.86 alt=0.363 off_n=-0.0829 off_e=-0.0765 nose_z=+0.0296
+2026-09-01 11:51:10,037 [INFO] gz_system.main_gz: Dashboard paint loop: 0.0 FPS (main thread)
+2026-09-01 11:51:10,067 [INFO] core.mission.gorev3_pickup: [KANCA_IZ] t=36.97 alt=0.361 off_n=-0.0879 off_e=-0.0756 nose_z=+0.0280
+2026-09-01 11:51:10,180 [INFO] core.mission.gorev3_pickup: [KANCA_IZ] t=37.08 alt=0.359 off_n=-0.0928 off_e=-0.0747 nose_z=+0.0268
+2026-09-01 11:51:10,292 [INFO] core.mission.gorev3_pickup: [KANCA_IZ] t=37.19 alt=0.358 off_n=-0.0969 off_e=-0.0741 nose_z=+0.0261
+2026-09-01 11:51:10,292 [INFO] gz_system.gz_payload_actuator: [HOOK] APPROACHING  lat=  52.3mm ins=  +49.9mm tilt= 18.7deg v=0.010m/s age=0.03s  [lateral(52.3mm>10.2mm), too_deep(+49.9mm>+19.9mm), tilt(18.7deg>15.0deg)]
+2026-09-01 11:51:10,404 [INFO] core.detection.vision_runtime: [VISION] detect() calisiyor -- bu karede 1 tespit: ['KIRMIZI_DIKDORTGEN']
+2026-09-01 11:51:10,404 [INFO] core.mission.gorev3_pickup: [KANCA_IZ] t=37.30 alt=0.357 off_n=-0.1020 off_e=-0.0732 nose_z=+0.0256
+2026-09-01 11:51:10,515 [INFO] core.mission.gorev3_pickup: [KANCA_IZ] t=37.42 alt=0.357 off_n=-0.1067 off_e=-0.0722 nose_z=+0.0253
+2026-09-01 11:51:10,626 [INFO] core.mission.gorev3_pickup: [KANCA_IZ] t=37.53 alt=0.357 off_n=-0.1102 off_e=-0.0712 nose_z=+0.0252
+2026-09-01 11:51:10,737 [INFO] core.mission.gorev3_pickup: [KANCA_IZ] t=37.64 alt=0.358 off_n=-0.1140 off_e=-0.0698 nose_z=+0.0250
+2026-09-01 11:51:10,850 [INFO] core.mission.gorev3_pickup: [KANCA_IZ] t=37.75 alt=0.358 off_n=-0.1168 off_e=-0.0685 nose_z=+0.0248
+QGC port check failed, reporting UNKNOWN: (pid=51264)
+2026-09-01 11:51:10,963 [INFO] core.mission.gorev3_pickup: [KANCA_IZ] t=37.86 alt=0.357 off_n=-0.1198 off_e=-0.0669 nose_z=+0.0246
+2026-09-01 11:51:11,076 [INFO] core.mission.gorev3_pickup: [KANCA_IZ] t=37.98 alt=0.357 off_n=-0.1226 off_e=-0.0649 nose_z=+0.0244
+2026-09-01 11:51:11,186 [INFO] core.mission.gorev3_pickup: [KANCA_IZ] t=38.09 alt=0.357 off_n=-0.1252 off_e=-0.0626 nose_z=+0.0241
+2026-09-01 11:51:11,300 [INFO] core.mission.gorev3_pickup: [KANCA_IZ] t=38.20 alt=0.357 off_n=-0.1271 off_e=-0.0604 nose_z=+0.0239
+2026-09-01 11:51:11,301 [INFO] gz_system.gz_payload_actuator: [HOOK] APPROACHING  lat=  53.0mm ins=  +52.1mm tilt= 18.0deg v=0.006m/s age=0.03s  [lateral(53.0mm>10.2mm), too_deep(+52.1mm>+19.9mm), tilt(18.0deg>15.0deg)]
+2026-09-01 11:51:11,411 [INFO] core.mission.gorev3_pickup: [KANCA_IZ] t=38.31 alt=0.357 off_n=-0.1290 off_e=-0.0574 nose_z=+0.0235
+2026-09-01 11:51:11,523 [INFO] core.mission.gorev3_pickup: [KANCA_IZ] t=38.42 alt=0.357 off_n=-0.1302 off_e=-0.0545 nose_z=+0.0231
+2026-09-01 11:51:11,635 [INFO] core.mission.gorev3_pickup: [KANCA_IZ] t=38.54 alt=0.357 off_n=-0.1313 off_e=-0.0507 nose_z=+0.0225
+2026-09-01 11:51:11,745 [INFO] core.mission.gorev3_pickup: [KANCA_IZ] t=38.65 alt=0.357 off_n=-0.1317 off_e=-0.0469 nose_z=+0.0220
+2026-09-01 11:51:11,857 [INFO] core.mission.gorev3_pickup: [KANCA_IZ] t=38.76 alt=0.357 off_n=-0.1307 off_e=-0.0441 nose_z=+0.0214
+2026-09-01 11:51:11,969 [INFO] core.mission.gorev3_pickup: [KANCA_IZ] t=38.87 alt=0.356 off_n=-0.1270 off_e=-0.0409 nose_z=+0.0204
+2026-09-01 11:51:12,082 [INFO] core.mission.gorev3_pickup: [KANCA_IZ] t=38.98 alt=0.355 off_n=-0.1217 off_e=-0.0382 nose_z=+0.0194
+2026-09-01 11:51:12,193 [INFO] core.mission.gorev3_pickup: [KANCA_IZ] t=39.09 alt=0.355 off_n=-0.1175 off_e=-0.0364 nose_z=+0.0189
+2026-09-01 11:51:12,305 [INFO] core.mission.gorev3_pickup: [KANCA_IZ] t=39.21 alt=0.354 off_n=-0.1144 off_e=-0.0348 nose_z=+0.0188
+2026-09-01 11:51:12,306 [INFO] gz_system.gz_payload_actuator: [HOOK] APPROACHING  lat=  43.4mm ins=  +57.2mm tilt= 10.3deg v=0.015m/s age=0.02s  [lateral(43.4mm>10.2mm), too_deep(+57.2mm>+19.9mm)]
+2026-09-01 11:51:12,417 [INFO] core.mission.gorev3_pickup: [KANCA_IZ] t=39.32 alt=0.354 off_n=-0.1132 off_e=-0.0337 nose_z=+0.0188
+2026-09-01 11:51:12,527 [INFO] core.mission.gorev3_pickup: [KANCA_IZ] t=39.43 alt=0.353 off_n=-0.1128 off_e=-0.0331 nose_z=+0.0190
+2026-09-01 11:51:12,638 [INFO] core.mission.gorev3_pickup: [KANCA_IZ] t=39.54 alt=0.353 off_n=-0.1125 off_e=-0.0327 nose_z=+0.0194
+2026-09-01 11:51:12,751 [INFO] core.mission.gorev3_pickup: [KANCA_IZ] t=39.65 alt=0.353 off_n=-0.1125 off_e=-0.0325 nose_z=+0.0199
+2026-09-01 11:51:12,862 [INFO] core.mission.gorev3_pickup: [KANCA_IZ] t=39.76 alt=0.354 off_n=-0.1130 off_e=-0.0325 nose_z=+0.0206
+QGC port check failed, reporting UNKNOWN: (pid=51264)
+2026-09-01 11:51:12,975 [INFO] core.mission.gorev3_pickup: [KANCA_IZ] t=39.88 alt=0.357 off_n=-0.1137 off_e=-0.0326 nose_z=+0.0211
+2026-09-01 11:51:13,086 [INFO] core.mission.gorev3_pickup: [KANCA_IZ] t=39.99 alt=0.359 off_n=-0.1150 off_e=-0.0329 nose_z=+0.0215
+2026-09-01 11:51:13,197 [INFO] core.mission.gorev3_pickup: [KANCA_IZ] t=40.10 alt=0.361 off_n=-0.1167 off_e=-0.0334 nose_z=+0.0217
+2026-09-01 11:51:13,309 [INFO] core.mission.gorev3_pickup: [KANCA_IZ] t=40.21 alt=0.363 off_n=-0.1185 off_e=-0.0338 nose_z=+0.0217
+2026-09-01 11:51:13,309 [INFO] gz_system.gz_payload_actuator: [HOOK] APPROACHING  lat=  43.2mm ins=  +54.3mm tilt= 10.8deg v=0.005m/s age=0.03s  [lateral(43.2mm>10.2mm), too_deep(+54.3mm>+19.9mm)]
+2026-09-01 11:51:13,419 [INFO] core.detection.vision_runtime: [VISION] detect() calisiyor -- bu karede 1 tespit: ['KIRMIZI_DIKDORTGEN']
+2026-09-01 11:51:13,419 [INFO] core.mission.gorev3_pickup: [KANCA_IZ] t=40.32 alt=0.364 off_n=-0.1210 off_e=-0.0346 nose_z=+0.0216
+2026-09-01 11:51:13,532 [INFO] core.mission.gorev3_pickup: [KANCA_IZ] t=40.43 alt=0.364 off_n=-0.1225 off_e=-0.0352 nose_z=+0.0213
+2026-09-01 11:51:13,642 [INFO] core.mission.gorev3_pickup: [KANCA_IZ] t=40.54 alt=0.363 off_n=-0.1232 off_e=-0.0360 nose_z=+0.0207
+2026-09-01 11:51:13,751 [INFO] core.mission.gorev3_pickup: [KANCA_IZ] t=40.65 alt=0.363 off_n=-0.1226 off_e=-0.0367 nose_z=+0.0201
+2026-09-01 11:51:13,860 [INFO] core.mission.gorev3_pickup: [KANCA_IZ] t=40.76 alt=0.363 off_n=-0.1217 off_e=-0.0372 nose_z=+0.0196
+2026-09-01 11:51:13,971 [INFO] core.mission.gorev3_pickup: [KANCA_IZ] t=40.87 alt=0.362 off_n=-0.1208 off_e=-0.0379 nose_z=+0.0191
+2026-09-01 11:51:14,081 [INFO] core.mission.gorev3_pickup: [KANCA_IZ] t=40.98 alt=0.362 off_n=-0.1207 off_e=-0.0385 nose_z=+0.0188
+2026-09-01 11:51:14,191 [INFO] core.mission.gorev3_pickup: [KANCA_IZ] t=41.09 alt=0.362 off_n=-0.1216 off_e=-0.0392 nose_z=+0.0186
+2026-09-01 11:51:14,300 [INFO] core.mission.gorev3_pickup: [KANCA_IZ] t=41.20 alt=0.362 off_n=-0.1232 off_e=-0.0402 nose_z=+0.0187
+2026-09-01 11:51:14,351 [INFO] gz_system.gz_payload_actuator: [HOOK] APPROACHING  lat=  41.9mm ins=  +57.3mm tilt= 13.3deg v=0.010m/s age=0.00s  [lateral(41.9mm>10.2mm), too_deep(+57.3mm>+19.9mm)]
+2026-09-01 11:51:14,414 [INFO] core.mission.gorev3_pickup: [KANCA_IZ] t=41.31 alt=0.362 off_n=-0.1248 off_e=-0.0412 nose_z=+0.0188
+2026-09-01 11:51:14,524 [INFO] core.mission.gorev3_pickup: [KANCA_IZ] t=41.42 alt=0.363 off_n=-0.1264 off_e=-0.0426 nose_z=+0.0189
+2026-09-01 11:51:14,636 [INFO] core.mission.gorev3_pickup: [KANCA_IZ] t=41.54 alt=0.363 off_n=-0.1276 off_e=-0.0439 nose_z=+0.0189
+2026-09-01 11:51:14,745 [INFO] core.mission.gorev3_pickup: [KANCA_IZ] t=41.65 alt=0.362 off_n=-0.1285 off_e=-0.0456 nose_z=+0.0189
+2026-09-01 11:51:14,857 [INFO] core.mission.gorev3_pickup: [KANCA_IZ] t=41.76 alt=0.360 off_n=-0.1288 off_e=-0.0472 nose_z=+0.0189
+QGC port check failed, reporting UNKNOWN: (pid=51264)
+2026-09-01 11:51:14,966 [INFO] core.mission.gorev3_pickup: [KANCA_IZ] t=41.87 alt=0.359 off_n=-0.1287 off_e=-0.0493 nose_z=+0.0191
+2026-09-01 11:51:15,053 [INFO] gz_system.main_gz: Dashboard paint loop: 0.0 FPS (main thread)
+2026-09-01 11:51:15,078 [INFO] core.mission.gorev3_pickup: [KANCA_IZ] t=41.98 alt=0.358 off_n=-0.1279 off_e=-0.0515 nose_z=+0.0193
+2026-09-01 11:51:15,188 [INFO] core.mission.gorev3_pickup: [KANCA_IZ] t=42.09 alt=0.357 off_n=-0.1270 off_e=-0.0532 nose_z=+0.0194
+2026-09-01 11:51:15,239 [INFO] gz_system.gz_payload_actuator: [KANCA_DENGE] oturma penceresi ortalama kanca_ofset=(-0.1000, -0.0368)  (216 ornek)
+2026-09-01 11:51:15,239 [WARNING] gz_system.gz_payload_actuator: [HOOK] OTURMADI (12.0 s). En iyi ESZAMANLI ornek: lat=  20.1mm ins=   -1.2mm tilt=  3.1deg v=0.040m/s age=0.01s (1 kapi ihlali). CAPTURE_CANDIDATE ornegi: 0/216. Kapi retleri: lateral=216, too_deep=152, tilt=77, rel_speed=41, too_high=26. Sinirlar: yanal<=10.2 mm, dwell 0.30 s.
+2026-09-01 11:51:15,239 [WARNING] gz_system.gz_payload_actuator: [HOOK] oturma dogrulanmadi (12.0s) -- /hook/attach YAYINLANMADI, vinc cekiliyor, tekrar denenecek
+2026-09-01 11:51:15,239 [INFO] gz_system.gz_payload_actuator: [HOOK] vinc -> 0.00 m
+I0901 11:51:15.239693 13598701 fork_posix.cc:71] Other threads are currently calling into gRPC, skipping fork() handlers
+2026-09-01 11:51:15,298 [INFO] core.mission.gorev3_pickup: [KANCA_IZ] t=42.20 alt=0.356 off_n=-0.1255 off_e=-0.0552 nose_z=+0.0195
+2026-09-01 11:51:15,408 [INFO] core.mission.gorev3_pickup: [KANCA_IZ] t=42.31 alt=0.356 off_n=-0.1237 off_e=-0.0572 nose_z=+0.0197
+2026-09-01 11:51:15,520 [INFO] core.mission.gorev3_pickup: [KANCA_IZ] t=42.42 alt=0.355 off_n=-0.1219 off_e=-0.0587 nose_z=+0.0198
+2026-09-01 11:51:15,630 [INFO] core.mission.gorev3_pickup: [KANCA_IZ] t=42.53 alt=0.355 off_n=-0.1196 off_e=-0.0601 nose_z=+0.0200
+2026-09-01 11:51:15,739 [INFO] core.mission.gorev3_pickup: [KANCA_IZ] t=42.64 alt=0.354 off_n=-0.1172 off_e=-0.0610 nose_z=+0.0203
+2026-09-01 11:51:15,851 [INFO] core.mission.gorev3_pickup: [KANCA_IZ] t=42.75 alt=0.352 off_n=-0.1152 off_e=-0.0614 nose_z=+0.0206
+2026-09-01 11:51:15,961 [INFO] core.mission.gorev3_pickup: [KANCA_IZ] t=42.86 alt=0.351 off_n=-0.1129 off_e=-0.0614 nose_z=+0.0212
+2026-09-01 11:51:16,073 [INFO] core.mission.gorev3_pickup: [KANCA_IZ] t=42.97 alt=0.351 off_n=-0.1110 off_e=-0.0609 nose_z=+0.0217
+2026-09-01 11:51:16,183 [INFO] core.mission.gorev3_pickup: [KANCA_IZ] t=43.08 alt=0.352 off_n=-0.1091 off_e=-0.0599 nose_z=+0.0223
+2026-09-01 11:51:16,294 [INFO] core.mission.gorev3_pickup: [KANCA_IZ] t=43.19 alt=0.354 off_n=-0.1083 off_e=-0.0600 nose_z=+0.0555
+2026-09-01 11:51:16,403 [INFO] core.mission.gorev3_pickup: [KANCA_IZ] t=43.30 alt=0.354 off_n=-0.1036 off_e=-0.0275 nose_z=+0.1544
+2026-09-01 11:51:16,513 [INFO] core.detection.vision_runtime: [VISION] detect() calisiyor -- bu karede 0 tespit: []
+2026-09-01 11:51:16,513 [INFO] core.mission.gorev3_pickup: [KANCA_IZ] t=43.41 alt=0.355 off_n=-0.1159 off_e=-0.0082 nose_z=+0.2445
+2026-09-01 11:51:16,622 [INFO] core.mission.gorev3_pickup: [KANCA_IZ] t=43.52 alt=0.357 off_n=-0.1073 off_e=-0.0298 nose_z=+0.2921
+2026-09-01 11:51:16,732 [INFO] core.mission.gorev3_pickup: [KANCA_IZ] t=43.63 alt=0.359 off_n=-0.1086 off_e=-0.0480 nose_z=+0.3521
+2026-09-01 11:51:16,845 [INFO] core.mission.gorev3_pickup: [KANCA_IZ] t=43.75 alt=0.361 off_n=-0.1154 off_e=-0.0432 nose_z=+0.3789
+QGC port check failed, reporting UNKNOWN: (pid=51264)
+2026-09-01 11:51:16,955 [INFO] core.mission.gorev3_pickup: [KANCA_IZ] t=43.85 alt=0.365 off_n=-0.1191 off_e=-0.0268 nose_z=+0.3810
+2026-09-01 11:51:17,064 [INFO] core.mission.gorev3_pickup: [KANCA_IZ] t=43.96 alt=0.366 off_n=-0.1156 off_e=-0.0062 nose_z=+0.3742
+2026-09-01 11:51:17,174 [INFO] core.mission.gorev3_pickup: [KANCA_IZ] t=44.07 alt=0.366 off_n=-0.1063 off_e=+0.0029 nose_z=+0.3696
+2026-09-01 11:51:17,223 [INFO] core.mission.gorev3_pickup: [YENIDEN_HIZA] deneme 3 oncesi, kanca havada -- duzeltme yeniden kosuluyor
+2026-09-01 11:51:17,223 [INFO] core.mission.gorev3_pickup: [SON_DUZELTME] 1/6 yanal 17.8 mm -> (kuzey -0.008, dogu +0.003)  | kanca_ofset=(-0.0980, +0.0029) arac_ned=(68.5206, -7.0170) kanca_mutlak=(68.4226, -7.0141)
+2026-09-01 11:51:17,289 [INFO] core.mission.gorev3_pickup: [KANCA_IZ] t=44.19 alt=0.365 off_n=-0.0939 off_e=+0.0009 nose_z=+0.3653
+2026-09-01 11:51:17,399 [INFO] core.mission.gorev3_pickup: [KANCA_IZ] t=44.30 alt=0.365 off_n=-0.0856 off_e=-0.0094 nose_z=+0.3627
+2026-09-01 11:51:17,511 [INFO] core.mission.gorev3_pickup: [KANCA_IZ] t=44.41 alt=0.364 off_n=-0.0849 off_e=-0.0194 nose_z=+0.3613
+2026-09-01 11:51:17,623 [INFO] core.mission.gorev3_pickup: [KANCA_IZ] t=44.52 alt=0.363 off_n=-0.0890 off_e=-0.0219 nose_z=+0.3604
+2026-09-01 11:51:17,733 [INFO] core.mission.gorev3_pickup: [KANCA_IZ] t=44.63 alt=0.361 off_n=-0.0954 off_e=-0.0168 nose_z=+0.3593
+2026-09-01 11:51:17,844 [INFO] core.mission.gorev3_pickup: [KANCA_IZ] t=44.74 alt=0.359 off_n=-0.0985 off_e=-0.0087 nose_z=+0.3588
+2026-09-01 11:51:17,956 [INFO] core.mission.gorev3_pickup: [KANCA_IZ] t=44.86 alt=0.358 off_n=-0.0975 off_e=-0.0001 nose_z=+0.3589
+2026-09-01 11:51:18,067 [INFO] core.mission.gorev3_pickup: [KANCA_IZ] t=44.97 alt=0.357 off_n=-0.0936 off_e=+0.0028 nose_z=+0.3592
+QGC port check failed, reporting UNKNOWN: (pid=51264)
+2026-09-01 11:51:19,516 [INFO] core.detection.vision_runtime: [VISION] detect() calisiyor -- bu karede 1 tespit: ['KIRMIZI_DIKDORTGEN']
+2026-09-01 11:51:20,065 [INFO] gz_system.main_gz: Dashboard paint loop: 0.0 FPS (main thread)
+2026-09-01 11:51:20,239 [INFO] core.mission.gorev3_pickup: [SON_DUZELTME] 2/6 yanal 26.7 mm -> (kuzey -0.007, dogu +0.011)  | kanca_ofset=(-0.0895, -0.0055) arac_ned=(68.5094, -7.0257) kanca_mutlak=(68.4199, -7.0311)
+QGC port check failed, reporting UNKNOWN: (pid=51264)
+2026-09-01 11:51:22,621 [INFO] core.detection.vision_runtime: [VISION] detect() calisiyor -- bu karede 1 tespit: ['KIRMIZI_DIKDORTGEN']
+2026-09-01 11:51:22,843 [INFO] core.mission.gorev3_pickup: [SON_DUZELTME] 3/6 yanal 7.4 mm -- hedefin icinde.
+2026-09-01 11:51:22,843 [INFO] core.mission.gorev3_pickup: [YENIDEN_HIZA] deneme 3 icin yeni yanal: 7.4 mm
+2026-09-01 11:51:22,843 [INFO] gz_system.gz_payload_actuator: [HOOK] alma denemesi 3/3
+2026-09-01 11:51:22,843 [INFO] gz_system.gz_payload_actuator: [HOOK] vinc salimi: 0.400 m  (irtifa=0.370 m, guverte=0.070, zincir ofseti=0.060, pay=0.040)
+2026-09-01 11:51:22,843 [INFO] gz_system.gz_payload_actuator: [HOOK] vinc -> 0.40 m
+I0901 11:51:22.843873 13598701 fork_posix.cc:71] Other threads are currently calling into gRPC, skipping fork() handlers
+QGC port check failed, reporting UNKNOWN: (pid=51264)
+2026-09-01 11:51:23,802 [INFO] gz_system.gz_payload_actuator: [HOOK] APPROACHING  lat=  18.7mm ins= -321.2mm tilt=  0.3deg v=  infm/s age=0.02s  [lateral(18.7mm>10.2mm), too_high(-321.2mm<-4.0mm), rel_speed(inf>0.05m/s)]
+2026-09-01 11:51:24,841 [INFO] gz_system.gz_payload_actuator: [HOOK] APPROACHING  lat=  15.2mm ins=   +0.1mm tilt=  1.1deg v=0.053m/s age=0.03s  [lateral(15.2mm>10.2mm), rel_speed(0.053>0.05m/s)]
+QGC port check failed, reporting UNKNOWN: (pid=51264)
+2026-09-01 11:51:25,089 [INFO] gz_system.main_gz: Dashboard paint loop: 0.0 FPS (main thread)
+2026-09-01 11:51:25,721 [INFO] core.detection.vision_runtime: [VISION] detect() calisiyor -- bu karede 0 tespit: []
+2026-09-01 11:51:25,882 [INFO] gz_system.gz_payload_actuator: [HOOK] APPROACHING  lat=  15.2mm ins=   -0.3mm tilt=  1.0deg v=0.011m/s age=0.00s  [lateral(15.2mm>10.2mm)]
+2026-09-01 11:51:26,929 [INFO] gz_system.gz_payload_actuator: [HOOK] APPROACHING  lat=  15.0mm ins=   +0.2mm tilt= 10.6deg v=0.011m/s age=0.01s  [lateral(15.0mm>10.2mm)]
+QGC port check failed, reporting UNKNOWN: (pid=51264)
+2026-09-01 11:51:27,968 [INFO] gz_system.gz_payload_actuator: [HOOK] APPROACHING  lat=  14.3mm ins=   +0.0mm tilt= 12.1deg v=0.002m/s age=0.01s  [lateral(14.3mm>10.2mm)]
+2026-09-01 11:51:28,798 [INFO] core.detection.vision_runtime: [VISION] detect() calisiyor -- bu karede 1 tespit: ['KIRMIZI_UCGEN']
+QGC port check failed, reporting UNKNOWN: (pid=51264)
+2026-09-01 11:51:29,020 [INFO] gz_system.gz_payload_actuator: [HOOK] APPROACHING  lat=  13.9mm ins=   -0.1mm tilt=  8.9deg v=0.006m/s age=0.03s  [lateral(13.9mm>10.2mm)]
+2026-09-01 11:51:30,055 [INFO] gz_system.gz_payload_actuator: [HOOK] APPROACHING  lat=  13.8mm ins=   -0.6mm tilt=  8.3deg v=0.003m/s age=0.00s  [lateral(13.8mm>10.2mm)]
+2026-09-01 11:51:30,097 [INFO] gz_system.main_gz: Dashboard paint loop: 0.0 FPS (main thread)
+QGC port check failed, reporting UNKNOWN: (pid=51264)
+2026-09-01 11:51:31,109 [INFO] gz_system.gz_payload_actuator: [HOOK] APPROACHING  lat=  11.8mm ins=   +2.3mm tilt= 12.0deg v=0.008m/s age=0.03s  [lateral(11.8mm>10.2mm)]
+2026-09-01 11:51:31,882 [INFO] core.detection.vision_runtime: [VISION] detect() calisiyor -- bu karede 1 tespit: ['KIRMIZI_UCGEN']
+2026-09-01 11:51:32,151 [INFO] gz_system.gz_payload_actuator: [HOOK] APPROACHING  lat=  11.3mm ins=   -1.2mm tilt=  5.2deg v=0.039m/s age=0.00s  [lateral(11.3mm>10.2mm)]
+QGC port check failed, reporting UNKNOWN: (pid=51264)
+2026-09-01 11:51:33,198 [INFO] gz_system.gz_payload_actuator: [HOOK] APPROACHING  lat=  11.8mm ins=   -3.9mm tilt= 17.4deg v=0.018m/s age=0.01s  [lateral(11.8mm>10.2mm), tilt(17.4deg>15.0deg)]
+2026-09-01 11:51:34,237 [INFO] gz_system.gz_payload_actuator: [HOOK] APPROACHING  lat=  11.0mm ins=   -0.2mm tilt=  0.5deg v=0.017m/s age=0.01s  [lateral(11.0mm>10.2mm)]
+2026-09-01 11:51:34,951 [INFO] core.detection.vision_runtime: [VISION] detect() calisiyor -- bu karede 0 tespit: []
+QGC port check failed, reporting UNKNOWN: (pid=51264)
+2026-09-01 11:51:35,002 [INFO] gz_system.gz_payload_actuator: [HOOK] OTURDU (SEATED): lat=   2.2mm ins=  +15.3mm tilt= 11.9deg v=0.003m/s age=0.01s -- dwell 0.33 s
+2026-09-01 11:51:35,002 [INFO] gz_system.gz_payload_actuator: [HOOK] SEATED -> LOCKING: servo kilitleniyor
+I0901 11:51:35.002709 13598701 fork_posix.cc:71] Other threads are currently calling into gRPC, skipping fork() handlers
+2026-09-01 11:51:35,115 [INFO] gz_system.main_gz: Dashboard paint loop: 0.0 FPS (main thread)
+I0901 11:51:35.807188 13598701 fork_posix.cc:71] Other threads are currently calling into gRPC, skipping fork() handlers
+2026-09-01 11:51:36,771 [INFO] gz_system.gz_payload_actuator: [HOOK] LOCKED (payload_red) -- vinc acik, yuk ipte; oturma: lat=   2.3mm ins=  +15.3mm tilt= 11.6deg v=0.000m/s age=0.01s
+QGC port check failed, reporting UNKNOWN: (pid=51264)
+2026-09-01 11:51:38,042 [INFO] core.detection.vision_runtime: [VISION] detect() calisiyor -- bu karede 0 tespit: []
+QGC port check failed, reporting UNKNOWN: (pid=51264)
+2026-09-01 11:51:39,772 [INFO] core.mission.gorev3_pickup: Yükseliniyor: 1.0m
+2026-09-01 11:51:40,143 [INFO] gz_system.main_gz: Dashboard paint loop: 0.0 FPS (main thread)
+QGC port check failed, reporting UNKNOWN: (pid=51264)
+2026-09-01 11:51:41,136 [INFO] core.detection.vision_runtime: [VISION] detect() calisiyor -- bu karede 1 tespit: ['KIRMIZI_UCGEN']
+2026-09-01 11:51:41,797 [INFO] core.mission.gorev3_pickup: Yükseliniyor: 2.0m
+QGC port check failed, reporting UNKNOWN: (pid=51264)
+2026-09-01 11:51:43,889 [INFO] core.mission.gorev3_pickup: Yükseliniyor: 3.0m
+2026-09-01 11:51:44,220 [INFO] core.detection.vision_runtime: [VISION] detect() calisiyor -- bu karede 1 tespit: ['KIRMIZI_UCGEN']
+QGC port check failed, reporting UNKNOWN: (pid=51264)
+2026-09-01 11:51:45,170 [INFO] gz_system.main_gz: Dashboard paint loop: 0.0 FPS (main thread)
+2026-09-01 11:51:45,994 [INFO] core.mission.gorev3_pickup: Doğrulama kontrolü yapılıyor (son irtifa)...
+2026-09-01 11:51:45,994 [INFO] core.mission.gorev3_pickup: [ALMA_DOGRULAMA] kanca_kilitli=True  yuk_yukseldi=+2.48 m  dikdortgen_goruntude=False (bu sonuncusu artik yalnizca gozlem)
+2026-09-01 11:51:45,994 [INFO] core.mission.gorev3_pickup: Yük Alma Başarılı (kanca kilitli, yuk +2.48 m yukseldi).
+2026-09-01 11:51:45,994 [INFO] core.mission.gorev3_transport: Görev 3 Faz 2 (Düşük Hızlı Taşıma) Başlatıldı.
+2026-09-01 11:51:45,994 [INFO] core.mission.gorev3_transport: Kırmızı Üçgen konumuna 2.0 m/s hızla gidiliyor: 47.3986188, 8.5463088
+2026-09-01 11:51:45,994 [INFO] core.navigation.centering_controller: Kayitli GPS konumuna gidiliyor: lat=47.3986188, lon=8.5463088, alt=1.5m
+QGC port check failed, reporting UNKNOWN: (pid=51264)
+2026-09-01 11:51:47,323 [INFO] core.detection.vision_runtime: [VISION] detect() calisiyor -- bu karede 0 tespit: []
+QGC port check failed, reporting UNKNOWN: (pid=51264)
+2026-09-01 11:51:50,194 [INFO] gz_system.main_gz: Dashboard paint loop: 0.0 FPS (main thread)
+2026-09-01 11:51:50,414 [INFO] core.detection.vision_runtime: [VISION] detect() calisiyor -- bu karede 0 tespit: []
+2026-09-01 11:51:50,973 [INFO] core.mission.gorev3_transport: Hedefe ulaşıldı.
+2026-09-01 11:51:50,973 [INFO] core.mission.gorev3_redrop: Görev 3 Faz 3 (Yeniden Bırakma) Başlatıldı.
+2026-09-01 11:51:50,973 [INFO] core.navigation.centering_controller: KIRMIZI_UCGEN hedefine merkezleniyor (irtifa hedefi: 1.5m, irtifa bandi +/-0.30m)...
+2026-09-01 11:51:50,973 [WARNING] core.navigation.centering_controller: [CENTERING] KIRMIZI_UCGEN 1/150 hedef kayboldu (feed canli, hedef bu karede yok)
+QGC port check failed, reporting UNKNOWN: (pid=51264)
+2026-09-01 11:51:51,535 [INFO] core.navigation.centering_controller: [CENTERING] KIRMIZI_UCGEN 6/150 dx=-139px dy=+230px d=0.8m ex=-0.2172 ey=+0.4781 (tol +/-0.010) alt_err=+0.06m -> fwd=-0.15 right=-0.15 down=+0.03 m/s
+2026-09-01 11:51:51,987 [WARNING] core.navigation.centering_controller: [LOW_ALT_OPEN_LOOP_DESCENT] KIRMIZI_UCGEN: goruntu 1.57m'de kayboldu -- dondurulmus kestirime (47.3986163, 8.5463080, offset=82.9cm @ 1.57m) gore 1.50m'ye alcalmaya devam.
+2026-09-01 11:51:52,559 [INFO] core.navigation.centering_controller: [LOW_ALT_OPEN_LOOP_DESCENT] KIRMIZI_UCGEN: 1.541m'ye ulasildi (hedef 1.50m).
+QGC port check failed, reporting UNKNOWN: (pid=51264)
+2026-09-01 11:51:53,210 [INFO] core.mission.visual_placement: [GORSEL_YERLESTIRME] 1/6 yuk-hedef 292.0 mm -> (kuzey -0.027, dogu -0.096)
+2026-09-01 11:51:53,473 [INFO] core.detection.vision_runtime: [VISION] detect() calisiyor -- bu karede 1 tespit: ['MAVI_DIKDORTGEN']
+2026-09-01 11:51:54,723 [INFO] core.mission.visual_placement: [GORSEL_YERLESTIRME] 2/6 yuk-hedef 197.6 mm -> (kuzey +0.067, dogu -0.074)
+QGC port check failed, reporting UNKNOWN: (pid=51264)
+2026-09-01 11:51:55,226 [INFO] gz_system.main_gz: Dashboard paint loop: 0.0 FPS (main thread)
+2026-09-01 11:51:56,311 [INFO] core.mission.visual_placement: [GORSEL_YERLESTIRME] 3/6 yuk-hedef 686.6 mm -> (kuzey +0.096, dogu +0.029)
+2026-09-01 11:51:56,535 [INFO] core.detection.vision_runtime: [VISION] detect() calisiyor -- bu karede 2 tespit: ['KIRMIZI_UCGEN', 'MAVI_ALTIGEN']
+QGC port check failed, reporting UNKNOWN: (pid=51264)
+2026-09-01 11:51:57,892 [INFO] core.mission.visual_placement: [GORSEL_YERLESTIRME] 4/6 yuk-hedef 838.4 mm -> (kuzey +0.091, dogu +0.040)
+QGC port check failed, reporting UNKNOWN: (pid=51264)
+2026-09-01 11:51:59,474 [INFO] core.mission.visual_placement: [GORSEL_YERLESTIRME] 5/6 yuk-hedef 900.7 mm -> (kuzey +0.090, dogu +0.044)
+2026-09-01 11:51:59,587 [INFO] core.detection.vision_runtime: [VISION] detect() calisiyor -- bu karede 2 tespit: ['KIRMIZI_UCGEN', 'MAVI_DIKDORTGEN']
+2026-09-01 11:52:00,234 [INFO] gz_system.main_gz: Dashboard paint loop: 0.0 FPS (main thread)
+QGC port check failed, reporting UNKNOWN: (pid=51264)
+2026-09-01 11:52:01,058 [INFO] core.mission.visual_placement: [GORSEL_YERLESTIRME] 6/6 yuk-hedef 914.2 mm -> (kuzey +0.089, dogu +0.045)
+2026-09-01 11:52:02,632 [INFO] core.detection.vision_runtime: [VISION] detect() calisiyor -- bu karede 2 tespit: ['KIRMIZI_UCGEN', 'MAVI_ALTIGEN']
+2026-09-01 11:52:02,632 [WARNING] core.mission.visual_placement: [GORSEL_YERLESTIRME] hizalanamadi (correction_budget); son hata 914.2 mm
+2026-09-01 11:52:02,632 [WARNING] core.mission.gorev3_redrop: [GORSEL_YERLESTIRME] hizalanamadi (correction_budget) -- birakma yine de yapilacak, sonuc olculup raporlanacak.
+2026-09-01 11:52:02,632 [INFO] core.mission.gorev3_redrop: [GORSEL_YERLESTIRME] hedef GORUNTUDEN olculdu: NED=(97.118, 11.028)
+2026-09-01 11:52:02,632 [INFO] core.mission.gorev3_redrop: 0.30 m birakma irtifasina iniliyor.
+QGC port check failed, reporting UNKNOWN: (pid=51264)
+QGC port check failed, reporting UNKNOWN: (pid=51264)
+2026-09-01 11:52:05,251 [INFO] gz_system.main_gz: Dashboard paint loop: 0.0 FPS (main thread)
+2026-09-01 11:52:05,649 [INFO] core.detection.vision_runtime: [VISION] detect() calisiyor -- bu karede 1 tespit: ['KIRMIZI_UCGEN']
+QGC port check failed, reporting UNKNOWN: (pid=51264)
+2026-09-01 11:52:08,678 [INFO] core.detection.vision_runtime: [VISION] detect() calisiyor -- bu karede 1 tespit: ['KIRMIZI_UCGEN']
+2026-09-01 11:52:08,678 [INFO] core.mission.visual_placement: [YERLESTIRME_DUZELTME] 1/6 yuk-hedef 872.5 mm -> (kuzey +0.378, dogu +0.217)
+QGC port check failed, reporting UNKNOWN: (pid=51264)
+2026-09-01 11:52:10,279 [INFO] gz_system.main_gz: Dashboard paint loop: 0.0 FPS (main thread)
+2026-09-01 11:52:10,706 [INFO] core.mission.visual_placement: [YERLESTIRME_DUZELTME] 2/6 yuk-hedef 474.7 mm -> (kuzey +0.210, dogu +0.110)
+QGC port check failed, reporting UNKNOWN: (pid=51264)
+2026-09-01 11:52:11,731 [INFO] core.detection.vision_runtime: [VISION] detect() calisiyor -- bu karede 2 tespit: ['KIRMIZI_UCGEN', 'MAVI_DIKDORTGEN']
+2026-09-01 11:52:12,748 [INFO] core.mission.visual_placement: [YERLESTIRME_DUZELTME] 3/6 yuk-hedef 277.4 mm -> (kuzey +0.118, dogu +0.073)
+QGC port check failed, reporting UNKNOWN: (pid=51264)
+2026-09-01 11:52:14,786 [INFO] core.detection.vision_runtime: [VISION] detect() calisiyor -- bu karede 2 tespit: ['KIRMIZI_UCGEN', 'MAVI_DIKDORTGEN']
+2026-09-01 11:52:14,786 [INFO] core.mission.visual_placement: [YERLESTIRME_DUZELTME] 4/6 yuk-hedef 151.9 mm -> (kuzey +0.068, dogu +0.034)
+QGC port check failed, reporting UNKNOWN: (pid=51264)
+2026-09-01 11:52:15,295 [INFO] gz_system.main_gz: Dashboard paint loop: 0.0 FPS (main thread)
+2026-09-01 11:52:16,808 [INFO] core.mission.visual_placement: [YERLESTIRME_DUZELTME] 5/6 yuk-hedef 88.2 mm -> (kuzey +0.032, dogu +0.031)
+QGC port check failed, reporting UNKNOWN: (pid=51264)
+2026-09-01 11:52:17,822 [INFO] core.detection.vision_runtime: [VISION] detect() calisiyor -- bu karede 2 tespit: ['KIRMIZI_UCGEN', 'MAVI_DIKDORTGEN']
+2026-09-01 11:52:18,835 [INFO] core.mission.visual_placement: [YERLESTIRME_DUZELTME] 6/6 yuk-hedef 82.5 mm -> (kuzey +0.024, dogu +0.034)
+QGC port check failed, reporting UNKNOWN: (pid=51264)
+2026-09-01 11:52:20,326 [INFO] gz_system.main_gz: Dashboard paint loop: 0.0 FPS (main thread)
+2026-09-01 11:52:20,849 [INFO] core.detection.vision_runtime: [VISION] detect() calisiyor -- bu karede 1 tespit: ['KIRMIZI_UCGEN']
+2026-09-01 11:52:20,850 [WARNING] core.mission.visual_placement: [YERLESTIRME_DUZELTME] butce doldu; son 82.5 mm
+2026-09-01 11:52:20,850 [INFO] core.mission.gorev3_redrop: [GORSEL_YERLESTIRME] birakma oncesi son yuk-hedef hatasi: 82.5 mm
+2026-09-01 11:52:20,850 [INFO] core.mission.gorev3_redrop: Taşınan yük bırakma mekanizması aktifleşiyor...
+2026-09-01 11:52:20,850 [INFO] gz_system.gz_payload_actuator: [HOOK] servo aciliyor -- yuk birakiliyor
+I0901 11:52:20.851288 13598701 fork_posix.cc:71] Other threads are currently calling into gRPC, skipping fork() handlers
+QGC port check failed, reporting UNKNOWN: (pid=51264)
+2026-09-01 11:52:21,843 [INFO] gz_system.gz_payload_actuator: [HOOK] ayrilma dogrulandi (0.00 s, deneme 1).
+2026-09-01 11:52:22,343 [INFO] gz_system.gz_payload_actuator: [HOOK] vinc -> 0.00 m
+I0901 11:52:22.344414 13598701 fork_posix.cc:71] Other threads are currently calling into gRPC, skipping fork() handlers
+QGC port check failed, reporting UNKNOWN: (pid=51264)
+2026-09-01 11:52:23,329 [INFO] gz_system.gz_payload_actuator: [HOOK] yuk birakildi, vinc toplandi.
+2026-09-01 11:52:23,889 [INFO] core.detection.vision_runtime: [VISION] detect() calisiyor -- bu karede 1 tespit: ['KIRMIZI_UCGEN']
+QGC port check failed, reporting UNKNOWN: (pid=51264)
+2026-09-01 11:52:25,329 [INFO] core.mission.gorev3_redrop: [GOREV3_FINAL_POSE] x=11.005 y=72.021 z=0.041 -- Kirmizi Ucgen merkezine 3385.9 cm, YERDE
+2026-09-01 11:52:25,329 [INFO] core.mission.gorev3_redrop: Görev 3 Faz 3 Başarılı.
+2026-09-01 11:52:25,329 [INFO] core.mission.gorev3_finish: Görev 3 Faz 4 (Sonlandırma) Başlatıldı.
+2026-09-01 11:52:25,329 [INFO] core.mission.gorev3_finish: Yükseliniyor: 1.0m
+2026-09-01 11:52:25,342 [INFO] gz_system.main_gz: Dashboard paint loop: 0.0 FPS (main thread)
+2026-09-01 11:52:26,909 [INFO] core.detection.vision_runtime: [VISION] detect() calisiyor -- bu karede 2 tespit: ['KIRMIZI_UCGEN', 'MAVI_DIKDORTGEN']
+QGC port check failed, reporting UNKNOWN: (pid=51264)
+2026-09-01 11:52:27,359 [INFO] core.mission.gorev3_finish: Yükseliniyor: 2.0m
+QGC port check failed, reporting UNKNOWN: (pid=51264)
+2026-09-01 11:52:29,374 [INFO] core.mission.gorev3_finish: Finish Line (Checkpoint) konumuna gidiliyor: 47.3977459, 8.5461637
+2026-09-01 11:52:29,374 [INFO] core.navigation.centering_controller: Kayitli GPS konumuna gidiliyor: lat=47.3977459, lon=8.5461637, alt=14.209000587463379m
+2026-09-01 11:52:29,929 [INFO] core.detection.vision_runtime: [VISION] detect() calisiyor -- bu karede 1 tespit: ['KIRMIZI_UCGEN']
+2026-09-01 11:52:30,372 [INFO] gz_system.main_gz: Dashboard paint loop: 0.0 FPS (main thread)
+QGC port check failed, reporting UNKNOWN: (pid=51264)
+2026-09-01 11:52:33,026 [INFO] core.detection.vision_runtime: [VISION] detect() calisiyor -- bu karede 1 tespit: ['MAVI_DIKDORTGEN']
+QGC port check failed, reporting UNKNOWN: (pid=51264)
+QGC port check failed, reporting UNKNOWN: (pid=51264)
+2026-09-01 11:52:35,407 [INFO] gz_system.main_gz: Dashboard paint loop: 0.0 FPS (main thread)
+2026-09-01 11:52:36,129 [INFO] core.detection.vision_runtime: [VISION] detect() calisiyor -- bu karede 1 tespit: ['KIRMIZI_DIKDORTGEN']
+QGC port check failed, reporting UNKNOWN: (pid=51264)
+QGC port check failed, reporting UNKNOWN: (pid=51264)
+2026-09-01 11:52:39,186 [INFO] core.detection.vision_runtime: [VISION] detect() calisiyor -- bu karede 0 tespit: []
+2026-09-01 11:52:40,166 [INFO] core.mission.gorev3_finish: GOREV 3 TAMAMLANDI - TUM GOREVLER BASARIYLA BITTI
+2026-09-01 11:52:40,166 [INFO] core.mission.master_fsm: TUM GOREVLER (2 + 3) BASARIYLA TAMAMLANDI
+2026-09-01 11:52:40,166 [INFO] core.mission.master_fsm: RETURNING_TO_START_FINISH (dist=0.9 m) -- hedef (47.3977459, 8.5461637) @ 15.0m, sebep: gorev3_complete
+2026-09-01 11:52:40,166 [INFO] core.navigation.centering_controller: Kayitli GPS konumuna gidiliyor: lat=47.3977459, lon=8.5461637, alt=15.0m
+2026-09-01 11:52:40,438 [INFO] gz_system.main_gz: Dashboard paint loop: 0.0 FPS (main thread)
+QGC port check failed, reporting UNKNOWN: (pid=51264)
+2026-09-01 11:52:42,226 [INFO] core.detection.vision_runtime: [VISION] detect() calisiyor -- bu karede 0 tespit: []
+QGC port check failed, reporting UNKNOWN: (pid=51264)
+QGC port check failed, reporting UNKNOWN: (pid=51264)
+2026-09-01 11:52:45,260 [INFO] core.detection.vision_runtime: [VISION] detect() calisiyor -- bu karede 0 tespit: []
+2026-09-01 11:52:45,459 [INFO] gz_system.main_gz: Dashboard paint loop: 0.0 FPS (main thread)
+2026-09-01 11:52:45,478 [INFO] core.mission.master_fsm: Baslangic/bitis noktasina ulasildi -- checkpoint'e uzaklik 0.8 m. Inis baslatiliyor.
+2026-09-01 11:52:45,478 [INFO] core.mission.master_fsm: Son iniş gerçekleştiriliyor...
+2026-09-01 11:52:45,478 [INFO] mavsdk_common.mavsdk_backend_base: İniş yapılıyor...
+2026-09-01 11:52:45,500 [INFO] core.detection.detection_publisher: [DETECTION_PUB] yayin kapatiliyor (gonderilen=3172, atlanan=0).
+2026-09-01 11:52:45,500 [INFO] core.detection.vision_runtime: [VISION] pipeline durduruldu.
+[CAMERA_CLIENT] Stopping client...
+[CAMERA_CLIENT] Shutdown complete.
+I0901 11:52:45.518782 13598703 fork_posix.cc:71] Other threads are currently calling into gRPC, skipping fork() handlers
+[CAMERA_SERVICE_MANAGER] Stopping (PID: 50439)...
+I0901 11:52:45.524607 13598703 fork_posix.cc:71] Other threads are currently calling into gRPC, skipping fork() handlers
+I0901 11:52:45.528249 13598703 fork_posix.cc:71] Other threads are currently calling into gRPC, skipping fork() handlers
+[CAMERA_SERVICE_MANAGER] Stopped.

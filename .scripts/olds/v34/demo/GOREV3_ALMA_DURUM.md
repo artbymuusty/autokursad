@@ -367,7 +367,7 @@ uçuş gerektirmeden, aynı koşudan** ayırmayı sağlıyor.
 
 ## 7. Açık işler
 
-### 1. Tilt darboğazı — FAZ 1+2 YAPILDI, kalan iş var
+### 1. Tilt darboğazı — ARAŞTIRMA KAPANDI (tasarım ayrı oturuma)
 
 Yuva collision'ı eklendikten sonra bağlayıcı terim değişti. 2026-09-01
 setinde yuvaya giren iki denemeden biri (`2·3`) yanal 1.62 mm ve
@@ -384,12 +384,48 @@ kasıtlı olarak açılmadı.
 Özet: tilt'in kötüleşmesi yuva collision'ıyla **ilişkili ve
 tekrarlanabilir**; dwell'in ulaşılamaz hale gelmesi p = 0.049.
 
-**Kalan iş:** `B_surekli`'nin temas anında mı başladığı yoksa sonradan mı
-geliştiği **hâlâ bilinmiyor**. `seat_trace` bunu okuyacak şekilde eklendi
-ve sahada çalıştığı doğrulandı (9 denemede 110'ar nokta), ama `B_surekli`
-gözlenen açık-grup koşuları enstrümantasyondan **önce** yapıldığı için o
-rejimin izi henüz yakalanmadı. Sıradaki adım: yuva AÇIK, `seat_trace`
-etkin en az 3 koşu. Mekanizma (1)'in salım formülüne hâlâ dokunulmadı.
+**KAPANDI (2026-09-01, son tur).** 9 koşu daha yapıldı (yuva AÇIK,
+`seat_trace` etkin) ve `B_surekli` yakalandı. Sonuç, beklediğimin tersi
+çıktı ve iki ayrı olguyu **karıştırdığımı** ortaya koydu.
+
+**Bulgu 1 — genel tilt temasla tetikleniyor (geometri tarafı).**
+17 denemenin hiçbirinde tilt temastan önce eşiği aşmıyor (temas öncesi
+maksimum 2.8°, eşiği aşan 0/17). Yuvanın içinde temas edildiğinde tilt
+**0.12–0.22 s** içinde geliyor; yuva kapalıyken benzer yanal ofsetlerde
+(15.8 / 21.9 mm) aynı eşik **1.20–5.46 s** sonra aşılıyor. İki küme hiç
+örtüşmüyor. Bu, yuva geometrisinin temas anında devirici bir tork
+uyguladığına işaret ediyor.
+
+**Bulgu 2 — ama `B_surekli` bunun bir örneği DEĞİL.** Üç `B_surekli`
+örneğinin **ikisinde temas hiç yok**:
+
+| koşu | yanal | ins | tilt | temas |
+|---|---|---|---|---|
+| 081226 d1 | 10.3 mm | **+11.4 mm** | 31.1° | evet (yuva içinde) |
+| 081900 d3 | 16.8 mm | **−10.0 mm** | 51.7° | **hayır** |
+| 120334 d1 | 25.7 mm | **−9.5 mm** | 47.3° | **hayır** |
+
+İzi alınan örnekte (120334 d1) kanca oturma penceresine **daha ilk
+örnekte 39.2° eğik** giriyor, deck'in 7.4–10.0 mm üstünde asılı kalıyor,
+12 saniye boyunca hiçbir şeye değmiyor ve tilt 35–53° arasında sabit
+duruyor (`crossings = 0`, `longest_run = 0`).
+
+Yani `B_surekli` **yukarı akıştan geliyor**: kanca temas edebileceği
+noktaya varmadan ÖNCE yatmış oluyor. Geometri değil, iniş/ip/sarkaç
+dinamiği alanı. Bulgu 1'in işaret ettiği yön `B_surekli` için geçerli
+değil; ikisi ayrı olgu.
+
+**Yan bulgu ÇÜRÜTÜLDÜ.** "Temas anındaki yanal ofset, tilt'in kalıcı
+olup olmayacağını belirler" hipotezi n=2'de makul görünüyordu; n=5'te
+yıkıldı (Pearson r = +0.50, monoton değil): **16.8 mm → 34.5° (düştü)**
+ama **17.2 mm → 9.2° (OTURDU)**. Neredeyse aynı ofset, zıt sonuç.
+
+**Sıklık:** `B_surekli` 3/32 deneme (~%9) — nadir bir olay. Daha fazla
+kovalanmadı.
+
+**Kapsam dışı bırakılan:** düzeltme tasarımı. Mekanizma (1)'in salım
+formülüne bu turda da dokunulmadı. Bulgu 2 doğrudan mekanizma (1)
+alanına girdiği için, tasarım AYRI bir oturuma bırakıldı.
 
 ### 2. `kursad_hook` eksik mesh'leri
 

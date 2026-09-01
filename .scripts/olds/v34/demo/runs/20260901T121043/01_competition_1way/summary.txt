@@ -1,0 +1,71 @@
+  mission_id : 5e8bc6ad1581
+  sure       : 342.8s  (5320 olay)
+  kaynak     : $REPO_ROOT/.scripts/olds/v34/demo/runs/20260901T121043/01_competition_1way/mission_5e8bc6ad1581.jsonl
+
+  FAZLAR (30)
+    t+    1.0s  CONNECTING
+    t+    2.8s  ARMING
+    t+    2.8s  TAKEOFF
+    t+    2.8s  CLIMB_TO_ALTITUDE
+    t+   19.4s  CHECKPOINT_SAVE
+    t+   19.4s  MISSION_ROUTE_CONFIRM
+    t+   19.4s  MISSION_START
+    t+   24.0s  SEARCHING
+    t+   29.7s  TARGET_TRACKING
+    t+   29.7s  SWITCH_TO_OFFBOARD
+    t+   32.8s  SEARCHING
+    t+   34.2s  TARGET_TRACKING
+    t+   34.2s  SWITCH_TO_OFFBOARD
+    t+   36.9s  GOTO_TARGET_CENTERING
+    t+   76.3s  HOVER_CONFIRM
+    t+   78.4s  GPS_SAVE
+    t+  114.0s  SEARCHING
+    t+  133.6s  TARGET_TRACKING
+    t+  133.6s  SWITCH_TO_OFFBOARD
+    t+  134.0s  GOTO_TARGET_CENTERING
+    t+  155.2s  HOVER_CONFIRM
+    t+  157.2s  GPS_SAVE
+    t+  207.0s  SEARCH_COMPLETE
+    t+  207.1s  GOREV2_COMPLETE
+    t+  207.1s  GOREV3_START
+    t+  207.1s  GOREV3_RUNNING
+    t+  332.2s  MISSION_FAILED
+    t+  332.2s  RETURN_TO_CHECKPOINT
+    t+  342.7s  LANDING
+    t+  342.7s  MISSION_FAILED
+
+  KILOMETRE TASLARI (26)
+    t+    1.0s  MISSION_STARTED  -- mission_id=5e8bc6ad1581
+    t+    1.0s  MISSION_STARTED  -- Gorev 2 starting
+    t+    2.0s  CONNECTED  -- connected to udp://:14540
+    t+    2.8s  ARMED  -- vehicle armed
+    t+   19.4s  CHECKPOINT_SAVED
+    t+   19.4s  MISSION_ROUTE_CONFIRMED  -- 3 items already on vehicle (from QGroundControl)
+    t+   23.0s  MISSION_CURRENT_ITEM_SET  -- start index 1
+    t+   23.0s  MISSION_STARTED_ONBOARD
+    t+   33.0s  MISSION_CURRENT_ITEM_SET  -- start index 2
+    t+   33.1s  MISSION_STARTED_ONBOARD
+    t+   73.2s  CENTERING_CONVERGED  -- MAVI_ALTIGEN
+    t+   84.8s  CENTERING_CONVERGED  -- MAVI_ALTIGEN
+    t+   91.3s  CENTERING_CONVERGED  -- MAVI_ALTIGEN
+    t+  102.2s  PAYLOAD_RELEASE_CONFIRMED  -- MAVI_ALTIGEN
+    t+  102.2s  PAYLOAD_RELEASED  -- PAYLOAD 1 RELEASED @0.47m
+    t+  117.7s  MISSION_CURRENT_ITEM_SET  -- start index 2
+    t+  117.7s  MISSION_STARTED_ONBOARD
+    t+  152.1s  CENTERING_CONVERGED  -- KIRMIZI_UCGEN
+    t+  167.9s  CENTERING_CONVERGED  -- KIRMIZI_UCGEN
+    t+  186.9s  CENTERING_CONVERGED  -- KIRMIZI_UCGEN
+    t+  200.1s  CENTERING_CONVERGED  -- KIRMIZI_UCGEN
+    t+  202.9s  PAYLOAD_RELEASE_CONFIRMED  -- KIRMIZI_UCGEN
+    t+  202.9s  PAYLOAD_RELEASED  -- PAYLOAD 2 RELEASED @0.42m
+    t+  207.0s  SEARCH_COMPLETE
+    t+  207.1s  GOREV2_COMPLETE
+    t+  231.9s  CENTERING_CONVERGED  -- KIRMIZI_DIKDORTGEN
+
+  SORUNLAR (4 WARNING+)
+    t+   32.8s  [CRITICAL] OFFBOARD_SWITCH_FAILED: PX4 did not report OFFBOARD before timeout
+    t+  332.2s  [CRITICAL] MISSION_PHASE_CHANGED: GOREV3_RUNNING -> MISSION_FAILED (gorev3_pickup_failed)
+    t+  332.2s  [CRITICAL] GOREV3_PHASE_FAILED: pickup
+    t+  342.7s  [CRITICAL] MISSION_PHASE_CHANGED: LANDING -> MISSION_FAILED (landed_after_prior_failure)
+
+  SONUC: MISSION_FAILED

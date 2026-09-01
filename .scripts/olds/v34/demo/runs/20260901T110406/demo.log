@@ -1,0 +1,148 @@
+
+===========================================================
+[00:00] FAZ 0/5 -- ON KONTROL
+===========================================================
+[00:00] python: $VENV_ROOT/bin/python
+[00:00]   [OK]   PX4 SITL binary  -- $REPO_ROOT/build/px4_sitl_default/bin/px4
+[00:00]   [OK]   gz (Gazebo)  -- /opt/homebrew/bin/gz 8.15.0
+[00:01]   [OK]   python: mavsdk
+[00:01]   [OK]   python: cv2/zmq/numpy (dashboard)
+[00:01]   [OK]   safe_sitl_launcher.sh
+[00:01]   [OK]   QGC missions dizini  -- $MISSIONS_DIR
+[00:01]   [OK]   plan: competition_1way.plan  -- 3 waypoint
+[00:01] on kontrol temiz: 1 plan sirayla kosulacak
+
+===========================================================
+[00:01] FAZ 1/5 -- PX4 SITL + GAZEBO
+===========================================================
+[00:01] safe_sitl_launcher.sh baslatiliyor (log: $REPO_ROOT/.scripts/olds/v34/demo/runs/20260901T110406/sitl.log)
+[00:01]   pid=43725
+
+===========================================================
+[00:01] FAZ 2/5 -- ARAC HAZIR MI
+===========================================================
+Connection using udp:// is deprecated, please use udpin:// or udpout:// (cli_arg.cpp:28)
+[WAIT] bekleniyor: 1/3 MAVLink heartbeat (kalan 223s)
+[WAIT]   -> OK (16.8s)
+[WAIT] bekleniyor: 2/3 global+home pozisyon (EKF) (kalan 223s)
+[WAIT]   -> OK (18.7s)
+[WAIT] bekleniyor: 3/3 is_armable (kalan 221s)
+[WAIT]   -> OK (19.7s)
+[WAIT] arac ucusa hazir (19.7s)
+
+===========================================================
+[00:21] FAZ 3/5 -- MISSION DASHBOARD
+===========================================================
+[00:21] dashboard KAPALI (--no-dashboard)
+
+===========================================================
+[00:21] FAZ 4/5 -- PLANLAR (SIRAYLA)
+===========================================================
+
+===========================================================
+[00:21] PLAN 1/1 -- competition_1way
+===========================================================
+[00:21] rota yukleniyor ve dogrulaniyor
+[UPLOAD] plan: competition_1way.plan  (3 item, dosyadan okundu)
+Connection using udp:// is deprecated, please use udpin:// or udpout:// (cli_arg.cpp:28)
+[UPLOAD] baglaniliyor: udp://:14540 (timeout 30s)
+[UPLOAD] arac bagli
+[UPLOAD] ayristirildi: 3 raw MAVLink item
+[UPLOAD] aractaki eski rota silindi
+[UPLOAD] yukleme ack alindi
+[UPLOAD] geri okundu: 3 item, 0 uyusmazlik
+[UPLOAD]   seq=0   cmd=22   lat=47.3977465 lon=8.5461637 alt=15.0
+[UPLOAD]   seq=1   cmd=16   lat=47.3977914 lon=8.5461637 alt=15.0
+[UPLOAD]   seq=2   cmd=16   lat=47.3990490 lon=8.5461637 alt=15.0
+[UPLOAD] DOGRULANDI: aractaki rota .plan ile birebir ayni
+[00:22] LAND modu temizligi
+Connection using udp:// is deprecated, please use udpin:// or udpout:// (cli_arg.cpp:28)
+[LAND-RESET] armable=True mode=HOLD armed=False on_ground=True
+[00:26] gorev basliyor (main_gz.py, duvar limiti 900s)
+[00:26]   canli log: tail -f $REPO_ROOT/.scripts/olds/v34/demo/runs/20260901T110406/01_competition_1way/mission.log
+[05:57] gorev sureci 0 ile bitti
+[05:57] olay akisi ozeti (e566d7cacba8)
+  mission_id : e566d7cacba8
+  sure       : 328.9s  (5050 olay)
+  kaynak     : $REPO_ROOT/.scripts/olds/v34/demo/runs/20260901T110406/01_competition_1way/mission_e566d7cacba8.jsonl
+
+  FAZLAR (27)
+    t+    1.0s  CONNECTING
+    t+    2.8s  ARMING
+    t+    2.8s  TAKEOFF
+    t+    2.8s  CLIMB_TO_ALTITUDE
+    t+   19.4s  CHECKPOINT_SAVE
+    t+   19.4s  MISSION_ROUTE_CONFIRM
+    t+   19.4s  MISSION_START
+    t+   24.0s  SEARCHING
+    t+   33.0s  TARGET_TRACKING
+    t+   33.0s  SWITCH_TO_OFFBOARD
+    t+   34.0s  GOTO_TARGET_CENTERING
+    t+   64.6s  HOVER_CONFIRM
+    t+   66.6s  GPS_SAVE
+    t+  102.2s  SEARCHING
+    t+  112.6s  TARGET_TRACKING
+    t+  112.6s  SWITCH_TO_OFFBOARD
+    t+  113.0s  GOTO_TARGET_CENTERING
+    t+  145.0s  HOVER_CONFIRM
+    t+  147.1s  GPS_SAVE
+    t+  189.1s  SEARCH_COMPLETE
+    t+  189.2s  GOREV2_COMPLETE
+    t+  189.2s  GOREV3_START
+    t+  189.2s  GOREV3_RUNNING
+    t+  320.1s  MISSION_FAILED
+    t+  320.1s  RETURN_TO_CHECKPOINT
+    t+  328.8s  LANDING
+    t+  328.8s  MISSION_FAILED
+
+  KILOMETRE TASLARI (24)
+    t+    1.0s  MISSION_STARTED  -- mission_id=e566d7cacba8
+    t+    1.0s  MISSION_STARTED  -- Gorev 2 starting
+    t+    1.8s  CONNECTED  -- connected to udp://:14540
+    t+    2.8s  ARMED  -- vehicle armed
+    t+   19.4s  CHECKPOINT_SAVED
+    t+   19.4s  MISSION_ROUTE_CONFIRMED  -- 3 items already on vehicle (from QGroundControl)
+    t+   23.0s  MISSION_CURRENT_ITEM_SET  -- start index 1
+    t+   23.0s  MISSION_STARTED_ONBOARD
+    t+   61.5s  CENTERING_CONVERGED  -- MAVI_ALTIGEN
+    t+   73.8s  CENTERING_CONVERGED  -- MAVI_ALTIGEN
+    t+   80.5s  CENTERING_CONVERGED  -- MAVI_ALTIGEN
+    t+   90.5s  PAYLOAD_RELEASE_CONFIRMED  -- MAVI_ALTIGEN
+    t+   90.5s  PAYLOAD_RELEASED  -- PAYLOAD 1 RELEASED @0.48m
+    t+  106.6s  MISSION_CURRENT_ITEM_SET  -- start index 2
+    t+  106.6s  MISSION_STARTED_ONBOARD
+    t+  142.0s  CENTERING_CONVERGED  -- KIRMIZI_UCGEN
+    t+  157.2s  CENTERING_CONVERGED  -- KIRMIZI_UCGEN
+    t+  163.8s  CENTERING_CONVERGED  -- KIRMIZI_UCGEN
+    t+  182.1s  CENTERING_CONVERGED  -- KIRMIZI_UCGEN
+    t+  185.0s  PAYLOAD_RELEASE_CONFIRMED  -- KIRMIZI_UCGEN
+    t+  185.0s  PAYLOAD_RELEASED  -- PAYLOAD 2 RELEASED @0.44m
+    t+  189.1s  SEARCH_COMPLETE
+    t+  189.2s  GOREV2_COMPLETE
+    t+  208.6s  CENTERING_CONVERGED  -- KIRMIZI_DIKDORTGEN
+
+  SORUNLAR (3 WARNING+)
+    t+  320.1s  [CRITICAL] MISSION_PHASE_CHANGED: GOREV3_RUNNING -> MISSION_FAILED (gorev3_pickup_failed)
+    t+  320.1s  [CRITICAL] GOREV3_PHASE_FAILED: pickup
+    t+  328.8s  [CRITICAL] MISSION_PHASE_CHANGED: LANDING -> MISSION_FAILED (landed_after_prior_failure)
+
+  SONUC: MISSION_FAILED
+
+===========================================================
+[06:02] FAZ 5/5 -- OZET
+===========================================================
+KURSAD40 V34 -- demo 20260901T110406
+plan sirasi: competition_1way
+gorev duvar limiti: 900s   dry-run: 0
+
+#    PLAN             YUKLEME    GOREV        SONUC
+-------------------------------------------------------------------------
+1    competition_1way OK         rc=0         MISSION_FAILED
+[06:02] 
+[06:02] her plan icin: $REPO_ROOT/.scripts/olds/v34/demo/runs/20260901T110406/<NN>_<plan>/{upload.log,mission.log,summary.txt,mission_*.jsonl}
+
+===========================================================
+[06:02] TEARDOWN
+===========================================================
+[06:02] SITL kapatiliyor
+[06:02] artefaktlar: $REPO_ROOT/.scripts/olds/v34/demo/runs/20260901T110406
