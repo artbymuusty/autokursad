@@ -1,6 +1,6 @@
   mission_id : 65927a0a3dc1
   sure       : 436.5s  (7242 olay)
-  kaynak     : /Users/muusty/AytechUAS/autokursad/.scripts/olds/v34/demo/runs/20260901T054009/01_competition_1way/mission_65927a0a3dc1.jsonl
+  kaynak     : $REPO_ROOT/.scripts/olds/v34/demo/runs/20260901T054009/01_competition_1way/mission_65927a0a3dc1.jsonl
 
   FAZLAR (27)
     t+    1.0s  CONNECTING

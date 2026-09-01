@@ -31,10 +31,10 @@
 Eski yedekler budandi: 1 silindi, 5 tutuldu
 
 Yedek: default.sdf.bak.20260901T023402Z
-default.sdf güncellendi: /Users/muusty/AytechUAS/autokursad/Tools/simulation/gz/worlds/default.sdf
+default.sdf güncellendi: $REPO_ROOT/Tools/simulation/gz/worlds/default.sdf
 [ORCHESTRATOR] 5/6 Handing control to PX4 (make px4_sitl gz_x500_mono_cam_down)...
 ps: stdin: not a terminal
-[0/1] cd /Users/muusty/AytechUAS/autokursad/build/px4_sitl_default/src/modules/simulation/gz_bridge && /opt/homebrew/bin/cmake -E env PX4_SIM_MODEL=gz_x500_mono_cam_down GZ_IP=127.0.0.1 /Users/muusty/AytechUAS/autokursad/build/px4_sitl_default/bin/px4
+[0/1] cd $REPO_ROOT/build/px4_sitl_default/src/modules/simulation/gz_bridge && /opt/homebrew/bin/cmake -E env PX4_SIM_MODEL=gz_x500_mono_cam_down GZ_IP=127.0.0.1 $REPO_ROOT/build/px4_sitl_default/bin/px4
 
 ______  __   __    ___ 
 | ___ \ \ \ / /   /   |
@@ -53,24 +53,24 @@ INFO  [parameters] BSON document size 580 bytes, decoded 580 bytes (INT32:17, FL
 INFO  [param] selected parameter backup file parameters_backup.bson
 INFO  [dataman] data manager file './dataman' size is 1208528 bytes
 INFO  [init] Gazebo simulator 8.15.0
-INFO  [init] Starting gazebo with world: /Users/muusty/AytechUAS/autokursad/Tools/simulation/gz/worlds/default.sdf
+INFO  [init] Starting gazebo with world: $REPO_ROOT/Tools/simulation/gz/worlds/default.sdf
 INFO  [init] Starting gz gui
-Error while loading the library [/Users/muusty/AytechUAS/autokursad/build/px4_sitl_default/src/modules/simulation/gz_plugins/libOpticalFlowSystem.dylib]: dlopen(/Users/muusty/AytechUAS/autokursad/build/px4_sitl_default/src/modules/simulation/gz_plugins/libOpticalFlowSystem.dylib, 0x0085): Library not loaded: @rpath/libOpticalFlow.dylib
-  Referenced from: <28BAD4A4-953B-30DD-BAC8-830744FF5EA4> /Users/muusty/AytechUAS/autokursad/build/px4_sitl_default/src/modules/simulation/gz_plugins/libOpticalFlowSystem.dylib
-  Reason: tried: '/Users/muusty/AytechUAS/autokursad/build/px4_sitl_default/external/Install/lib/libOpticalFlow.dylib' (no such file), '/System/Volumes/Preboot/Cryptexes/OS/Users/muusty/AytechUAS/autokursad/build/px4_sitl_default/external/Install/lib/libOpticalFlow.dylib' (no such file), '/opt/homebrew/lib/libOpticalFlow.dylib' (no such file), '/System/Volumes/Preboot/Cryptexes/OS/opt/homebrew/lib/libOpticalFlow.dylib' (no such file), '/Users/muusty/AytechUAS/autokursad/build/px4_sitl_default/external/Install/lib/libOpticalFlow.dylib' (no such file), '/System/Volumes/Preboot/Cryptexes/OS/Users/muusty/AytechUAS/autokursad/build/px4_sitl_default/external/Install/lib/libOpticalFlow.dylib' (no such file), '/opt/homebrew/lib/libOpticalFlow.dylib' (no such file), '/System/Volumes/Preboot/Cryptexes/OS/opt/homebrew/lib/libOpticalFlow.dylib' (no such file), '/opt/homebrew/Cellar/gz-plugin2/2.0.4/lib/../lib/libOpticalFlow.dylib' (no such file), '/opt/homebrew/Cellar/gz-plugin2/2.0.4/lib/../../../lib/libOpticalFlow.dylib' (no such file)
+Error while loading the library [$REPO_ROOT/build/px4_sitl_default/src/modules/simulation/gz_plugins/libOpticalFlowSystem.dylib]: dlopen($REPO_ROOT/build/px4_sitl_default/src/modules/simulation/gz_plugins/libOpticalFlowSystem.dylib, 0x0085): Library not loaded: @rpath/libOpticalFlow.dylib
+  Referenced from: <28BAD4A4-953B-30DD-BAC8-830744FF5EA4> $REPO_ROOT/build/px4_sitl_default/src/modules/simulation/gz_plugins/libOpticalFlowSystem.dylib
+  Reason: tried: '$REPO_ROOT/build/px4_sitl_default/external/Install/lib/libOpticalFlow.dylib' (no such file), '/System/Volumes/Preboot/Cryptexes/OS$REPO_ROOT/build/px4_sitl_default/external/Install/lib/libOpticalFlow.dylib' (no such file), '/opt/homebrew/lib/libOpticalFlow.dylib' (no such file), '/System/Volumes/Preboot/Cryptexes/OS/opt/homebrew/lib/libOpticalFlow.dylib' (no such file), '$REPO_ROOT/build/px4_sitl_default/external/Install/lib/libOpticalFlow.dylib' (no such file), '/System/Volumes/Preboot/Cryptexes/OS$REPO_ROOT/build/px4_sitl_default/external/Install/lib/libOpticalFlow.dylib' (no such file), '/opt/homebrew/lib/libOpticalFlow.dylib' (no such file), '/System/Volumes/Preboot/Cryptexes/OS/opt/homebrew/lib/libOpticalFlow.dylib' (no such file), '/opt/homebrew/Cellar/gz-plugin2/2.0.4/lib/../lib/libOpticalFlow.dylib' (no such file), '/opt/homebrew/Cellar/gz-plugin2/2.0.4/lib/../../../lib/libOpticalFlow.dylib' (no such file)
 [1;31m[Err] [SystemLoader.cc:107] [0m[1;31mFailed to load system plugin: (Reason: No plugins detected in library)
 - Requested plugin name: [custom::OpticalFlowSystem]
 - Requested library name: [libOpticalFlowSystem.so]
-- Resolved library path: [/Users/muusty/AytechUAS/autokursad/build/px4_sitl_default/src/modules/simulation/gz_plugins/libOpticalFlowSystem.dylib][0m
+- Resolved library path: [$REPO_ROOT/build/px4_sitl_default/src/modules/simulation/gz_plugins/libOpticalFlowSystem.dylib][0m
 INFO  [init] Waiting for Gazebo world...
 INFO  [init] Gazebo world is ready
 INFO  [init] Gazebo model pose: 0 -25 0 0 0 1.5707963267948966
 INFO  [init] Spawning Gazebo model
-[1;33mWarning [Utils.cc:132][0m [/sdf/model[@name="x500_base"]/link[@name="base_link"]/sensor[@name="air_pressure_sensor"]/gz_frame_id:/Users/muusty/AytechUAS/autokursad/Tools/simulation/gz/models/x500_base/model.sdf:L219]: XML Element[gz_frame_id], child of element[sensor], not defined in SDF. Copying[gz_frame_id] as children of [sensor].
-[1;33mWarning [Utils.cc:132][0m [/sdf/model[@name="x500_base"]/link[@name="base_link"]/sensor[@name="magnetometer_sensor"]/gz_frame_id:/Users/muusty/AytechUAS/autokursad/Tools/simulation/gz/models/x500_base/model.sdf:L233]: XML Element[gz_frame_id], child of element[sensor], not defined in SDF. Copying[gz_frame_id] as children of [sensor].
-[1;33mWarning [Utils.cc:132][0m [/sdf/model[@name="x500_base"]/link[@name="base_link"]/sensor[@name="imu_sensor"]/gz_frame_id:/Users/muusty/AytechUAS/autokursad/Tools/simulation/gz/models/x500_base/model.sdf:L259]: XML Element[gz_frame_id], child of element[sensor], not defined in SDF. Copying[gz_frame_id] as children of [sensor].
-[1;33mWarning [Utils.cc:132][0m [/sdf/model[@name="x500_base"]/link[@name="base_link"]/sensor[@name="navsat_sensor"]/gz_frame_id:/Users/muusty/AytechUAS/autokursad/Tools/simulation/gz/models/x500_base/model.sdf:L311]: XML Element[gz_frame_id], child of element[sensor], not defined in SDF. Copying[gz_frame_id] as children of [sensor].
-[1;33mWarning [Utils.cc:132][0m [/sdf/model[@name="mono_cam"]/link[@name="camera_link"]/sensor[@name="camera"]/gz_frame_id:/Users/muusty/AytechUAS/autokursad/Tools/simulation/gz/models/mono_cam/model.sdf:L51]: XML Element[gz_frame_id], child of element[sensor], not defined in SDF. Copying[gz_frame_id] as children of [sensor].
+[1;33mWarning [Utils.cc:132][0m [/sdf/model[@name="x500_base"]/link[@name="base_link"]/sensor[@name="air_pressure_sensor"]/gz_frame_id:$REPO_ROOT/Tools/simulation/gz/models/x500_base/model.sdf:L219]: XML Element[gz_frame_id], child of element[sensor], not defined in SDF. Copying[gz_frame_id] as children of [sensor].
+[1;33mWarning [Utils.cc:132][0m [/sdf/model[@name="x500_base"]/link[@name="base_link"]/sensor[@name="magnetometer_sensor"]/gz_frame_id:$REPO_ROOT/Tools/simulation/gz/models/x500_base/model.sdf:L233]: XML Element[gz_frame_id], child of element[sensor], not defined in SDF. Copying[gz_frame_id] as children of [sensor].
+[1;33mWarning [Utils.cc:132][0m [/sdf/model[@name="x500_base"]/link[@name="base_link"]/sensor[@name="imu_sensor"]/gz_frame_id:$REPO_ROOT/Tools/simulation/gz/models/x500_base/model.sdf:L259]: XML Element[gz_frame_id], child of element[sensor], not defined in SDF. Copying[gz_frame_id] as children of [sensor].
+[1;33mWarning [Utils.cc:132][0m [/sdf/model[@name="x500_base"]/link[@name="base_link"]/sensor[@name="navsat_sensor"]/gz_frame_id:$REPO_ROOT/Tools/simulation/gz/models/x500_base/model.sdf:L311]: XML Element[gz_frame_id], child of element[sensor], not defined in SDF. Copying[gz_frame_id] as children of [sensor].
+[1;33mWarning [Utils.cc:132][0m [/sdf/model[@name="mono_cam"]/link[@name="camera_link"]/sensor[@name="camera"]/gz_frame_id:$REPO_ROOT/Tools/simulation/gz/models/mono_cam/model.sdf:L51]: XML Element[gz_frame_id], child of element[sensor], not defined in SDF. Copying[gz_frame_id] as children of [sensor].
 [1;31m[Err] [SystemPaths.cc:426] [0m[1;31mUnable to find file with URI [[0m[1;31mmodel://kursad_hook/meshes/core_lower.stl[0m[1;31m][0m[1;31m[0m
 [1;31m[Err] [SystemPaths.cc:526] [0m[1;31mCould not resolve file [[0m[1;31mmodel://kursad_hook/meshes/core_lower.stl[0m[1;31m][0m[1;31m[0m
 [1;31m[Err] [MeshManager.cc:211] [0m[1;31mUnable to find file[[0m[1;31mmodel://kursad_hook/meshes/core_lower.stl[0m[1;31m][0m
@@ -129,7 +129,7 @@ INFO  [commander] Takeoff detected
 INFO  [navigator] Executing Mission	
 INFO  [navigator] Executing Mission	
 INFO  [commander] Landing at current position	
-FAILED: [code=137] src/modules/simulation/gz_bridge/CMakeFiles/gz_x500_mono_cam_down /Users/muusty/AytechUAS/autokursad/build/px4_sitl_default/src/modules/simulation/gz_bridge/CMakeFiles/gz_x500_mono_cam_down 
-cd /Users/muusty/AytechUAS/autokursad/build/px4_sitl_default/src/modules/simulation/gz_bridge && /opt/homebrew/bin/cmake -E env PX4_SIM_MODEL=gz_x500_mono_cam_down GZ_IP=127.0.0.1 /Users/muusty/AytechUAS/autokursad/build/px4_sitl_default/bin/px4
+FAILED: [code=137] src/modules/simulation/gz_bridge/CMakeFiles/gz_x500_mono_cam_down $REPO_ROOT/build/px4_sitl_default/src/modules/simulation/gz_bridge/CMakeFiles/gz_x500_mono_cam_down 
+cd $REPO_ROOT/build/px4_sitl_default/src/modules/simulation/gz_bridge && /opt/homebrew/bin/cmake -E env PX4_SIM_MODEL=gz_x500_mono_cam_down GZ_IP=127.0.0.1 $REPO_ROOT/build/px4_sitl_default/bin/px4
 ninja: build stopped: subcommand failed.
 make: *** [px4_sitl] Error 137

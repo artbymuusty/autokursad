@@ -2,20 +2,20 @@
 ===========================================================
 [00:00] FAZ 0/5 -- ON KONTROL
 ===========================================================
-[00:00] python: /Users/muusty/Projects/kursad40-venv/bin/python
-[00:00]   [OK]   PX4 SITL binary  -- /Users/muusty/AytechUAS/autokursad/build/px4_sitl_default/bin/px4
+[00:00] python: $VENV_ROOT/bin/python
+[00:00]   [OK]   PX4 SITL binary  -- $REPO_ROOT/build/px4_sitl_default/bin/px4
 [00:00]   [OK]   gz (Gazebo)  -- /opt/homebrew/bin/gz 8.15.0
 [00:00]   [OK]   python: mavsdk
 [00:00]   [OK]   python: cv2/zmq/numpy (dashboard)
 [00:00]   [OK]   safe_sitl_launcher.sh
-[00:00]   [OK]   QGC missions dizini  -- /Users/muusty/Documents/QGroundControl Daily/Missions
+[00:00]   [OK]   QGC missions dizini  -- $MISSIONS_DIR
 [00:00]   [OK]   plan: competition_1way.plan  -- 3 waypoint
 [00:00] on kontrol temiz: 1 plan sirayla kosulacak
 
 ===========================================================
 [00:00] FAZ 1/5 -- PX4 SITL + GAZEBO
 ===========================================================
-[00:00] safe_sitl_launcher.sh baslatiliyor (log: /Users/muusty/AytechUAS/autokursad/.scripts/olds/v34/demo/runs/20260901T061446/sitl.log)
+[00:00] safe_sitl_launcher.sh baslatiliyor (log: $REPO_ROOT/.scripts/olds/v34/demo/runs/20260901T061446/sitl.log)
 [00:00]   pid=2764
 
 ===========================================================
@@ -59,12 +59,12 @@ Connection using udp:// is deprecated, please use udpin:// or udpout:// (cli_arg
 Connection using udp:// is deprecated, please use udpin:// or udpout:// (cli_arg.cpp:28)
 [LAND-RESET] armable=True mode=HOLD armed=False on_ground=True
 [00:25] gorev basliyor (main_gz.py, duvar limiti 900s)
-[00:25]   canli log: tail -f /Users/muusty/AytechUAS/autokursad/.scripts/olds/v34/demo/runs/20260901T061446/01_competition_1way/mission.log
+[00:25]   canli log: tail -f $REPO_ROOT/.scripts/olds/v34/demo/runs/20260901T061446/01_competition_1way/mission.log
 [07:32] gorev sureci 0 ile bitti
 [07:33] olay akisi ozeti (7b1433c38e7f)
   mission_id : 7b1433c38e7f
   sure       : 425.3s  (7004 olay)
-  kaynak     : /Users/muusty/AytechUAS/autokursad/.scripts/olds/v34/demo/runs/20260901T061446/01_competition_1way/mission_7b1433c38e7f.jsonl
+  kaynak     : $REPO_ROOT/.scripts/olds/v34/demo/runs/20260901T061446/01_competition_1way/mission_7b1433c38e7f.jsonl
 
   FAZLAR (27)
     t+    1.0s  CONNECTING
@@ -142,11 +142,11 @@ gorev duvar limiti: 900s   dry-run: 0
 -------------------------------------------------------------------------
 1    competition_1way OK         rc=0         MISSION_FAILED
 [07:38] 
-[07:38] her plan icin: /Users/muusty/AytechUAS/autokursad/.scripts/olds/v34/demo/runs/20260901T061446/<NN>_<plan>/{upload.log,mission.log,summary.txt,mission_*.jsonl}
+[07:38] her plan icin: $REPO_ROOT/.scripts/olds/v34/demo/runs/20260901T061446/<NN>_<plan>/{upload.log,mission.log,summary.txt,mission_*.jsonl}
 
 ===========================================================
 [07:38] TEARDOWN
 ===========================================================
 [07:38] SITL ACIK BIRAKILDI (--keep-sitl). Kapatmak icin:
 [07:38]   pkill -9 -f 'bin/px4$'; pkill -9 -f 'gz sim'
-[07:38] artefaktlar: /Users/muusty/AytechUAS/autokursad/.scripts/olds/v34/demo/runs/20260901T061446
+[07:38] artefaktlar: $REPO_ROOT/.scripts/olds/v34/demo/runs/20260901T061446

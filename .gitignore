@@ -154,3 +154,7 @@ GZ_PARTITION=*
 # Rapordaki iddialar ham veriden dogrulanabilsin diye bu dort kosu geri
 # aliniyor. Yeni kosular yine varsayilan olarak DISARIDA kalir.
 !.scripts/olds/v34/demo/runs/20260901T*/**
+
+# Yol temizligi yedegi: TEMIZLENMEMIS orijinalleri iceriyor (mutlak
+# /Users/... yollari). Depoya girerse temizligin anlami kalmaz.
+.scripts/olds/v34/backups/faz3_pathclean_*/
