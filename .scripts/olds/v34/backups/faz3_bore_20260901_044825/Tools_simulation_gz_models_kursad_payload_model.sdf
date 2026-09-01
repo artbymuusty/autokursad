@@ -1,0 +1,51 @@
+<?xml version="1.0" ?>
+<sdf version="1.9">
+  <!--
+    Neutral / inspection copy of the Fusion payload capture body.
+
+    The MISSION copies are payload_red and payload_blue in
+    Tools/simulation/gz/worlds/default.sdf: they are held to the vehicle by
+    DetachableJoint (ADR-011) and must keep their exact detector colours, so
+    they are declared there rather than included from here. They reference the
+    SAME meshes/, so CAD updates reach all three copies at once.
+
+    UNITS: metres. mm->m is baked into the vertices by cad_to_gz.py.
+  -->
+  <model name="kursad_payload">
+    <static>false</static>
+    <link name="link">
+      <gravity>true</gravity>
+      <inertial>
+        <!-- Sim mass, NOT the real 1.05 kg - see the payload_red note in the
+             world SDF for why the simulated payloads are 0.15 kg. -->
+        <mass>0.15</mass>
+        <inertia>
+          <ixx>9.25e-5</ixx><iyy>3.06e-4</iyy><izz>2.76e-4</izz>
+          <ixy>0</ixy><ixz>0</ixz><iyz>0</iyz>
+        </inertia>
+      </inertial>
+
+      <visual name="body_visual">
+        <geometry><mesh><uri>model://kursad_payload/meshes/payload_body.stl</uri></mesh></geometry>
+        <material>
+          <ambient>0.45 0.45 0.48 1</ambient>
+          <diffuse>0.60 0.60 0.63 1</diffuse>
+        </material>
+      </visual>
+      <visual name="bottom_plate_visual">
+        <geometry><mesh><uri>model://kursad_payload/meshes/payload_bottom_plate.stl</uri></mesh></geometry>
+        <material>
+          <ambient>0.25 0.25 0.27 1</ambient>
+          <diffuse>0.35 0.35 0.38 1</diffuse>
+        </material>
+      </visual>
+
+      <!-- Simplified collider: the CAD body is a ribbed cage. A single box on
+           the external envelope is what the drop physics actually needs. -->
+      <collision name="collision">
+        <pose>0 0 -0.008 0 0 0</pose>
+        <geometry><box><size>0.142 0.052 0.070</size></box></geometry>
+      </collision>
+    </link>
+  </model>
+</sdf>

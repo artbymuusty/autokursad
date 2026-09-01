@@ -1,0 +1,50 @@
+========================================
+KURSAD40 V34
+Mission Commands
+========================================
+
+Mission (Gazebo Simülasyon)
+./run_mission_v34_gz.sh
+Gazebo SITL üzerinde tam otonom görev.
+---
+Mission (Dual / Gölge Test)
+./run_mission_v34_dual.sh
+Eşzamanlı simülasyon + gerçek uçuş (gölge test) modu.
+---
+Mission (Gerçek Uçuş)
+./run_mission_v34_real.sh
+Gerçek donanımda görev icrası.
+---
+Health Check
+./health_check_v34
+Servis/süreç sağlık kontrolü (process_manager.py health).
+---
+Camera Only (Ground Station)
+./run_just_cam
+Sadece kamera görüntüleyiciyi başlatır (gz_system.camera_viewer).
+---
+Camera Diagnostic
+./run_camera_test
+Kamera alt sistemini tanılama modunda başlatır (process_manager.py start_test).
+---
+Architecture
+PX4
+Gazebo Harmonic
+ProcessManager
+Camera Service
+Camera Client
+ZeroMQ
+Mission State Machine
+Navigation
+Waypoint Manager
+Telemetry
+Target Detection
+Target Tracking
+Coordinate Estimation
+Payload Controller
+Failsafe
+Ground Station
+Logging
+Configuration
+Health Monitor
+========================================

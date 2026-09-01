@@ -1,0 +1,32 @@
+<?xml version="1.0" ?>
+<sdf version="1.9">
+  <model name="red_square">
+    <static>true</static>
+    <pose>2 -2 0.05 0 0 0</pose>
+    <link name="link">
+      <visual name="visual">
+        <geometry>
+          <mesh>
+            <uri>../../materials/meshes/square_red_1m_2cm.stl</uri>
+          </mesh>
+        </geometry>
+        <material>
+          <ambient>1 0 0 1</ambient>
+          <diffuse>1 0 0 1</diffuse>
+          <specular>0.1 0.1 0.1 1</specular>
+          <double_sided>true</double_sided>
+        </material>
+      </visual>
+
+      <!-- Same thin-above/thick-below collision box as red_triangle/
+           blue_hexagon (see those models for the tunnelling measurement
+           that forced this): top at world z=0.006, bulk underground. -->
+      <collision name="collision">
+        <pose>0 0 -0.047 0 0 0</pose>
+        <geometry>
+          <box><size>1 1 0.1</size></box>
+        </geometry>
+      </collision>
+    </link>
+  </model>
+</sdf>

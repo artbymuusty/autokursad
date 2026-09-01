@@ -1,0 +1,38 @@
+flight_backend:
+  connection_string: "udp://:14540"
+camera:
+  # BUG FIX: was "/camera/image_raw" -- not a real Gazebo topic for this
+  # simulation (gz_camera_source.py's auto-discovery via `gz topic -l`
+  # would fall back to this and find nothing, producing zero frames). This
+  # matches the real gz-transport topic convention V30/V31 used
+  # successfully; auto-discovery still covers other model-name variants.
+  ros2_topic: "/world/default/model/x500_mono_cam_down_0/link/camera_link/sensor/camera/image"
+  zmq_address: "tcp://127.0.0.1:5555"
+control_gains:
+  kp_horizontal: 0.5
+  # ADR-009 S1 (2026-08-16): 0.3 -> 0.5, matching kp_horizontal. ey
+  # normalizes by the SHORTER half-axis (480px vs 640px), so the forward
+  # axis was both weaker-gained and larger-normalized -- it was the axis
+  # that never closed in any V1 pursuit.
+  #
+  # Briefly reverted to 0.4 after V1' showed oscillation, then RESTORED to
+  # 0.5 by the operator (2026-08-17) once the V1' data showed the
+  # oscillation was on the X axis (kp_horizontal, untouched) and driven by
+  # the altitude-independent command floor -- fixed properly by ADR-009 S2.
+  # real_system.yaml deliberately stays at 0.3: a real-vehicle gain must
+  # not move on a simulator measurement.
+  kp_vertical: 0.5
+  kp_altitude: 0.5
+  # Operator-specified centering precision (2026-08-13 revision): ±0.01
+  # normalized in both axes.
+  centering_tolerance_x: 0.01
+  centering_tolerance_y: 0.01
+actuator:
+  gazebo_service_name: "/v33/set_payload_state"
+
+# Mission Flow V3 (F0 — state/config iskeleti). real_system.yaml'daki
+# mission_v3 bloğuyla aynı timeout, sim tarafında da tutarlı okunabilsin
+# diye. Sim tarafında servo kanal numarası kavramı yok (bkz. gz_payload_
+# actuator.py — gz-transport topic tabanlı, PWM/AUX indexi kullanmıyor).
+mission_v3:
+  catch_payload_timeout_s: 15.0

@@ -1,0 +1,664 @@
+﻿<?xml version="1.0" encoding="UTF-8"?>
+<sdf version="1.9">
+  <world name="competition_overcast">
+
+    <!--
+      DURUM NOTU (2026-08-31). Bu dunya safe_sitl_launcher.sh'in ana akisinda
+      DEGILDIR; launcher her zaman default.sdf ile calisir.
+
+      DUZELTILDI: payload_red / payload_blue pose'lari artik
+      generate_competition_area.py tarafindan, default.sdf ile AYNI turda ve
+      ayni mantikla (spawn + yaw dondurmesi) yaziliyor. Yani bu dunya yeni
+      spawn ile acilirsa DetachableJoint bir halata donusmez. Onceki hali
+      orijinde kalmisti; olculen sonucu (default.sdf'te ayni hata): arac
+      4.90 m'ye tirmandi, 2.7 saniyede geri cekildi, ardindan 483 saniye
+      boyunca MISSION modunda yerde kaldi.
+
+      HALA BAYAT OLAN: sekil yerlesimi. Bu dosya migrasyon oncesi IKI sekilli
+      duzeni sabit konumlarda tasiyor (blue_hexagon, red_triangle), tek-parkur
+      DORT hedefli duzeni degil; sinir cercevesi de yok. Sekiller spawn'in
+      orijinde oldugu varsayimiyla yerlestirilmisti, spawn ise artik
+      (0, -25); yani hedefler artik kuzeyde 40 m ve 65 m'de kaliyor.
+      generate_competition_area.py bu dosyada YALNIZCA payload pose'larina
+      dokunur, sekillere dokunmaz.
+
+      Bu dunyayi isik/gorus kosulu testi icin kullanacaksaniz once sekil
+      yerlesimini gozden gecirin.
+    -->
+
+    <!-- Physics -->
+    <physics type="ode">
+      <max_step_size>0.004</max_step_size>
+      <real_time_factor>1.0</real_time_factor>
+      <real_time_update_rate>250</real_time_update_rate>
+    </physics>
+
+    <!-- Environment -->
+    <gravity>0 0 -9.8</gravity>
+    <magnetic_field>6e-06 2.3e-05 -4.2e-05</magnetic_field>
+    <atmosphere type="adiabatic"/>
+
+    <!-- Scene / lighting env -->
+    <!--
+      OUTDOOR LOOK, TIER 1 (2026-08-27). Scene level only: no geometry, no
+      physics, no new bodies, no new lights, no textures, no Fuel includes.
+
+      WHY: the arena read as a studio turntable (near white floor, flat
+      neutral 0.7 backdrop) rather than an outdoor competition field.
+
+      THE HARD CONSTRAINT that shapes every number below: the mission
+      detects the blue hexagon, the red triangle and the coloured payload
+      rectangles with ABSOLUTE HSV thresholds. There is no auto exposure
+      and no white balance in the pipeline; CLAHE is applied to the V
+      channel only. Live values, from the HSVContourDetector block of
+      .scripts/olds/v34/v34_flight_stack/core/config/parameters.py
+      (cited by NAME, not by line number, because that file moves):
+        HSV_RED_LO_1  (0,40,40)    HSV_RED_HI_1  (15,255,255)
+        HSV_RED_LO_2  (165,40,40)  HSV_RED_HI_2  (180,255,255)
+        HSV_BLUE_LO   (90,80,40)   HSV_BLUE_HI   (140,255,255)
+      So every surface added or recoloured in this world must be either
+      near neutral (S below 30) or yellow green (H 35..80). Brown, ochre,
+      terracotta, rust, dry grass and safety orange all land inside the
+      RED mask (H 10..25 with S above 60) and are banned here.
+
+      ambient 0.4 to 0.5. Lifts the inside of every cast shadow by 25%.
+      The RED TRIANGLE is the tightest margin in the entire system: 1 m
+      side is 0.433 m2, which projects to about 561 px2 at the 15 m
+      mission altitude against HSV_MIN_AREA_TRI_BASE 390, a margin of
+      only 1.44x. Anything that darkens or desaturates red, or drops a
+      shadow across the triangle, is a mission risk. Shadow interiors
+      therefore get BRIGHTER here, never darker.
+
+      background 0.7 grey to 0.72 0.78 0.85. Pale sky haze instead of
+      studio grey. OpenCV HSV of that colour, computed:
+        R=0.72 G=0.78 B=0.85, max=B=0.85, min=R=0.72, delta=0.13
+        V = 0.85*255                       = 217
+        S = 255*0.13/0.85                  = 39
+        H = 60*(4 + (R-G)/delta) = 212.3 deg, OpenCV H = 106
+      H 106 IS inside the blue hue band [90,140], so the hue alone would
+      not save it. The blue mask also demands S at or above 80, and this
+      colour is S 39, less than half the floor. The horizon can therefore
+      never register as blue even at the >40 deg vehicle tilts that put
+      it in frame. It is out of the red mask on hue as well, since red is
+      [0,15] u [165,180] and 106 is in neither.
+
+      grid and shadows are unchanged.
+    -->
+    <!--
+      OVERCAST VARIANT OVERRIDE (2026-08-27). This world is default.sdf
+      with exactly two blocks changed: this <scene> and the sunUTC
+      <light>. Everything else, including <physics>, <gravity>,
+      <magnetic_field>, <atmosphere>, the ground_plane <collision>, both
+      marker <include> poses, payload_red, payload_blue and
+      <spherical_coordinates>, is byte identical to default.sdf so that
+      gz_payload_actuator.py and tests/sdf_geometry.py reason about
+      identical geometry in every variant.
+
+      The TIER 1 note directly above is inherited context and still
+      applies, EXCEPT for the two values this block overrides:
+      <ambient> and <background>. Read that note first for the HSV
+      constraint that governs every colour in all three worlds.
+
+      This is the VISION SAFEST and CHEAPEST of the three worlds. Use it
+      whenever a detection result has to be trusted.
+
+      ambient 0.5 to 0.65 and sun intensity 1.1 to 0.55 with
+      cast_shadows OFF. That is what an overcast sky physically is: the
+      key light collapses into the dome, so almost all illumination
+      arrives as ambient and NOTHING casts a hard shadow. For this
+      mission that is a pure win, because the red triangle carries only a
+      1.44x area margin (0.433 m2 is about 561 px2 at 15 m against
+      HSV_MIN_AREA_TRI_BASE 390) and a hard shadow clipping the triangle
+      is the single most plausible way to lose it. With no shadow caster
+      at all, that failure mode does not exist here.
+
+      It is also the cheapest world to render: no <sky> and no shadow
+      casting light means the ogre2 scene runs zero PSSM shadow passes.
+
+      background 0.80 0.82 0.84. Flat overcast white grey. OpenCV HSV,
+      computed:
+        R=0.80 G=0.82 B=0.84, max=B=0.84, min=R=0.80, delta=0.04
+        V = 0.84*255      = 214
+        S = 255*0.04/0.84 = 12
+        H = 60*(4 + (0.80-0.82)/0.04) = 210 deg, OpenCV H = 105
+      S 12 is under the neutral ceiling of 30 and far under the blue mask
+      floor of 80, so the horizon can never enter the blue mask. H 105 is
+      outside both red bands as well.
+
+      Sanity check of the targets under this much weaker key:
+        red_triangle   0.780 * 0.55 * (1,0,0) = (0.429,0,0) plus ambient
+          0.65*(1,0,0) = (0.65,0,0). Sum 1.079 clamps to (255,0,0):
+          H 0, S 255, V 255. Still fully saturated red.
+        blue_hexagon   diffuse + ambient + emissive clamps to about
+          (7,77,255): H about 111, S 248, V 255. Inside [90,140] with
+          21 units of headroom.
+      Both markers are comfortably inside their masks with the sun at
+      half strength, which is the point of this variant.
+
+      The sun's <diffuse> and <specular> are left at the Tier 1 values on
+      purpose rather than being re-neutralised: at intensity 0.55 under
+      ambient 0.65 the warm tint is imperceptible, and keeping the light
+      block otherwise identical makes the diff against default.sdf
+      trivial to audit.
+    -->
+    <scene>
+      <grid>false</grid>
+      <ambient>0.65 0.65 0.65 1</ambient>
+      <background>0.80 0.82 0.84 1</background>
+      <shadows>true</shadows>
+    </scene>
+
+    <!-- Ground plane -->
+    <model name="ground_plane">
+      <static>true</static>
+      <link name="link">
+        <collision name="collision">
+          <geometry>
+            <plane>
+              <normal>0 0 1</normal>
+              <size>1 1</size>
+            </plane>
+          </geometry>
+          <surface>
+            <friction>
+              <ode/>
+            </friction>
+            <bounce/>
+            <contact/>
+          </surface>
+        </collision>
+
+        <!--
+          OUTDOOR LOOK, TIER 1 (2026-08-27). VISUAL ONLY.
+
+          THE <collision> BLOCK ABOVE IS DELIBERATELY UNTOUCHED. It is a
+          <plane>, which DART treats as an INFINITE half space; its
+          <size>1 1</size> is inert and does nothing. Every contact,
+          landing and payload release test in this repo is calibrated
+          against that half space, and tests/sdf_geometry.py parses this
+          file for the payload mount poses. Changing the LOOK must not
+          change the PHYSICS, so nothing outside this <visual> moves.
+
+          0.8 near white to 0.30 0.30 0.31 mid grey asphalt. OpenCV HSV,
+          computed:
+            R=0.30 G=0.30 B=0.31, max=B=0.31, min=0.30, delta=0.01
+            V = 0.31*255       = 79
+            S = 255*0.01/0.31  = 8
+            H = 60*(4 + (0.30-0.30)/0.01) = 240 deg, OpenCV H = 120
+          S 8 is below BOTH mask saturation floors (red needs S at or
+          above 40, blue needs S at or above 80), so this surface is
+          unconditionally invisible to the detector however it is lit.
+          It is also the biggest free win available for the red triangle:
+          the old 0.8 floor was almost as bright as the targets, so red
+          and blue sat on a low contrast field. A mid grey apron makes
+          both markers pop, which helps the colour fraction gates
+          (HSV_COLOR_FRAC_TRI_BASE 0.35, HSV_COLOR_FRAC_HEX 0.45) and
+          gives CLAHE on V a much better histogram to work with.
+
+          cast_shadows false. A 500 m plane is the largest caster in the
+          world and it can only ever shadow itself, so switching it off
+          changes nothing visible and drops it out of the PSSM shadow
+          passes. This edit is a net performance SAVING.
+
+          specular 0.8 to 0. Matte asphalt. A bright specular lobe on the
+          ground beside a marker is exactly the sort of near white
+          highlight that drags saturation down, and blue_hexagon is
+          already deliberately glossy (its own material carries specular
+          0.9 0.9 0.9 1).
+        -->
+        <visual name="visual">
+          <cast_shadows>false</cast_shadows>
+          <geometry>
+            <plane>
+              <normal>0 0 1</normal>
+              <size>500 500</size>
+            </plane>
+          </geometry>
+          <material>
+            <ambient>0.30 0.30 0.31 1</ambient>
+            <diffuse>0.30 0.30 0.31 1</diffuse>
+            <specular>0 0 0 0</specular>
+          </material>
+        </visual>
+
+        <pose>0 0 0 0 0 0</pose>
+
+        <inertial>
+          <pose>0 0 0 0 0 0</pose>
+          <mass>1</mass>
+          <inertia>
+            <ixx>1</ixx>
+            <ixy>0</ixy>
+            <ixz>0</ixz>
+            <iyy>1</iyy>
+            <iyz>0</iyz>
+            <izz>1</izz>
+          </inertia>
+        </inertial>
+
+        <enable_wind>false</enable_wind>
+      </link>
+
+      <pose>0 0 0 0 0 0</pose>
+      <self_collide>false</self_collide>
+    </model>
+
+    <!--
+      WORLD MODIFICATION (documented per KURSAD40 recovery sprint STEP 6):
+      Vehicle spawn pose is untouched (PX4_GZ_MODEL_POSE is unset everywhere in
+      this repo, so Gazebo uses its default spawn: origin, yaw 0. "Forward"
+      is +X/+North.
+
+      NOTE (historical): the original lawnmower search this comment referred
+      to has since been replaced by a deterministic straight-line search (see
+      search.py, SearchPlanner.start_straight_search), which only ever moves
+      forward from wherever the vehicle currently is and never looks backward.
+
+      Previously blue_hexagon sat at N=-8 (BEHIND the spawn point), which was
+      outside that forward-only sweep and could never be found by the search
+      pattern at all, and red_triangle at N=+3 would have been reached first
+      anyway: the opposite of the required Hexagon-then-Triangle order.
+
+      UPDATE (user request): placed directly in front of the drone (E=0, no
+      lateral offset), on the vehicle's forward (+N) centerline.
+      UPDATE 2 (user request): Blue Hexagon moved +5m further (10m -> 15m
+      from spawn), Red Triangle moved +20m further (20m -> 40m from spawn).
+    -->
+
+    <!-- 🔷 Kalıcı mavi altıgen (STL + klasik malzeme, kendi model.sdf'in) -->
+    <include>
+      <uri>model://blue_hexagon</uri>
+      <name>blue_hexagon</name>
+      <!-- X Y Z R P Y: 15m directly in front of the drone.
+           BUG FIX (runtime investigation, 2026-08-13): this used to be
+           "15 0 0.05 0 0 0". Gazebo's world frame is ENU (X=East, Y=North),
+           and the px4-gz bridge maps PX4's local-NED north_m to this world's
+           Y axis, not X. "15 0" therefore placed the model 15m EAST of the
+           drone, not in front on the +N centerline the comment above (and
+           the file header) explicitly call for - proven via a live MAVSDK
+           Offboard flight: commanding north=15 put the vehicle at world
+           (0,15), 21m from the actual prop at (15,0), while commanding
+           east=15 landed it exactly on top of the prop with a clean,
+           correctly-classified MAVI_ALTIGEN detection dead-center in frame.
+           Swapping X/Y puts the prop on the +N centerline as intended. -->
+      <!-- W1 (2026-08-17): z 0.05 -> 0.003. The mesh is FLAT (measured:
+           z = [0.0000, 0.0000] despite the "2cm" in its filename), so the
+           model pose IS the visual plane height - the target was floating
+           5 cm above the ground rather than painted on it. 3 mm keeps it
+           clear of ground_plane (z=0, no z-fighting) while sitting below
+           the height a released payload rests at (0.006 collision top +
+           0.025 half-length = 0.031). X/Y and the colours/scale are
+           unchanged, so the detector sees the same shape from the same
+           place. -->
+      <pose>0 15 0.003 0 0 0</pose>
+    </include>
+
+
+    <!-- 🔺 Kalıcı kırmızı üçgen -->
+    <include>
+      <uri>model://red_triangle</uri>
+      <name>red_triangle</name>
+      <!-- 40m directly in front of the drone, 25m past blue_hexagon.
+           BUG FIX (runtime investigation, 2026-08-13): same X/Y axis
+           mix-up as blue_hexagon above - "40 0" was 40m EAST, not north.
+           See the comment on blue_hexagon's <pose> for the full proof. -->
+      <!-- W1: same 0.05 -> 0.003 lift as blue_hexagon above. -->
+      <pose>0 40 0.003 0 0 0</pose>
+    </include>
+
+
+
+    <!-- ADR-011: RED-servo (Mavi Altigen target) payload. Exists from world load and is held to the
+         x500 by a DetachableJoint (see the vehicle model). Mounted RIGHT (-y).
+
+         F2 (2026-08-17) MOVED THIS OUTBOARD, 0.20 -> 0.28 m, and down to
+         its exact resting height. The original 0.20 m put the payload's
+         volume (z [0.000,0.050], |y| [0.0875,0.3125]) straight through the
+         landing skid (z [0.0136,0.0286], |y| [0.1245,0.1395]). Nothing
+         pushed them apart while the DetachableJoint held, because DART
+         suppresses collision between joint-connected bodies, but the
+         instant the joint was removed the solver saw a deeply
+         interpenetrating pair and EJECTED the payload. That, not the
+         detach message, is what threw payload 2 to 4.9 m off the triangle
+         and left payload 1 standing on its edge. Clearance now needs
+         |y| >= 0.1395 + 0.1125 = 0.252; 0.28 leaves 2.8 cm.
+         z 0.06 -> 0.025 so the body starts exactly at rest on the ground
+         instead of dropping 3.5 cm while the joint is forming.
+         COST, recorded honestly: a side-mounted payload lands where its
+         MOUNT is, so centring the camera on the target now leaves a
+         systematic 0.28 m miss (was 0.20 m). See ADR-011.
+         Colour is TRUE RED (operator requirement, 2026-08-17 F1): the real
+         payload is red, and a stand-in hue would make every colour-based
+         observation in the sim untransferable. It therefore sits squarely
+         inside the detector's red mask (hue 0, S 238, V 191 vs the
+         [0,15]u[165,180] S>=40 V>=40 band) and separation from the arena
+         targets comes from SIZE, not colour: at the 15 m mission altitude
+         a 0.30x0.225 m prism projects to 10.8x8.1 px = 87 px2, against
+         HSV_MIN_AREA_TRI_BASE 390 and HSV_MIN_AREA_RECT_BASE 400, a 4.5x
+         margin. The gate is only reached below ~7 m altitude.
+         Cross-colour mapping helps too: this RED payload is dropped on the
+         BLUE hexagon, so a released payload never lies on a same-colour
+         target.
+         Mass 0.15 kg in simulation, NOT the real 1.05 kg: the sim x500 is a
+         2.07 kg airframe, and two real payloads (+2.1 kg, +101%) would push
+         thrust-to-weight and MPC_THR_HOVER far outside the tuning this SITL
+         model ships with. Real value is recorded in real_system.yaml. -->
+        <!--
+      GERCEGE UYGUN OLCU/YERLESIM (operator, 2026-08-21). Onceki 0.30 x 0.225
+      x 0.05 m govde ve -+0.28 m yan montaj gercek dusenegi yansitmiyordu.
+      Yeni: uzun kenar 0.14, kisa kenar 0.05, yukseklik 0.07; iki yuk
+      DRONE'UN TAM ALTINDA, uzun kenarlari gövde X'ine paralel, aralarinda
+      2 cm bosluk -> merkezler y = -+0.035 (0.025 yarim genislik + 0.010
+      yarim bosluk). Yerde dururken merkez z = 0.035 (yukseklik/2).
+
+      Iniş takimi ile catisma yok: skid |y| araligi [0.1245, 0.1395], yukler
+      |y| <= 0.06 - tamamen ice dusuyor, yani dunya SDF'sinin F2 notundaki
+      "eklem cozulunce DART ic ice gecmis cifti gorup payload'i firlatiyor"
+      tuzagina girmiyoruz.
+
+      YAN FAYDA: yuk artik montaj noktasinda degil neredeyse govde
+      merkezinde, yani "kamera hedefi ortaliyor ama yuk montaj noktasina
+      dusuyor" sistematik hatasi 0.28 m'den ~0.035 m'ye iniyor.
+    -->
+    <model name="payload_red">
+      <pose>0.035000 -25.000000 0.035 0 0 1.5707963268</pose>
+      <link name="link">
+        <inertial>
+          <mass>0.15</mass>
+          <inertia>
+            <ixx>9.25e-5</ixx><iyy>3.06e-4</iyy><izz>2.76e-4</izz>
+            <ixy>0</ixy><ixz>0</ixz><iyz>0</iyz>
+          </inertia>
+        </inertial>
+        <collision name="collision">
+          <geometry><box><size>0.14 0.05 0.07</size></box></geometry>
+        </collision>
+        <!--
+          FUSION GEOMETRY (Payload_Capture_Body_V1). The 0.14 x 0.05 x 0.07 box
+          that used to be here was a hand-entered stand-in for this CAD; the
+          real part measures 142 x 52 x 70 mm, so the box was right to within
+          1 mm per side. Meshes come from ~/KURSAD40/cad_exports/payload/ via
+          Tools/simulation/gz/cad/update_hook_from_cad.sh and are shared with
+          Tools/simulation/gz/models/kursad_payload/.
+
+          UNITS: metres. mm->m is baked into the vertices, not applied with
+          <mesh><scale>.
+
+          POSE +0.008: the CAD frame runs z -0.043 (bottom plate underside) to
+          +0.027 (deck top), i.e. its origin is 8 mm below the part's mid
+          height. The link origin here is the mid height, so the mesh is
+          lifted 8 mm to put CAD -0.043/+0.027 exactly on link -0.035/+0.035 -
+          the same top and bottom faces the collision box still uses.
+
+          COLOUR IS UNCHANGED, deliberately. The exact ambient/diffuse values
+          below are the ones the HSV detector was tuned against (see the
+          colour note on payload_blue). The bottom plate is given the same
+          colour rather than a neutral one so the part reads as a single
+          solid blob from every angle, exactly as the box did - the
+          down-facing camera never sees it, but nothing is gained by making
+          it a second colour.
+        -->
+        <visual name="visual">
+          <pose>0 0 0.008 0 0 0</pose>
+          <geometry><mesh><uri>model://kursad_payload/meshes/payload_body.stl</uri></mesh></geometry>
+          <material>
+            <ambient>0.75 0.05 0.05 1</ambient>
+            <diffuse>0.75 0.05 0.05 1</diffuse>
+            <specular>0.2 0.2 0.2 1</specular>
+          </material>
+        </visual>
+        <visual name="bottom_plate_visual">
+          <pose>0 0 0.008 0 0 0</pose>
+          <geometry><mesh><uri>model://kursad_payload/meshes/payload_bottom_plate.stl</uri></mesh></geometry>
+          <material>
+            <ambient>0.75 0.05 0.05 1</ambient>
+            <diffuse>0.75 0.05 0.05 1</diffuse>
+            <specular>0.2 0.2 0.2 1</specular>
+          </material>
+        </visual>
+        <!--
+          KANCA YUVASI (2026-08-21, operator: "gercekteki kancamizin altinda
+          magnet var ve eger denk gelirse kendi yuvasina girecek").
+          Kutu link merkezinde, yerel z [-0.025, +0.025]; yuva onun ustune
+          oturur, yerel z [+0.025, +0.045] -> DUNYA z [0.050, 0.070]. Kanca
+          ucunun inmesi gereken yukseklik bu 0.070.
+
+          RENK/TESPIT ETKISI: yuva noturr gri, yani ustten bakinca kirmizi
+          dikdortgenin icinde kirmizi OLMAYAN bir ada acar. Zararsiz oldugu
+          hesaplandi: yuva 0.03 m yaricapla 0.0028 m2, payload ustu
+          0.30x0.225 = 0.0675 m2, yani alanin %4.2'si. HSV_COLOR_FRAC_RECT
+          esigi 0.40 (yani %40) - doluluk ~%96'da kalir, esikten 2.4x uzak.
+          RETR_EXTERNAL kullanildigi icin dis kontur da bolunmez.
+        -->
+        <!--
+          CELIK HEDEF DISKI - YUKUN ICINDE, USTUNDE DEGIL.
+          (operator, 2026-08-26: "magneti yukun icindeki deliklere koymak lazim")
+
+          Burada eskiden 20 mm YUKARI TASAN gri bir silindir vardi. Gercek
+          parcada oyle bir cikinti YOK: Payload_Capture_Body'nin alici agzi
+          guverteden ASAGI dogru oyulmus bir hunidir. Olculer tahmin degil,
+          exportlanan mesh'in eksen etrafindaki yaricap profilinden okundu
+          (Tools/simulation/gz/cad/, CAD mm cinsinden):
+
+            z 16.50  r 23.25   huni agzi (canak) O46.50
+            z 13.00  r 14.50   huni ust duzlemi O29.00
+            z  9.00  r 11.00   duz gecis deligi O22.00
+            z  5.00  r 13.80   dis boslugu O27.60
+            z  0.00 -> -2.20   r 6.50   MIKNATIS YUVASI O13.00
+            z -2.20 -> -3.30   r 6.20   HEDEF DISKI CEBI O12.40
+
+          Yani delikler guverte ustunden 27 mm ASAGIDA. PCBV1_PARAMETERS.txt'ye
+          gore is bolusumu: miknatis KANCADA (hook_magnet O10 x 2, bkz.
+          x500_mono_cam_down/model.sdf hook_magnet_visual), yukun tasidigi parca
+          ise bu O12 x 1 celik disk; kanca inince miknatis O13 yuvaya girer ve
+          diskin 0.20 mm ustunde durur (magnet_target_clearance).
+
+          Link merkezi CAD z = -8 mm oldugundan yerel z = CAD z + 0.008.
+          Cep -2.20..-3.20 -> yerel +0.0058..+0.0048, merkez +0.0053.
+
+          COLLISION YOK: eski yuva silindiri kancanin uzerine oturdugu yuzeydi;
+          artik kanca dogrudan guverteye (kutu collision'inin ustu, yerel
+          +0.035) oturuyor, yani /hook/contact aynen calisiyor ama temas
+          yuzeyi 20 mm asagida. Gorev zaten vinci 0.40 m ile BILEREK fazla
+          uzatip fizigin durdurmasina birakiyor (gz_payload_actuator.py
+          HOOK_WINCH_EXTEND_M), o yuzden bu fark soguruluyor.
+
+          TESPIT ETKISI: eski gri cikinti ustten bakinca yukun renkli
+          yuzeyinde %4.2'lik gri bir ada aciyordu; artik acmiyor. Disk
+          deligin dibinde ve neredeyse hic gorunmuyor, yani HSV doluluk
+          orani ARTIYOR - esikten (HSV_COLOR_FRAC_RECT 0.40) daha da uzak.
+        -->
+        <visual name="target_disk_visual">
+          <pose>0 0 0.0053 0 0 0</pose>
+          <geometry><cylinder><radius>0.006</radius><length>0.001</length></cylinder></geometry>
+          <material>
+            <ambient>0.32 0.33 0.36 1</ambient>
+            <diffuse>0.55 0.57 0.62 1</diffuse>
+            <specular>0.9 0.9 0.9 1</specular>
+          </material>
+        </visual>
+      </link>
+    </model>
+
+    <!-- ADR-011: BLUE-servo (Kirmizi Ucgen target) payload. Exists from world load and is held to the
+         x500 by a DetachableJoint (see the vehicle model). Mounted LEFT (+y).
+         Moved outboard to 0.28 m and down to its resting height for the
+         same reason as payload_red above (F2: it was mounted through the
+         landing skid, and detaching an interpenetrating pair ejects it).
+         Colour is TRUE BLUE (operator requirement, 2026-08-17 F1); see
+         payload_red above for the full rationale. Hue 118, S 238, V 191,
+         inside the detector's [90,140] blue mask; separation is by size
+         (87 px2 at 15 m vs HSV_MIN_AREA_HEX_BASE 800, a 9x margin).
+         Cross-colour mapping: this BLUE payload is dropped on the RED
+         triangle, so it never lies on a same-colour target.
+         Mass 0.15 kg in simulation, NOT the real 1.05 kg: the sim x500 is a
+         2.07 kg airframe, and two real payloads (+2.1 kg, +101%) would push
+         thrust-to-weight and MPC_THR_HOVER far outside the tuning this SITL
+         model ships with. Real value is recorded in real_system.yaml. -->
+        <!--
+      GERCEGE UYGUN OLCU/YERLESIM (operator, 2026-08-21). Onceki 0.30 x 0.225
+      x 0.05 m govde ve -+0.28 m yan montaj gercek dusenegi yansitmiyordu.
+      Yeni: uzun kenar 0.14, kisa kenar 0.05, yukseklik 0.07; iki yuk
+      DRONE'UN TAM ALTINDA, uzun kenarlari gövde X'ine paralel, aralarinda
+      2 cm bosluk -> merkezler y = -+0.035 (0.025 yarim genislik + 0.010
+      yarim bosluk). Yerde dururken merkez z = 0.035 (yukseklik/2).
+
+      Iniş takimi ile catisma yok: skid |y| araligi [0.1245, 0.1395], yukler
+      |y| <= 0.06 - tamamen ice dusuyor, yani dunya SDF'sinin F2 notundaki
+      "eklem cozulunce DART ic ice gecmis cifti gorup payload'i firlatiyor"
+      tuzagina girmiyoruz.
+
+      YAN FAYDA: yuk artik montaj noktasinda degil neredeyse govde
+      merkezinde, yani "kamera hedefi ortaliyor ama yuk montaj noktasina
+      dusuyor" sistematik hatasi 0.28 m'den ~0.035 m'ye iniyor.
+    -->
+    <model name="payload_blue">
+      <pose>-0.035000 -25.000000 0.035 0 0 1.5707963268</pose>
+      <link name="link">
+        <inertial>
+          <mass>0.15</mass>
+          <inertia>
+            <ixx>9.25e-5</ixx><iyy>3.06e-4</iyy><izz>2.76e-4</izz>
+            <ixy>0</ixy><ixz>0</ixz><iyz>0</iyz>
+          </inertia>
+        </inertial>
+        <collision name="collision">
+          <geometry><box><size>0.14 0.05 0.07</size></box></geometry>
+        </collision>
+        <!--
+          FUSION GEOMETRY (Payload_Capture_Body_V1). The 0.14 x 0.05 x 0.07 box
+          that used to be here was a hand-entered stand-in for this CAD; the
+          real part measures 142 x 52 x 70 mm, so the box was right to within
+          1 mm per side. Meshes come from ~/KURSAD40/cad_exports/payload/ via
+          Tools/simulation/gz/cad/update_hook_from_cad.sh and are shared with
+          Tools/simulation/gz/models/kursad_payload/.
+
+          UNITS: metres. mm->m is baked into the vertices, not applied with
+          <mesh><scale>.
+
+          POSE +0.008: the CAD frame runs z -0.043 (bottom plate underside) to
+          +0.027 (deck top), i.e. its origin is 8 mm below the part's mid
+          height. The link origin here is the mid height, so the mesh is
+          lifted 8 mm to put CAD -0.043/+0.027 exactly on link -0.035/+0.035 -
+          the same top and bottom faces the collision box still uses.
+
+          COLOUR IS UNCHANGED, deliberately. The exact ambient/diffuse values
+          below are the ones the HSV detector was tuned against (see the
+          colour note on payload_blue). The bottom plate is given the same
+          colour rather than a neutral one so the part reads as a single
+          solid blob from every angle, exactly as the box did - the
+          down-facing camera never sees it, but nothing is gained by making
+          it a second colour.
+        -->
+        <visual name="visual">
+          <pose>0 0 0.008 0 0 0</pose>
+          <geometry><mesh><uri>model://kursad_payload/meshes/payload_body.stl</uri></mesh></geometry>
+          <material>
+            <ambient>0.05 0.10 0.75 1</ambient>
+            <diffuse>0.05 0.10 0.75 1</diffuse>
+            <specular>0.2 0.2 0.2 1</specular>
+          </material>
+        </visual>
+        <visual name="bottom_plate_visual">
+          <pose>0 0 0.008 0 0 0</pose>
+          <geometry><mesh><uri>model://kursad_payload/meshes/payload_bottom_plate.stl</uri></mesh></geometry>
+          <material>
+            <ambient>0.05 0.10 0.75 1</ambient>
+            <diffuse>0.05 0.10 0.75 1</diffuse>
+            <specular>0.2 0.2 0.2 1</specular>
+          </material>
+        </visual>
+        <!-- Ayni Payload_Capture_Body parcasi, ayni celik hedef diski; tam
+             gerekce icin payload_red'e bakin. -->
+        <visual name="target_disk_visual">
+          <pose>0 0 0.0053 0 0 0</pose>
+          <geometry><cylinder><radius>0.006</radius><length>0.001</length></cylinder></geometry>
+          <material>
+            <ambient>0.32 0.33 0.36 1</ambient>
+            <diffuse>0.55 0.57 0.62 1</diffuse>
+            <specular>0.9 0.9 0.9 1</specular>
+          </material>
+        </visual>
+      </link>
+    </model>
+
+    <!-- Sun -->
+    <!--
+      OUTDOOR LOOK, TIER 1 (2026-08-27). This is still the ONLY light in
+      the world; a second shadow casting light was considered and
+      rejected (cost, and a second shadow across the red triangle).
+
+      intensity 1 to 1.1 and diffuse 0.904 neutral to 1.0 0.98 0.94.
+      A warm late afternoon key instead of a studio grey one. A LIGHT
+      colour is not a surface colour, so it can never enter an HSV mask
+      by itself; what it does is bias the per channel gain. The red
+      channel gets gain 1.0 while blue gets 0.94, which pushes red
+      surfaces slightly warmer and slightly more saturated. That is the
+      direction of travel we want, because the red triangle has only a
+      1.44x area margin against HSV_MIN_AREA_TRI_BASE 390 and is the
+      first thing to fail in poor light.
+
+      Checked against the real marker materials rather than assumed:
+        red_triangle   ambient/diffuse 1 0 0. Diffuse term
+          0.780 (N dot L) * 1.1 * (1,0,0)*(1.0,0.98,0.94) = (0.858,0,0),
+          plus ambient 0.5*(1,0,0) = (0.5,0,0). Sum clamps to (255,0,0),
+          i.e. H 0, S 255, V 255. Dead centre of red band 1. Unchanged
+          from before in direct sun (it already clamped); the gain is in
+          shade, which is what the ambient lift is for.
+        blue_hexagon   ambient 0.04 0.10 0.28, diffuse 0.00 0.55 1.00,
+          emissive 0.000 0.004 0.541. Summing diffuse + ambient +
+          emissive and clamping gives roughly (5,132,255), i.e. H 105,
+          S 250, V 255. Before this change it computed to about H 107.
+          Both sit mid band in [90,140] with 15 units of headroom to the
+          lower edge, so the warm tint costs nothing.
+
+      specular 0.271 to 0.20, LOWERED ON PURPOSE, and this is the part
+      that must not be "fixed" later. blue_hexagon's material carries
+      <specular>0.9 0.9 0.9 1</specular>; it is intentionally glossy.
+      A specular highlight is near white, i.e. S near 0, so raising the
+      sun's specular blows out the hexagon's saturation and pushes it
+      toward failing HSV_COLOR_FRAC_HEX 0.45. Every brightening above is
+      therefore paid for with a specular cut: 0.9*0.271 = 0.244 becomes
+      0.9*0.20 = 0.18, a 26% smaller white lobe on the glossiest surface
+      in the arena.
+
+      <direction> IS BYTE IDENTICAL AND MUST STAY THAT WAY. All shadow
+      geometry in the arena, and every mission run the HSV thresholds
+      were tuned against, assumes the sun sits exactly where it sits.
+    -->
+    <light name="sunUTC" type="directional">
+      <pose>0 0 500 0 0 0</pose>
+      <!-- OVERCAST: no hard shadow anywhere in the world. See the note on
+           <scene> above; this is the reason this variant is the safest
+           one for the red triangle, and it also removes every PSSM
+           shadow pass from the render. -->
+      <cast_shadows>false</cast_shadows>
+      <intensity>0.55</intensity>
+      <direction>0.001 0.625 -0.78</direction>
+      <diffuse>1.0 0.98 0.94 1</diffuse>
+      <specular>0.20 0.20 0.20 1</specular>
+      <attenuation>
+        <range>2000</range>
+        <linear>0</linear>
+        <constant>1</constant>
+        <quadratic>0</quadratic>
+      </attenuation>
+      <spot>
+        <inner_angle>0</inner_angle>
+        <outer_angle>0</outer_angle>
+        <falloff>0</falloff>
+      </spot>
+    </light>
+
+    <!-- Geo coords (PX4 default) -->
+    <spherical_coordinates>
+      <surface_model>EARTH_WGS84</surface_model>
+      <world_frame_orientation>ENU</world_frame_orientation>
+      <latitude_deg>47.397971057728974</latitude_deg>
+      <longitude_deg>8.546163739800146</longitude_deg>
+      <elevation>0</elevation>
+    </spherical_coordinates>
+
+
+  </world>
+</sdf>

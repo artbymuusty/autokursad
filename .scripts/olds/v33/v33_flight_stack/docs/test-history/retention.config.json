@@ -1,0 +1,36 @@
+{
+  "_comment": [
+    "tools/artifact_retention.py konfigurasyonu. Esikler SABIT KODLANMAZ; hepsi burada.",
+    "Yollar repo koku (v33_flight_stack) ile gorecelidir; mutlak yol da kabul edilir.",
+    "kind=ephemeral kokler: ajanin gecici alani. Temizlik kapsamindadir ama ASLA",
+    "ozet barindiramaz ve oraya HICBIR SEY YAZILMAZ."
+  ],
+
+  "roots": [
+    {
+      "path": "../logs",
+      "kind": "project",
+      "patterns": ["mission_*.log", "mission_*.jsonl", "mission_positions_*.json",
+                   "*_calibration_*.csv", "phase6_sag_*.csv"]
+    },
+    {
+      "path": "/private/tmp/claude-501",
+      "kind": "ephemeral",
+      "patterns": ["*.log", "*.output"]
+    }
+  ],
+
+  "history_dir": "docs/test-history",
+  "archive_dir": "docs/test-history/_archive",
+
+  "warning_bytes": "10GB",
+  "critical_bytes": "15GB",
+
+  "recent_keep_days": 1,
+  "recent_keep_runs": 5,
+
+  "active_grace_seconds": 900,
+  "purge_archive_after_days": 90,
+
+  "min_artifact_bytes": "64KB"
+}

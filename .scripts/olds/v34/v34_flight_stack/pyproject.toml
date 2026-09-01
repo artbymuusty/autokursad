@@ -1,0 +1,19 @@
+[build-system]
+requires = ["setuptools>=61.0"]
+build-backend = "setuptools.build_meta"
+
+[project]
+name = "v34_flight_stack"
+version = "0.1.0"
+description = "TEKNOFEST Doner Kanat V34 Mission System"
+dependencies = [
+    "mavsdk",
+    "opencv-python",
+    "numpy",
+    "pyyaml",
+    "pytest",
+    "pytest-asyncio",
+    "ultralytics",
+    "pyzmq",
+    "psutil"
+]

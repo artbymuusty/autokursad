@@ -1,0 +1,817 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<sdf version='1.9'>
+  <model name='x500_mono_cam_down'>
+    <self_collide>false</self_collide>
+    <include merge='true'>
+      <uri>x500</uri>
+    </include>
+
+
+<!-- ===================== DUMMY BLUE (sağ / right side) ===================== -->
+<!--
+  PLACEMENT FIX: was Y=0 Z=-0.30 vs red's Y=0 Z=-0.35, i.e. stacked directly
+  on top of each other on the vertical centerline. Real payload mounting is
+  symmetric left/right at the same height, so both links now share Z=-0.32
+  and only differ in Y. base_link follows PX4's standard body frame
+  (Forward-X, Right-Y, Down-Z), so +Y is the vehicle's RIGHT side and -Y is
+  LEFT: blue is at +0.20 (right), red is at -0.20 (left).
+
+  RESTORE NOTE: an earlier pass here mistakenly assumed the compiled
+  PayloadDropSystem plugin worked by removing this link's own fixed joint,
+  and changed gravity/mass/collision/self_collide accordingly. The actually
+  compiled plugin (src/modules/simulation/gz_plugins/payload_drop, verified
+  against the built .so's own path) works completely differently: it finds
+  this dummy link BY NAME, removes only its <visual>/<collision> on drop,
+  and spawns a brand new independent falling model via the world "create"
+  service: this link itself stays fixed-jointed to base_link forever, it
+  never becomes dynamic. None of gravity/mass/collision/self_collide here
+  matter to that mechanism, so this is back to its original simple form.
+-->
+<!-- ===================== DUMMY RED (sol / left side) ===================== -->
+<!--
+  ADR-011 (2026-08-17): PayloadDropSystem is replaced by two DetachableJoint
+  instances, and the two dummy payload links above are gone.
+
+  Why: PayloadDropSystem released a payload by SPAWNING a brand-new model
+  through the world "create" service. Measured on 2026-08-17, a body spawned
+  that way gets no reliable collision pairs in this gz-sim 8.15 build: a real
+  drop was logged at z=-0.72 and still falling 3 s later, and a
+  payload-equivalent probe fell through bare ground at every offset tested
+  while an identical probe rested fine on the world-loaded drone. So every
+  mission drop was falling through the world instead of landing on a target.
+
+  DetachableJoint keeps real drop physics (the payload is a normal dynamic
+  body that falls, bounces and settles) while guaranteeing collision pairs,
+  because both bodies exist from world load rather than being created
+  mid-run. Release = one message on the detach topic, which mirrors the real
+  180-degree servo: left rotation frees the LEFT payload, right the RIGHT.
+
+  Mount side is dictated by the existing, UNCHANGED servo->colour mapping in
+  gz_payload_actuator.py: release_payload_at_mavi_altigen() -> "red",
+  release_payload_at_kirmizi_ucgen() -> "blue". The dummies' SIDES are
+  kept (blue LEFT +y, red RIGHT -y) but not their offsets: those dummies
+  hung 0.32 m below base_link, which is underground for a landed vehicle,
+  and they got away with it only because they had gravity and collision
+  disabled. A real body cannot. The mount points now live in the world SDF
+  (0, -+0.28, 0.025), chosen to clear the landing gear; see the F2 note
+  there for why 0.20 m did not.
+-->
+<plugin filename="gz-sim-detachable-joint-system" name="gz::sim::systems::DetachableJoint">
+  <parent_link>base_link</parent_link>
+  <child_model>payload_red</child_model>
+  <child_link>link</child_link>
+  <detach_topic>/payload/detach/red</detach_topic>
+</plugin>
+
+<plugin filename="gz-sim-detachable-joint-system" name="gz::sim::systems::DetachableJoint">
+  <parent_link>base_link</parent_link>
+  <child_model>payload_blue</child_model>
+  <child_link>link</child_link>
+  <detach_topic>/payload/detach/blue</detach_topic>
+</plugin>
+
+
+
+
+<!-- ===================== KANCA (HOOK) MEKANIZMASI ===================== -->
+<!--
+  Operator istegi (2026-08-21): kameranin HIZASINDA (z=+0.05, mono_cam
+  "0.35 0 .05" ile ayni yukseklik) ama govdenin DIGER ucunda (x=-0.35) bir
+  silindir govde, altindan asagi sarkan bir ip ve ucunda kanca.
+
+  NEDEN BU BLOK VAR: HookAttachSystem
+  (src/modules/simulation/gz_plugins/hook_attach) derlenmis durumda ve
+  /hook/attach, /hook/detach, /hook/state topic'lerini dinliyor - ama bugune
+  kadar hicbir .sdf/.world dosyasi onu ornekleme(instantiate) etmedigi icin
+  o topic'lere publish etmek hicbir sey tetiklemiyordu; bkz.
+  gz_payload_actuator.py'nin kendi notu (release_payload_at_kirmizi_ucgen
+  altinda). Bu blok o boslugu kapatir. Gorev 3'un alma/birakma akisi HALA
+  mevcut simule yolunda: burasi yalnizca mekanizmayi SDF'ye koyar.
+
+  YUKSEKLIKLER (hepsi base_link'e gore; model yerdeyken base_link z=0.24):
+    inis takimi tupu  z = -0.2195, yaricap 0.0069 -> en alt nokta -0.2264
+    kanca ucu         z = -0.16,   yaricap 0.02   -> en alt nokta -0.1800
+  Kanca ucu iniş takimindan 4.6 cm YUKARIDA kalir, yani yere once daima
+  skid deger. Bu kasitli: dunya SDF'sindeki F2 notu (payload_red uzerinde)
+  0.20 m'de payload hacminin skid hacmine girdigini, DART'in eklem
+  cozuldugu an ic ice gecmis cifti gorup payload'i FIRLATTIGINI kayda
+  geciyor (payload 2 hedeften 4.9 m uzaga gitmisti). Sarkan bir govde ayni
+  sinifta, o yuzden aciklik payload'inkiyle ayni titizlikte secildi.
+  Egilme paylari: uc x=-0.35'te oldugundan 0.046/0.35 -> ~7.5 derece pitch'e
+  kadar skid hala once deger. Daha uzun ip isteniyorsa bu sayi dusecektir.
+
+  KUTLE: winch 0.020 + ip/uc 0.015 = 0.035 kg, 2.07 kg govdede %1.7. Dunya
+  SDF'si gercek payload kutlesini 1.05 -> 0.15 kg'a bilerek dusuruyor cunku
+  MPC_THR_HOVER ve itki/agirlik orani bu SITL modelinin geldigi ayarin
+  disina cikiyor; ayni gerekce burada da gecerli, o yuzden kanca hafif.
+
+  TEMAS: contact sensoru yalnizca hook_tip_collision'a bakar (ipin govdesine
+  degil) - "kanca dokundu" sorusunun fiziksel karsiligi ucun degmesidir.
+  gz-sim-contact-system server.config'de zaten yuklu.
+-->
+<!--
+  MOUNT POINT - THE ONE PLACE TO MOVE THE HOOK.
+  Every hook link below is posed relative to this frame, so changing this
+  single <pose> relocates winch + rope + Fusion hook body together.
+
+  X = -0.090 IS NOT FREE. The mission side hard-codes it:
+  .scripts/olds/v32/v32_flight_stack/gz_system/gz_payload_actuator.py
+      HOOK_TIP_BODY_X_M = -0.090
+  which is how _hook_tip_xy() converts vehicle pose into hook-tip world XY,
+  and therefore how magnet_gap_m() decides whether a pickup is in range
+  (HOOK_MAGNET_CAPTURE_RADIUS_M = 0.05). Move this X without moving that
+  constant and every Gorev 3 pickup silently mis-measures by the delta.
+-->
+<frame name="hook_mount" attached_to="base_link">
+  <pose relative_to="base_link">-0.090 0 0.05 0 0 0</pose>
+</frame>
+
+<link name="hook_winch_link">
+  <pose relative_to="hook_mount">0 0 0 1.5707 0 0</pose>
+  <inertial>
+    <mass>0.020</mass>
+    <inertia>
+      <ixx>1.5e-5</ixx><iyy>1.5e-5</iyy><izz>9.0e-6</izz>
+      <ixy>0</ixy><ixz>0</ixz><iyz>0</iyz>
+    </inertia>
+  </inertial>
+  <visual name="winch_visual">
+    <geometry><cylinder><radius>0.03</radius><length>0.08</length></cylinder></geometry>
+    <material>
+      <ambient>0.25 0.25 0.28 1</ambient>
+      <diffuse>0.35 0.35 0.40 1</diffuse>
+      <specular>0.4 0.4 0.4 1</specular>
+    </material>
+  </visual>
+</link>
+
+<joint name="HookWinchJoint" type="fixed">
+  <parent>base_link</parent>
+  <child>hook_winch_link</child>
+</joint>
+
+<link name="hook_rope_link">
+  <pose relative_to="hook_mount">0 0 0 0 0 0</pose>
+  <inertial>
+    <!--
+      0.015 -> 0.010 kg. This link used to carry BOTH the rope and the hook
+      tip; the tip is now a real body of its own (hook_body_link, 0.005 kg)
+      carrying the Fusion geometry. The TOTAL hook budget is unchanged at
+      0.020 + 0.010 + 0.005 = 0.035 kg, which is the whole point: the note
+      above on this mechanism records that the hook is kept light on purpose
+      because MPC_THR_HOVER and the thrust/weight ratio of this SITL model
+      are tuned for a 2.07 kg airframe. Inertia scaled by the same 2/3 so the
+      link stays self-consistent.
+    -->
+    <mass>0.001</mass>
+    <inertia>
+      <ixx>1.0e-7</ixx><iyy>1.0e-7</iyy><izz>1.0e-7</izz>
+      <ixy>0</ixy><ixz>0</ixz><iyz>0</iyz>
+    </inertia>
+  </inertial>
+
+  <!-- No visual: this link is the cord's exit point, hidden inside the drum.
+       The visible rope is the four hinged segments declared below. -->
+
+  <!-- Kanca ucu artik ayri bir link: bkz. hook_body_link (Fusion CAD). -->
+</link>
+
+<!-- ============ FUSION HOOK BODY (Payload Hook V4 "M3 NUT") ============ -->
+<!--
+  WHAT CHANGED: the hook tip was a 24 mm sphere. It is now the actual
+  Fusion assembly - Core_Lower + Core_Upper + Servo_Cam + 4x Locking_Arm -
+  exported from Payload_Hook_V4_OnePieceArm_Assembly v7.
+
+  Fusion is the source of truth. Nothing here is hand-modelled. The meshes
+  come from ~/KURSAD40/cad_exports/hook/ via
+      Tools/simulation/gz/cad/update_hook_from_cad.sh
+  and are shared byte-for-byte with the standalone model
+      Tools/simulation/gz/models/kursad_hook/model.sdf
+  so the two copies cannot drift.
+
+  UNITS: Fusion works in mm, Gazebo in metres. The 1/1000 is BAKED INTO THE
+  VERTICES by the converter, not applied with <mesh><scale>, so what is
+  measured offline is exactly what Gazebo loads. Verified against three
+  numbers the CAD report publishes independently: cam OD 26.400 mm, cam
+  minimum vertex radius 3.100 mm, retracted arm envelope 25.50 mm.
+
+  MESH FRAME: z = 0 is the rope attach point (Core_Upper top face). The hook
+  hangs DOWN from there:
+      hook top     base_link z = -0.1330   (exactly where the sphere sat)
+      hook bottom  base_link z = -0.19765  (64.65 mm of CAD below it)
+      shell        45 mm dia, locked arms 36 mm dia -> inside the shell
+
+  GROUND/PAYLOAD CLEARANCE (base_link is at z = 0.240 when landed):
+      landing skid underside   -0.2264  -> hook clears it by 29.4 mm
+      payload_red/blue bottom  -0.2400  -> hook tip is 42.4 mm above ground
+  The skid still touches down before the hook up to ~18 deg of pitch at this
+  X, which is the same class of check the winch note above makes.
+
+  ARM STATE: shown LOCKED (nose radius 18.00 mm = the frozen 36.00 mm locked
+  envelope), because the mission starts with the payload attached. The
+  RETRACTED mesh is generated alongside it; swapping the four URIs to
+  locking_arm_retracted.stl shows the released state. Arm motion is NOT
+  simulated - see the collision note below.
+-->
+<link name="hook_body_link">
+  <pose relative_to="hook_rope_seg_4">0 0 -0.02287 0 0 0</pose>
+  <inertial>
+    <pose>0 0 -0.032 0 0 0</pose>
+    <!--
+      0.005 -> 0.020 kg. The hook budget is now 0.051 kg
+      (0.020 winch + 0.001 anchor + 4 x 0.0025 cord + 0.020 hook), up from
+      0.035. That ceiling was set when this was a decorative sphere; the real
+      printed V4 hook plus its MG90S is ~55 g, so 20 g is still an
+      UNDER-estimate, and the extra 16 g is 0.8% of the 2.07 kg airframe
+      against the +14.5% each 0.15 kg payload already adds. Hover tuning does
+      not notice it; the solver does - see the cord note above for the crash
+      this conditioning is fixing.
+    -->
+    <mass>0.020</mass>
+    <inertia>
+      <ixx>9.6e-6</ixx><iyy>9.6e-6</iyy><izz>5.3e-6</izz>
+      <ixy>0</ixy><ixz>0</ixz><iyz>0</iyz>
+    </inertia>
+  </inertial>
+
+  <visual name="hook_core_lower_visual">
+    <geometry><mesh><uri>model://kursad_hook/meshes/core_lower.stl</uri></mesh></geometry>
+    <material>
+      <ambient>0.18 0.18 0.20 1</ambient>
+      <diffuse>0.28 0.28 0.32 1</diffuse>
+      <specular>0.30 0.30 0.30 1</specular>
+    </material>
+  </visual>
+  <visual name="hook_core_upper_visual">
+    <geometry><mesh><uri>model://kursad_hook/meshes/core_upper.stl</uri></mesh></geometry>
+    <material>
+      <ambient>0.18 0.18 0.20 1</ambient>
+      <diffuse>0.28 0.28 0.32 1</diffuse>
+      <specular>0.30 0.30 0.30 1</specular>
+    </material>
+  </visual>
+  <visual name="hook_servo_cam_visual">
+    <geometry><mesh><uri>model://kursad_hook/meshes/servo_cam.stl</uri></mesh></geometry>
+    <material>
+      <ambient>0.10 0.20 0.30 1</ambient>
+      <diffuse>0.15 0.35 0.55 1</diffuse>
+      <specular>0.40 0.40 0.40 1</specular>
+    </material>
+  </visual>
+
+  <!-- One mesh, four instances. The arm is modelled on the +X radius, so
+       yaw alone places all four; no duplicated geometry in memory. -->
+  <visual name="hook_locking_arm_0_visual">
+    <pose>0 0 0 0 0 0</pose>
+    <geometry><mesh><uri>model://kursad_hook/meshes/locking_arm_locked.stl</uri></mesh></geometry>
+    <material>
+      <ambient>0.55 0.45 0.05 1</ambient>
+      <diffuse>0.85 0.70 0.10 1</diffuse>
+      <specular>0.5 0.5 0.5 1</specular>
+    </material>
+  </visual>
+  <visual name="hook_locking_arm_1_visual">
+    <pose>0 0 0 0 0 1.5707963</pose>
+    <geometry><mesh><uri>model://kursad_hook/meshes/locking_arm_locked.stl</uri></mesh></geometry>
+    <material>
+      <ambient>0.55 0.45 0.05 1</ambient>
+      <diffuse>0.85 0.70 0.10 1</diffuse>
+      <specular>0.5 0.5 0.5 1</specular>
+    </material>
+  </visual>
+  <visual name="hook_locking_arm_2_visual">
+    <pose>0 0 0 0 0 3.1415927</pose>
+    <geometry><mesh><uri>model://kursad_hook/meshes/locking_arm_locked.stl</uri></mesh></geometry>
+    <material>
+      <ambient>0.55 0.45 0.05 1</ambient>
+      <diffuse>0.85 0.70 0.10 1</diffuse>
+      <specular>0.5 0.5 0.5 1</specular>
+    </material>
+  </visual>
+  <visual name="hook_locking_arm_3_visual">
+    <pose>0 0 0 0 0 4.7123890</pose>
+    <geometry><mesh><uri>model://kursad_hook/meshes/locking_arm_locked.stl</uri></mesh></geometry>
+    <material>
+      <ambient>0.55 0.45 0.05 1</ambient>
+      <diffuse>0.85 0.70 0.10 1</diffuse>
+      <specular>0.5 0.5 0.5 1</specular>
+    </material>
+  </visual>
+
+
+  <!--
+    MIKNATIS (hook_magnet, O10 x 2 mm). PCBV1_PARAMETERS.txt bunu KANCANIN
+    parcasi olarak tanimliyor: hook_magnet_diameter 10.00,
+    hook_magnet_thickness 2.00. Kanca indiginde yukun O13.00 miknatis
+    yuvasina girer ve celik hedef diskin 0.20 mm ustunde durur.
+
+    SADECE GORSEL: manyetik cekim simule EDILMIYOR. Yakalama kurali
+    mesafeye dayali ve gorev tarafinda duruyor
+    (gz_payload_actuator.py, HOOK_MAGNET_CAPTURE_RADIUS_M = 0.05) - bu
+    disk o kuralin nereye baktigini gozle gorulur kiliyor, degistirmiyor.
+    Collision yok, yani kancanin 24 mm'lik tek collider'i degismedi.
+  -->
+  <visual name="hook_magnet_visual">
+    <pose>0 0 -0.06565 0 0 0</pose>
+    <geometry><cylinder><radius>0.005</radius><length>0.002</length></cylinder></geometry>
+    <material>
+      <ambient>0.30 0.30 0.32 1</ambient>
+      <diffuse>0.62 0.62 0.66 1</diffuse>
+      <specular>0.9 0.9 0.9 1</specular>
+    </material>
+  </visual>
+
+  <!--
+    COLLISION: DELIBERATELY STILL A 24 mm PRIMITIVE, NOT THE 39848-TRIANGLE
+    CAD MESH, AND NOT THE 45 mm SHELL.
+
+    Two independent reasons, both measured rather than assumed:
+
+    1. The mission depends on this size. gz_payload_actuator.py sizes its
+       capture rule as "uc (0.012) + yuva (0.015)" - the 0.012 here IS that
+       tip radius. Growing the collider to the real 45 mm shell would change
+       the pickup geometry the HOOK_MAGNET_CAPTURE_RADIUS_M = 0.05 rule was
+       measured against.
+
+    2. A 45 mm shell collider would INTERPENETRATE both payloads. The
+       payloads sit directly under the vehicle at |y| in [0.010, 0.060],
+       x in [-0.070, +0.070], base_link z in [-0.240, -0.170]; a 22.5 mm
+       radius at x = -0.090 reaches x = -0.0675 and overlaps them by 2.5 mm
+       in x over the full 27.65 mm of shared height. The world SDF's own F2
+       note records what that costs: DART sees an interpenetrating pair the
+       moment a joint releases and EJECTS the payload (measured 4.9 m off
+       target). A 12 mm radius reaches only x = -0.078 and clears the
+       payloads by 8 mm.
+
+    So the visual is the true CAD and the collider is the interface it
+    actually touches: the gripper mouth, placed at the bottom face of the
+    assembly rather than 64.65 mm up at the rope end where the old sphere
+    was. Name and topic are unchanged so nothing downstream moves.
+  -->
+  <collision name="hook_tip_collision">
+    <pose>0 0 -0.0547 0 0 0</pose>
+    <geometry><cylinder><radius>0.012</radius><length>0.020</length></cylinder></geometry>
+  </collision>
+
+  <sensor name="hook_contact_sensor" type="contact">
+    <always_on>true</always_on>
+    <update_rate>50</update_rate>
+    <contact>
+      <collision>hook_tip_collision</collision>
+      <topic>/hook/contact</topic>
+    </contact>
+  </sensor>
+</link>
+
+<!-- Rigid: the hook is bolted to the rope end through the M3x20 cross-bolt
+     in Core_Upper, so a fixed joint is the honest model. It also means the
+     hook adds no degrees of freedom to a vehicle whose flight dynamics are
+     already tuned. -->
+<joint name="HookBodyJoint" type="fixed">
+  <parent>hook_rope_seg_4</parent>
+  <child>hook_body_link</child>
+</joint>
+
+
+<!-- ==================== IP (ROPE) - HINGED CHAIN ==================== -->
+<!--
+  The rope used to be ONE rigid cylinder rigidly welded between the winch and
+  the hook: it could telescope but it could not swing, so the hook tracked the
+  airframe exactly and a slung load behaved like a bolted-on mast.
+
+  It is now four segments joined by universal (2-axis) joints, so the load
+  behaves like a real pendulum: it lags on acceleration, overshoots on stop,
+  and hangs vertical while the airframe pitches. Total length is unchanged at
+  0.183 m (4 x 0.04575), and the top of segment 1 is still at the drum centre
+  with the hook still arriving at base_link z = -0.133, so nothing downstream
+  of the rope moved.
+
+  BENDING STIFFNESS (spring_stiffness 0.004 N m/rad, limits +-0.7 rad) is
+  NOT a fudge - this line is not a limp string. The V4 hook carries its servo
+  INSIDE the hook body, so the line running to it is a cable bundle, and a
+  cable bundle has real bending stiffness.
+
+  It also has to be modelled, because a limp cord silently breaks the mission.
+  gz_payload_actuator.py pays out HOOK_WINCH_EXTEND_M = 0.40 m ON PURPOSE and
+  relies on "physics stops it": with the old RIGID rope the hook pressed on
+  the seat and stalled the joint (its own note records cmd 0.12 stalling at
+  0.059). A cord with no bending stiffness cannot transmit that compression -
+  it just buckles, the winch runs to its full commanded travel, and the slack
+  topples the hook. MEASURED at 0.004: with no spring the grounded hook tipped
+  to 49 deg, i.e. the magnet pointed sideways instead of down at the payload's
+  well. The spring keeps it upright while the slack bows out sideways, which
+  is what a stiff lanyard actually does.
+
+  The spring is weak against gravity by design (0.004 vs the pendulum's
+  k = mgL = 0.0198 N m/rad at the top joint), so it stiffens the swing by
+  ~20% rather than suppressing it.
+
+  NO COLLISION on any segment - deliberately. The cord is visual and inertial
+  only; the sole collider on this chain is the hook's own tip. That keeps the
+  rope from generating contacts against the airframe, the payloads or itself,
+  which is where a segmented rope normally destabilises a sim.
+
+  DAMPING 0.0015 per axis, TUNED AGAINST A MEASUREMENT, not derived. The
+  pendulum is m = 0.011 kg at L = 0.183 m, so k = mgL = 0.0198 N m/rad,
+  I = mL^2 = 3.68e-4 and critical damping is 5.4e-3. Hand-splitting that over
+  four joints predicted zeta ~ 0.2 at 0.0003/axis; flying a 3 m/s lateral step
+  and logging the hook measured zeta ~ 0.03 instead - the prediction was off
+  by ~7x because the chain's compliance is shared, not per-joint. 0.0015 is
+  the value that actually lands the swing where it belongs.
+
+  The target is NOT "as damped as possible". A real cord settles slowly, so
+  over-damping would look wrong; the constraint is the mission's own
+  HOOK_SETTLE_S = 3.0 s wait after lock (gz_payload_actuator.py). The tune
+  keeps several visible swings while decaying inside that budget.
+
+  Measured period is 0.899 s against an ideal point-mass pendulum's 0.858 s.
+  The excess is correct and expected: the cord carries its own distributed
+  mass, which lengthens the period. RETUNE HERE if the rope length or the
+  hook mass changes - zeta scales with the pendulum, not with this number.
+-->
+<link name="hook_rope_seg_1">
+  <pose relative_to="hook_rope_link">0 0 -0.02287 0 0 0</pose>
+  <inertial>
+    <mass>0.0025</mass>
+    <!--
+      MASS AND INERTIA ARE BOTH FLOORS, NOT THE TRUE VALUES of a 4 mm x 46 mm
+      cord segment (which would be ~0.75 g and ~1.3e-7). They are set by a
+      MEASURED failure, not by taste.
+
+      At 0.00075 kg / 1e-6 the cord was fine carrying the 11 g hook, and a
+      pickup that RETRACTED the winch first lifted a payload to 14 m without
+      complaint. But the mission locks on and then climbs with the winch still
+      PAID OUT ("vinc acik, yuk ipte"), so a 0.15 kg payload hung off 0.75 g
+      links through a slack, buckled chain - a 200:1 mass ratio per link. That
+      configuration diverged and took the whole server down inside ODE:
+          Physics::Update -> dartsim -> ConstraintSolver::updateConstraints
+          -> GzOdeCollisionDetector::collide -> dxHashSpace::collide
+          -> dDebug -> abort
+      i.e. a geometry transform had already gone non-finite by the time
+      collision ran.
+
+      0.0025 kg / 1e-5 cuts the per-link mass ratio to 60:1 and the inertia
+      ratio by 10x. The cord still weighs 10 g in total against a 20 g hook,
+      so it still hangs and swings as a cord rather than a chain of weights.
+    -->
+    <inertia>
+      <ixx>1.0e-5</ixx><iyy>1.0e-5</iyy><izz>1.0e-6</izz>
+      <ixy>0</ixy><ixz>0</ixz><iyz>0</iyz>
+    </inertia>
+  </inertial>
+  <visual name="rope_seg_1_visual">
+    <geometry><cylinder><radius>0.004</radius><length>0.04575</length></cylinder></geometry>
+    <material>
+      <ambient>0.12 0.12 0.12 1</ambient>
+      <diffuse>0.18 0.18 0.18 1</diffuse>
+    </material>
+  </visual>
+</link>
+
+<joint name="HookRopeSwing1" type="universal">
+  <parent>hook_rope_link</parent>
+  <child>hook_rope_seg_1</child>
+  <!-- Joint sits at the TOP face of this segment, i.e. where it hangs from
+       the one above. Two perpendicular swing axes = a Hooke joint, which is
+       what a cord does; no twist DOF, which a cord barely has and which
+       would only add a rattling mode. -->
+  <pose>0 0 0.02287 0 0 0</pose>
+  <axis>
+    <xyz expressed_in="__model__">1 0 0</xyz>
+    <limit><lower>-1.2</lower><upper>1.2</upper></limit>
+    <dynamics>
+      <damping>0.0030</damping>
+      <friction>0</friction>
+      <spring_stiffness>0.004</spring_stiffness>
+      <spring_reference>0</spring_reference>
+    </dynamics>
+  </axis>
+  <axis2>
+    <xyz expressed_in="__model__">0 1 0</xyz>
+    <limit><lower>-1.2</lower><upper>1.2</upper></limit>
+    <dynamics>
+      <damping>0.0030</damping>
+      <friction>0</friction>
+      <spring_stiffness>0.004</spring_stiffness>
+      <spring_reference>0</spring_reference>
+    </dynamics>
+  </axis2>
+</joint>
+
+<link name="hook_rope_seg_2">
+  <pose relative_to="hook_rope_seg_1">0 0 -0.04575 0 0 0</pose>
+  <inertial>
+    <mass>0.0025</mass>
+    <!--
+      MASS AND INERTIA ARE BOTH FLOORS, NOT THE TRUE VALUES of a 4 mm x 46 mm
+      cord segment (which would be ~0.75 g and ~1.3e-7). They are set by a
+      MEASURED failure, not by taste.
+
+      At 0.00075 kg / 1e-6 the cord was fine carrying the 11 g hook, and a
+      pickup that RETRACTED the winch first lifted a payload to 14 m without
+      complaint. But the mission locks on and then climbs with the winch still
+      PAID OUT ("vinc acik, yuk ipte"), so a 0.15 kg payload hung off 0.75 g
+      links through a slack, buckled chain - a 200:1 mass ratio per link. That
+      configuration diverged and took the whole server down inside ODE:
+          Physics::Update -> dartsim -> ConstraintSolver::updateConstraints
+          -> GzOdeCollisionDetector::collide -> dxHashSpace::collide
+          -> dDebug -> abort
+      i.e. a geometry transform had already gone non-finite by the time
+      collision ran.
+
+      0.0025 kg / 1e-5 cuts the per-link mass ratio to 60:1 and the inertia
+      ratio by 10x. The cord still weighs 10 g in total against a 20 g hook,
+      so it still hangs and swings as a cord rather than a chain of weights.
+    -->
+    <inertia>
+      <ixx>1.0e-5</ixx><iyy>1.0e-5</iyy><izz>1.0e-6</izz>
+      <ixy>0</ixy><ixz>0</ixz><iyz>0</iyz>
+    </inertia>
+  </inertial>
+  <visual name="rope_seg_2_visual">
+    <geometry><cylinder><radius>0.004</radius><length>0.04575</length></cylinder></geometry>
+    <material>
+      <ambient>0.12 0.12 0.12 1</ambient>
+      <diffuse>0.18 0.18 0.18 1</diffuse>
+    </material>
+  </visual>
+</link>
+
+<joint name="HookRopeSwing2" type="universal">
+  <parent>hook_rope_seg_1</parent>
+  <child>hook_rope_seg_2</child>
+  <!-- Joint sits at the TOP face of this segment, i.e. where it hangs from
+       the one above. Two perpendicular swing axes = a Hooke joint, which is
+       what a cord does; no twist DOF, which a cord barely has and which
+       would only add a rattling mode. -->
+  <pose>0 0 0.02287 0 0 0</pose>
+  <axis>
+    <xyz expressed_in="__model__">1 0 0</xyz>
+    <limit><lower>-1.2</lower><upper>1.2</upper></limit>
+    <dynamics>
+      <damping>0.0030</damping>
+      <friction>0</friction>
+      <spring_stiffness>0.004</spring_stiffness>
+      <spring_reference>0</spring_reference>
+    </dynamics>
+  </axis>
+  <axis2>
+    <xyz expressed_in="__model__">0 1 0</xyz>
+    <limit><lower>-1.2</lower><upper>1.2</upper></limit>
+    <dynamics>
+      <damping>0.0030</damping>
+      <friction>0</friction>
+      <spring_stiffness>0.004</spring_stiffness>
+      <spring_reference>0</spring_reference>
+    </dynamics>
+  </axis2>
+</joint>
+
+<link name="hook_rope_seg_3">
+  <pose relative_to="hook_rope_seg_2">0 0 -0.04575 0 0 0</pose>
+  <inertial>
+    <mass>0.0025</mass>
+    <!--
+      MASS AND INERTIA ARE BOTH FLOORS, NOT THE TRUE VALUES of a 4 mm x 46 mm
+      cord segment (which would be ~0.75 g and ~1.3e-7). They are set by a
+      MEASURED failure, not by taste.
+
+      At 0.00075 kg / 1e-6 the cord was fine carrying the 11 g hook, and a
+      pickup that RETRACTED the winch first lifted a payload to 14 m without
+      complaint. But the mission locks on and then climbs with the winch still
+      PAID OUT ("vinc acik, yuk ipte"), so a 0.15 kg payload hung off 0.75 g
+      links through a slack, buckled chain - a 200:1 mass ratio per link. That
+      configuration diverged and took the whole server down inside ODE:
+          Physics::Update -> dartsim -> ConstraintSolver::updateConstraints
+          -> GzOdeCollisionDetector::collide -> dxHashSpace::collide
+          -> dDebug -> abort
+      i.e. a geometry transform had already gone non-finite by the time
+      collision ran.
+
+      0.0025 kg / 1e-5 cuts the per-link mass ratio to 60:1 and the inertia
+      ratio by 10x. The cord still weighs 10 g in total against a 20 g hook,
+      so it still hangs and swings as a cord rather than a chain of weights.
+    -->
+    <inertia>
+      <ixx>1.0e-5</ixx><iyy>1.0e-5</iyy><izz>1.0e-6</izz>
+      <ixy>0</ixy><ixz>0</ixz><iyz>0</iyz>
+    </inertia>
+  </inertial>
+  <visual name="rope_seg_3_visual">
+    <geometry><cylinder><radius>0.004</radius><length>0.04575</length></cylinder></geometry>
+    <material>
+      <ambient>0.12 0.12 0.12 1</ambient>
+      <diffuse>0.18 0.18 0.18 1</diffuse>
+    </material>
+  </visual>
+</link>
+
+<joint name="HookRopeSwing3" type="universal">
+  <parent>hook_rope_seg_2</parent>
+  <child>hook_rope_seg_3</child>
+  <!-- Joint sits at the TOP face of this segment, i.e. where it hangs from
+       the one above. Two perpendicular swing axes = a Hooke joint, which is
+       what a cord does; no twist DOF, which a cord barely has and which
+       would only add a rattling mode. -->
+  <pose>0 0 0.02287 0 0 0</pose>
+  <axis>
+    <xyz expressed_in="__model__">1 0 0</xyz>
+    <limit><lower>-1.2</lower><upper>1.2</upper></limit>
+    <dynamics>
+      <damping>0.0030</damping>
+      <friction>0</friction>
+      <spring_stiffness>0.004</spring_stiffness>
+      <spring_reference>0</spring_reference>
+    </dynamics>
+  </axis>
+  <axis2>
+    <xyz expressed_in="__model__">0 1 0</xyz>
+    <limit><lower>-1.2</lower><upper>1.2</upper></limit>
+    <dynamics>
+      <damping>0.0030</damping>
+      <friction>0</friction>
+      <spring_stiffness>0.004</spring_stiffness>
+      <spring_reference>0</spring_reference>
+    </dynamics>
+  </axis2>
+</joint>
+
+<link name="hook_rope_seg_4">
+  <pose relative_to="hook_rope_seg_3">0 0 -0.04575 0 0 0</pose>
+  <inertial>
+    <mass>0.0025</mass>
+    <!--
+      MASS AND INERTIA ARE BOTH FLOORS, NOT THE TRUE VALUES of a 4 mm x 46 mm
+      cord segment (which would be ~0.75 g and ~1.3e-7). They are set by a
+      MEASURED failure, not by taste.
+
+      At 0.00075 kg / 1e-6 the cord was fine carrying the 11 g hook, and a
+      pickup that RETRACTED the winch first lifted a payload to 14 m without
+      complaint. But the mission locks on and then climbs with the winch still
+      PAID OUT ("vinc acik, yuk ipte"), so a 0.15 kg payload hung off 0.75 g
+      links through a slack, buckled chain - a 200:1 mass ratio per link. That
+      configuration diverged and took the whole server down inside ODE:
+          Physics::Update -> dartsim -> ConstraintSolver::updateConstraints
+          -> GzOdeCollisionDetector::collide -> dxHashSpace::collide
+          -> dDebug -> abort
+      i.e. a geometry transform had already gone non-finite by the time
+      collision ran.
+
+      0.0025 kg / 1e-5 cuts the per-link mass ratio to 60:1 and the inertia
+      ratio by 10x. The cord still weighs 10 g in total against a 20 g hook,
+      so it still hangs and swings as a cord rather than a chain of weights.
+    -->
+    <inertia>
+      <ixx>1.0e-5</ixx><iyy>1.0e-5</iyy><izz>1.0e-6</izz>
+      <ixy>0</ixy><ixz>0</ixz><iyz>0</iyz>
+    </inertia>
+  </inertial>
+  <visual name="rope_seg_4_visual">
+    <geometry><cylinder><radius>0.004</radius><length>0.04575</length></cylinder></geometry>
+    <material>
+      <ambient>0.12 0.12 0.12 1</ambient>
+      <diffuse>0.18 0.18 0.18 1</diffuse>
+    </material>
+  </visual>
+</link>
+
+<joint name="HookRopeSwing4" type="universal">
+  <parent>hook_rope_seg_3</parent>
+  <child>hook_rope_seg_4</child>
+  <!-- Joint sits at the TOP face of this segment, i.e. where it hangs from
+       the one above. Two perpendicular swing axes = a Hooke joint, which is
+       what a cord does; no twist DOF, which a cord barely has and which
+       would only add a rattling mode. -->
+  <pose>0 0 0.02287 0 0 0</pose>
+  <axis>
+    <xyz expressed_in="__model__">1 0 0</xyz>
+    <limit><lower>-1.2</lower><upper>1.2</upper></limit>
+    <dynamics>
+      <damping>0.0030</damping>
+      <friction>0</friction>
+      <spring_stiffness>0.004</spring_stiffness>
+      <spring_reference>0</spring_reference>
+    </dynamics>
+  </axis>
+  <axis2>
+    <xyz expressed_in="__model__">0 1 0</xyz>
+    <limit><lower>-1.2</lower><upper>1.2</upper></limit>
+    <dynamics>
+      <damping>0.0030</damping>
+      <friction>0</friction>
+      <spring_stiffness>0.004</spring_stiffness>
+      <spring_reference>0</spring_reference>
+    </dynamics>
+  </axis2>
+</joint>
+
+<!--
+  VINC: bu eklem KASITLI olarak fixed degil prismatic. Sabit uzunlukta bir ip
+  bu araci calistiramaz, olculeri tutmuyor:
+    arac yerdeyken base_link z=0.240, kanca ucunun alti z=0.060
+    payload_red'in ustu z=0.050, yuvasinin ustu z=0.070
+    gorevin alcaldigi GOREV3_DESCENT_ALTITUDE_M=0.30'da kanca ucu z=0.360
+  yani 0.30 m'de kanca yukun 31 cm ustunde kalir; arac tamamen inse bile
+  kanca ucu yukun ustunden 1 cm yukarida. Ipi 31 cm uzatmak da cozmez:
+  o zaman arac indiginde kanca 25 cm YERIN ALTINDA olur, ki dunya SDF'sindeki
+  F2 notu tam bu ic ice gecmenin DART'a payload'i 4.9 m oteye FIRLATTIRDIGINI
+  kaydediyor. Cozum ipin uzayip kisalabilmesi: silindir zaten makara.
+
+  Eksen model cercevesinde asagi (0 0 -1), yani POZITIF eklem konumu = ip
+  salindi. 0.00 = tamamen cekili (kalkis/inis guvenli hali, kanca ucu
+  base_link-0.180'de ve inis takimindan 4.6 cm yukarida).
+  Ust sinir 0.35 m: 0.30 m irtifada yuvanin ustune (z=0.070) ulasmak icin
+  gereken uzama 0.29 m, ustune biraz pay.
+-->
+<joint name="HookRopeJoint" type="prismatic">
+  <parent>hook_winch_link</parent>
+  <child>hook_rope_link</child>
+  <axis>
+    <xyz expressed_in="__model__">0 0 -1</xyz>
+    <limit>
+      <lower>0.0</lower>
+      <!--
+        0.50 -> 0.35: this is now the winch's USABLE LINE LENGTH, and with a
+        hinged cord it is load-bearing rather than cosmetic.
+
+        The mission commands HOOK_WINCH_EXTEND_M = 0.40 deliberately past the
+        target and expects "physics stops it". A RIGID rope did stop it (its
+        note records cmd 0.12 stalling at 0.059). A cord cannot: it buckles,
+        the winch runs to the full commanded travel, and every extra
+        centimetre becomes slack that shoves the grounded hook over.
+
+        Reaching the payload deck from the mission's 0.30 m descent altitude
+        needs 0.272 m of payout (base_link sits 0.24 above ground, the hook
+        tip hangs 0.198 below base_link, the deck top is at 0.070). Capping at
+        0.35 leaves 78 mm of margin for PX4's few-centimetre altitude error
+        while keeping the worst-case slack small enough that the cord stays
+        floppy instead of saturating its joint limits.
+
+        THAT SATURATION IS THE WHOLE POINT of the +-1.2 rad segment limits
+        above. Absorbing s metres of slack folds the cord to (0.183-s)/0.183
+        of its length, needing ~acos(that) per joint; at +-0.7 rad the four
+        joints ran out of travel and the chain turned into a rigid bent strut
+        that transmitted the full 8 N of winch effort into the hook.
+        MEASURED: +-0.7 tipped the hook to 77 deg, +-1.2 to 49 deg. Tightening
+        the cord makes it worse, not better - bound the payout, not the bend.
+      -->
+      <upper>0.35</upper>
+      <effort>8</effort>
+      <velocity>0.5</velocity>
+    </limit>
+    <dynamics>
+      <damping>2.0</damping>
+      <friction>0.1</friction>
+    </dynamics>
+  </axis>
+</joint>
+
+<!--
+  Vinc komutu: gz.msgs.Double olarak hedef uzama (metre) /hook/winch/cmd'ye.
+  Kazanclar kucuk bir yuk icin secildi: hareketli link 0.015 kg, yerçekimi
+  yalnizca 0.15 N cekiyor, o yuzden p_gain kilitli tutmaya fazlasiyla yeter;
+  d_gain sarkmayi soner.
+-->
+<plugin filename="gz-sim-joint-position-controller-system"
+        name="gz::sim::systems::JointPositionController">
+  <joint_name>HookRopeJoint</joint_name>
+  <topic>/hook/winch/cmd</topic>
+  <p_gain>60.0</p_gain>
+  <i_gain>0.5</i_gain>
+  <d_gain>8.0</d_gain>
+  <cmd_max>50</cmd_max>
+  <cmd_min>-50</cmd_min>
+</plugin>
+
+<!--
+  parent_link ARTIK EKLENTININ VARSAYILANI DEGIL, ve olmamali.
+  HookAttachSystem.cc'nin varsayilani hook_rope_link; o link eskiden kancanin
+  KENDISIYDI, ama ip artik menteseli bir zincir oldugu icin hook_rope_link
+  sadece makaradan cikis noktasi. Varsayilan birakilsaydi alinan yuk kancaya
+  degil ipin EN UST parcasina kaynaklanir, yani ipin yaninda havada asili
+  kalirdi. Bu yuzden acikca hook_body_link yaziliyor.
+  Diger topic'ler eklentinin varsayilanlariyla ayni ama yine de acikca
+  yazildi: varsayilana guvenmek, eklentinin ileride degismesi halinde
+  sessizce yanlis linke baglanmak demek olurdu.
+-->
+<plugin filename="libHookAttachSystem.so" name="hook_attach::HookAttachSystem">
+  <parent_link>hook_body_link</parent_link>
+  <child_link>link</child_link>
+  <attach_topic>/hook/attach</attach_topic>
+  <detach_topic>/hook/detach</detach_topic>
+  <output_topic>/hook/state</output_topic>
+</plugin>
+
+
+    <include merge='true'>
+      <uri>model://mono_cam</uri>
+      <pose>0.085 0 .05 0 1.5707 0</pose>
+      <name>mono_cam</name>
+    </include>
+    <joint name="CameraJoint" type="fixed">
+      <parent>base_link</parent>
+      <child>camera_link</child>
+      <pose relative_to="base_link">0 0 0 0 1.5707 0</pose>
+    </joint>
+  </model>
+</sdf>

@@ -8,7 +8,7 @@
         <geometry>
           <mesh>
             <uri>../../materials/meshes/hexagon_blue_1m_2cm.stl</uri>
-            <scale>5 5 1</scale>
+            <scale>2 2 1</scale>
           </mesh>
         </geometry>
         <material>
@@ -44,10 +44,17 @@
            3 mm proud of the visual plane (no z-fighting with the payload's
            bottom face) while the bulk extends underground where it is
            invisible and cannot be tunnelled through. -->
+      <!-- SCALE CORRECTED 5 -> 2 (2026-08-29): the 5x5 scale above (and the
+           5 x 4.33 collision footprint the two comments above describe) was
+           a v32-era leftover with no spec basis - the competition spec
+           calls for a 2 m hexagon. Scale and this box are updated together
+           (2 x 1.732, same 0.866 flat-to-flat ratio); the tunnelling
+           measurement and thickness reasoning above are unaffected by the
+           footprint's size and remain accurate. -->
       <collision name="collision">
         <pose>0 0 -0.047 0 0 0</pose>
         <geometry>
-          <box><size>5 4.33 0.1</size></box>
+          <box><size>2 1.732 0.1</size></box>
         </geometry>
       </collision>
     </link>

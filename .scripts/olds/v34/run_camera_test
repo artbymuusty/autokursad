@@ -1,0 +1,13 @@
+#!/bin/bash
+# run_camera_test - Diagnostic Camera Launcher
+
+cd "$(dirname "$0")"
+clear
+echo "====================================="
+echo " KURSAD40 V34"
+echo " Camera Diagnostic Tool"
+echo "====================================="
+echo ""
+source "$(dirname "$0")/resolve_python.sh"
+
+"$PYTHON_BIN" process_manager.py start_test

@@ -135,3 +135,13 @@ __pycache__/
 *.pid
 GZ_PARTITION=*
 →
+
+# KURSAD40 -- public depo kapsami (2026-09-01 karari)
+# Kod, dokuman ve GOREV3_ALMA_DURUM.md'nin atif yaptigi GUNCEL kosu
+# kanitlari depoya girer; eski kosu arsivleri ve yeniden uretilebilir
+# ciktilar girmez. Not: *.jsonl zaten yukarida haric tutuluyor, mission
+# olay akislarinin buyuk kismi bu yuzden hicbir zaman depoya girmedi.
+.scripts/olds/*/logs/
+.scripts/olds/*/demo/runs/2026083*/
+# generate_competition_area.py'nin dondurdugu world yedekleri
+*.sdf.bak.*

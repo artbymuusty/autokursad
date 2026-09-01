@@ -1,0 +1,399 @@
+<?xml version="1.0" ?>
+<sdf version="1.9">
+  <!--
+    Neutral / inspection copy of the Fusion payload capture body.
+
+    The MISSION copies are payload_red and payload_blue in
+    Tools/simulation/gz/worlds/default.sdf: they are held to the vehicle by
+    DetachableJoint (ADR-011) and must keep their exact detector colours, so
+    they are declared there rather than included from here. They reference the
+    SAME meshes/, so CAD updates reach all three copies at once.
+
+    UNITS: metres. mm->m is baked into the vertices by cad_to_gz.py.
+  -->
+  <model name="kursad_payload">
+    <static>false</static>
+    <link name="link">
+      <gravity>true</gravity>
+      <inertial>
+        <!-- Sim mass, NOT the real 1.05 kg - see the payload_red note in the
+             world SDF for why the simulated payloads are 0.15 kg. -->
+        <mass>0.15</mass>
+        <inertia>
+          <ixx>9.25e-5</ixx><iyy>3.06e-4</iyy><izz>2.76e-4</izz>
+          <ixy>0</ixy><ixz>0</ixz><iyz>0</iyz>
+        </inertia>
+      </inertial>
+
+      <visual name="body_visual">
+        <geometry><mesh><uri>model://kursad_payload/meshes/payload_body.stl</uri></mesh></geometry>
+        <material>
+          <ambient>0.45 0.45 0.48 1</ambient>
+          <diffuse>0.60 0.60 0.63 1</diffuse>
+        </material>
+      </visual>
+      <visual name="bottom_plate_visual">
+        <geometry><mesh><uri>model://kursad_payload/meshes/payload_bottom_plate.stl</uri></mesh></geometry>
+        <material>
+          <ambient>0.25 0.25 0.27 1</ambient>
+          <diffuse>0.35 0.35 0.38 1</diffuse>
+        </material>
+      </visual>
+
+      <!-- YUVA (BORE) COLLISION.
+           Buradaki bloklar generate_bore_collision.py tarafindan URETILIR;
+           marker'lar arasini elle duzenlemeyin. Profil (cep O46.50, pah-1
+           23.20 derece, pah-2 46.97 derece, gecis deligi O22.00) ve faset
+           sayisi N o script'te tek yerde tanimli.
+
+           ONCEKI HALI tek bir kutuydu: <box><size>0.142 0.052 0.070</size></box>.
+           O kutunun ust yuzeyi deck seviyesinde DUZ ve KAPALI oldugu icin
+           kanca burnu yuvaya giremiyor, kapagin ustunde duruyordu; yanal
+           kacisi engelleyen hicbir fiziksel sinir yoktu. Geometri zaten
+           payload_body.stl icinde VARDI ve VISUAL olarak kullaniliyordu,
+           yalnizca collision tarafinda atiliyordu. Uydurulmus bir sey
+           eklenmedi; var olan yuzeyler tasindi. -->
+      <!-- KURSAD_BORE_COLLISION_START -->
+      <!-- URETILMIS BLOK -- generate_bore_collision.py yazar.
+           ELLE DUZENLEME. Profil ve N o script'te tek yerde.
+           Faset N=12, deck serit K=8, 83 kutu.
+           CAD yuva: cep O46.50 (10.5mm derin), pah-1 23.20deg,
+           pah-2 46.97deg, gecis deligi O22.00.
+           Burun (O26, r 13.00) link z +19.14'de durur
+           -> maks. girme 15.86 mm. Yanal sinir 10.25 mm. -->
+      <collision name="bore_base">
+        <pose>0.000000 0.000000 -0.017000 0.000000000 0.000000000 0.000000000</pose>
+        <geometry><box><size>0.142000 0.052000 0.052000</size></box></geometry>
+      </collision>
+      <collision name="bore_fill_wall_00">
+        <pose>-0.047600 0.013000 0.021750 0.000000000 0.000000000 0.000000000</pose>
+        <geometry><box><size>0.046800 0.026000 0.010500</size></box></geometry>
+      </collision>
+      <collision name="bore_fill_wall_01">
+        <pose>-0.047600 -0.013000 0.021750 0.000000000 0.000000000 0.000000000</pose>
+        <geometry><box><size>0.046800 0.026000 0.010500</size></box></geometry>
+      </collision>
+      <collision name="bore_fill_wall_02">
+        <pose>-0.021175 0.021003 0.021750 0.000000000 0.000000000 0.000000000</pose>
+        <geometry><box><size>0.006050 0.009993 0.010500</size></box></geometry>
+      </collision>
+      <collision name="bore_fill_wall_03">
+        <pose>-0.021175 -0.021003 0.021750 0.000000000 0.000000000 0.000000000</pose>
+        <geometry><box><size>0.006050 0.009993 0.010500</size></box></geometry>
+      </collision>
+      <collision name="bore_fill_wall_04">
+        <pose>-0.015125 0.023479 0.021750 0.000000000 0.000000000 0.000000000</pose>
+        <geometry><box><size>0.006050 0.005042 0.010500</size></box></geometry>
+      </collision>
+      <collision name="bore_fill_wall_05">
+        <pose>-0.015125 -0.023479 0.021750 0.000000000 0.000000000 0.000000000</pose>
+        <geometry><box><size>0.006050 0.005042 0.010500</size></box></geometry>
+      </collision>
+      <collision name="bore_fill_wall_06">
+        <pose>-0.009075 0.024716 0.021750 0.000000000 0.000000000 0.000000000</pose>
+        <geometry><box><size>0.006050 0.002568 0.010500</size></box></geometry>
+      </collision>
+      <collision name="bore_fill_wall_07">
+        <pose>-0.009075 -0.024716 0.021750 0.000000000 0.000000000 0.000000000</pose>
+        <geometry><box><size>0.006050 0.002568 0.010500</size></box></geometry>
+      </collision>
+      <collision name="bore_fill_wall_08">
+        <pose>-0.003025 0.025100 0.021750 0.000000000 0.000000000 0.000000000</pose>
+        <geometry><box><size>0.006050 0.001800 0.010500</size></box></geometry>
+      </collision>
+      <collision name="bore_fill_wall_09">
+        <pose>-0.003025 -0.025100 0.021750 0.000000000 0.000000000 0.000000000</pose>
+        <geometry><box><size>0.006050 0.001800 0.010500</size></box></geometry>
+      </collision>
+      <collision name="bore_fill_wall_10">
+        <pose>0.003025 0.025100 0.021750 0.000000000 0.000000000 0.000000000</pose>
+        <geometry><box><size>0.006050 0.001800 0.010500</size></box></geometry>
+      </collision>
+      <collision name="bore_fill_wall_11">
+        <pose>0.003025 -0.025100 0.021750 0.000000000 0.000000000 0.000000000</pose>
+        <geometry><box><size>0.006050 0.001800 0.010500</size></box></geometry>
+      </collision>
+      <collision name="bore_fill_wall_12">
+        <pose>0.009075 0.024716 0.021750 0.000000000 0.000000000 0.000000000</pose>
+        <geometry><box><size>0.006050 0.002568 0.010500</size></box></geometry>
+      </collision>
+      <collision name="bore_fill_wall_13">
+        <pose>0.009075 -0.024716 0.021750 0.000000000 0.000000000 0.000000000</pose>
+        <geometry><box><size>0.006050 0.002568 0.010500</size></box></geometry>
+      </collision>
+      <collision name="bore_fill_wall_14">
+        <pose>0.015125 0.023479 0.021750 0.000000000 0.000000000 0.000000000</pose>
+        <geometry><box><size>0.006050 0.005042 0.010500</size></box></geometry>
+      </collision>
+      <collision name="bore_fill_wall_15">
+        <pose>0.015125 -0.023479 0.021750 0.000000000 0.000000000 0.000000000</pose>
+        <geometry><box><size>0.006050 0.005042 0.010500</size></box></geometry>
+      </collision>
+      <collision name="bore_fill_wall_16">
+        <pose>0.021175 0.021003 0.021750 0.000000000 0.000000000 0.000000000</pose>
+        <geometry><box><size>0.006050 0.009993 0.010500</size></box></geometry>
+      </collision>
+      <collision name="bore_fill_wall_17">
+        <pose>0.021175 -0.021003 0.021750 0.000000000 0.000000000 0.000000000</pose>
+        <geometry><box><size>0.006050 0.009993 0.010500</size></box></geometry>
+      </collision>
+      <collision name="bore_fill_wall_18">
+        <pose>0.047600 0.013000 0.021750 0.000000000 0.000000000 0.000000000</pose>
+        <geometry><box><size>0.046800 0.026000 0.010500</size></box></geometry>
+      </collision>
+      <collision name="bore_fill_wall_19">
+        <pose>0.047600 -0.013000 0.021750 0.000000000 0.000000000 0.000000000</pose>
+        <geometry><box><size>0.046800 0.026000 0.010500</size></box></geometry>
+      </collision>
+      <collision name="bore_wall_00">
+        <pose>0.026424 0.000000 0.021750 0.000000000 0.000000000 0.000000000</pose>
+        <geometry><box><size>0.007153 0.014080 0.010500</size></box></geometry>
+      </collision>
+      <collision name="bore_wall_01">
+        <pose>0.022883 0.013212 0.021750 0.000000000 0.000000000 0.523598776</pose>
+        <geometry><box><size>0.007153 0.014080 0.010500</size></box></geometry>
+      </collision>
+      <collision name="bore_wall_02">
+        <pose>0.012200 0.021132 0.021750 0.000000000 0.000000000 1.047197551</pose>
+        <geometry><box><size>0.003107 0.014080 0.010500</size></box></geometry>
+      </collision>
+      <collision name="bore_wall_03">
+        <pose>0.000000 0.024401 0.021750 0.000000000 0.000000000 1.570796327</pose>
+        <geometry><box><size>0.003107 0.014080 0.010500</size></box></geometry>
+      </collision>
+      <collision name="bore_wall_04">
+        <pose>-0.012200 0.021132 0.021750 0.000000000 0.000000000 2.094395102</pose>
+        <geometry><box><size>0.003107 0.014080 0.010500</size></box></geometry>
+      </collision>
+      <collision name="bore_wall_05">
+        <pose>-0.022883 0.013212 0.021750 0.000000000 0.000000000 2.617993878</pose>
+        <geometry><box><size>0.007153 0.014080 0.010500</size></box></geometry>
+      </collision>
+      <collision name="bore_wall_06">
+        <pose>-0.026424 0.000000 0.021750 0.000000000 0.000000000 3.141592654</pose>
+        <geometry><box><size>0.007153 0.014080 0.010500</size></box></geometry>
+      </collision>
+      <collision name="bore_wall_07">
+        <pose>-0.022883 -0.013212 0.021750 0.000000000 0.000000000 3.665191429</pose>
+        <geometry><box><size>0.007153 0.014080 0.010500</size></box></geometry>
+      </collision>
+      <collision name="bore_wall_08">
+        <pose>-0.012200 -0.021132 0.021750 0.000000000 0.000000000 4.188790205</pose>
+        <geometry><box><size>0.003107 0.014080 0.010500</size></box></geometry>
+      </collision>
+      <collision name="bore_wall_09">
+        <pose>-0.000000 -0.024401 0.021750 0.000000000 0.000000000 4.712388980</pose>
+        <geometry><box><size>0.003107 0.014080 0.010500</size></box></geometry>
+      </collision>
+      <collision name="bore_wall_10">
+        <pose>0.012200 -0.021132 0.021750 0.000000000 0.000000000 5.235987756</pose>
+        <geometry><box><size>0.003107 0.014080 0.010500</size></box></geometry>
+      </collision>
+      <collision name="bore_wall_11">
+        <pose>0.022883 -0.013212 0.021750 0.000000000 0.000000000 5.759586532</pose>
+        <geometry><box><size>0.007153 0.014080 0.010500</size></box></geometry>
+      </collision>
+      <collision name="bore_fill_chamfer1_00">
+        <pose>-0.047235 0.013000 0.014625 0.000000000 0.000000000 0.000000000</pose>
+        <geometry><box><size>0.047530 0.026000 0.003750</size></box></geometry>
+      </collision>
+      <collision name="bore_fill_chamfer1_01">
+        <pose>-0.047235 -0.013000 0.014625 0.000000000 0.000000000 0.000000000</pose>
+        <geometry><box><size>0.047530 0.026000 0.003750</size></box></geometry>
+      </collision>
+      <collision name="bore_fill_chamfer1_02">
+        <pose>-0.020536 0.020762 0.014625 0.000000000 0.000000000 0.000000000</pose>
+        <geometry><box><size>0.005867 0.010476 0.003750</size></box></geometry>
+      </collision>
+      <collision name="bore_fill_chamfer1_03">
+        <pose>-0.020536 -0.020762 0.014625 0.000000000 0.000000000 0.000000000</pose>
+        <geometry><box><size>0.005867 0.010476 0.003750</size></box></geometry>
+      </collision>
+      <collision name="bore_fill_chamfer1_04">
+        <pose>-0.014669 0.023163 0.014625 0.000000000 0.000000000 0.000000000</pose>
+        <geometry><box><size>0.005867 0.005674 0.003750</size></box></geometry>
+      </collision>
+      <collision name="bore_fill_chamfer1_05">
+        <pose>-0.014669 -0.023163 0.014625 0.000000000 0.000000000 0.000000000</pose>
+        <geometry><box><size>0.005867 0.005674 0.003750</size></box></geometry>
+      </collision>
+      <collision name="bore_fill_chamfer1_06">
+        <pose>-0.008801 0.024362 0.014625 0.000000000 0.000000000 0.000000000</pose>
+        <geometry><box><size>0.005867 0.003275 0.003750</size></box></geometry>
+      </collision>
+      <collision name="bore_fill_chamfer1_07">
+        <pose>-0.008801 -0.024362 0.014625 0.000000000 0.000000000 0.000000000</pose>
+        <geometry><box><size>0.005867 0.003275 0.003750</size></box></geometry>
+      </collision>
+      <collision name="bore_fill_chamfer1_08">
+        <pose>-0.002934 0.024735 0.014625 0.000000000 0.000000000 0.000000000</pose>
+        <geometry><box><size>0.005867 0.002530 0.003750</size></box></geometry>
+      </collision>
+      <collision name="bore_fill_chamfer1_09">
+        <pose>-0.002934 -0.024735 0.014625 0.000000000 0.000000000 0.000000000</pose>
+        <geometry><box><size>0.005867 0.002530 0.003750</size></box></geometry>
+      </collision>
+      <collision name="bore_fill_chamfer1_10">
+        <pose>0.002934 0.024735 0.014625 0.000000000 0.000000000 0.000000000</pose>
+        <geometry><box><size>0.005867 0.002530 0.003750</size></box></geometry>
+      </collision>
+      <collision name="bore_fill_chamfer1_11">
+        <pose>0.002934 -0.024735 0.014625 0.000000000 0.000000000 0.000000000</pose>
+        <geometry><box><size>0.005867 0.002530 0.003750</size></box></geometry>
+      </collision>
+      <collision name="bore_fill_chamfer1_12">
+        <pose>0.008801 0.024362 0.014625 0.000000000 0.000000000 0.000000000</pose>
+        <geometry><box><size>0.005867 0.003275 0.003750</size></box></geometry>
+      </collision>
+      <collision name="bore_fill_chamfer1_13">
+        <pose>0.008801 -0.024362 0.014625 0.000000000 0.000000000 0.000000000</pose>
+        <geometry><box><size>0.005867 0.003275 0.003750</size></box></geometry>
+      </collision>
+      <collision name="bore_fill_chamfer1_14">
+        <pose>0.014669 0.023163 0.014625 0.000000000 0.000000000 0.000000000</pose>
+        <geometry><box><size>0.005867 0.005674 0.003750</size></box></geometry>
+      </collision>
+      <collision name="bore_fill_chamfer1_15">
+        <pose>0.014669 -0.023163 0.014625 0.000000000 0.000000000 0.000000000</pose>
+        <geometry><box><size>0.005867 0.005674 0.003750</size></box></geometry>
+      </collision>
+      <collision name="bore_fill_chamfer1_16">
+        <pose>0.020536 0.020762 0.014625 0.000000000 0.000000000 0.000000000</pose>
+        <geometry><box><size>0.005867 0.010476 0.003750</size></box></geometry>
+      </collision>
+      <collision name="bore_fill_chamfer1_17">
+        <pose>0.020536 -0.020762 0.014625 0.000000000 0.000000000 0.000000000</pose>
+        <geometry><box><size>0.005867 0.010476 0.003750</size></box></geometry>
+      </collision>
+      <collision name="bore_fill_chamfer1_18">
+        <pose>0.047235 0.013000 0.014625 0.000000000 0.000000000 0.000000000</pose>
+        <geometry><box><size>0.047530 0.026000 0.003750</size></box></geometry>
+      </collision>
+      <collision name="bore_fill_chamfer1_19">
+        <pose>0.047235 -0.013000 0.014625 0.000000000 0.000000000 0.000000000</pose>
+        <geometry><box><size>0.047530 0.026000 0.003750</size></box></geometry>
+      </collision>
+      <collision name="bore_chamfer1_00">
+        <pose>0.019945 0.000000 0.012896 0.000000000 -0.411260474 0.000000000</pose>
+        <geometry><box><size>0.010560 0.014080 0.004286</size></box></geometry>
+      </collision>
+      <collision name="bore_chamfer1_01">
+        <pose>0.017273 0.009973 0.012896 0.000000000 -0.411260474 0.523598776</pose>
+        <geometry><box><size>0.010560 0.014080 0.004286</size></box></geometry>
+      </collision>
+      <collision name="bore_chamfer1_02">
+        <pose>0.009973 0.017273 0.012896 0.000000000 -0.411260474 1.047197551</pose>
+        <geometry><box><size>0.010560 0.014080 0.004286</size></box></geometry>
+      </collision>
+      <collision name="bore_chamfer1_03">
+        <pose>0.000000 0.019945 0.012896 0.000000000 -0.411260474 1.570796327</pose>
+        <geometry><box><size>0.010560 0.014080 0.004286</size></box></geometry>
+      </collision>
+      <collision name="bore_chamfer1_04">
+        <pose>-0.009973 0.017273 0.012896 0.000000000 -0.411260474 2.094395102</pose>
+        <geometry><box><size>0.010560 0.014080 0.004286</size></box></geometry>
+      </collision>
+      <collision name="bore_chamfer1_05">
+        <pose>-0.017273 0.009973 0.012896 0.000000000 -0.411260474 2.617993878</pose>
+        <geometry><box><size>0.010560 0.014080 0.004286</size></box></geometry>
+      </collision>
+      <collision name="bore_chamfer1_06">
+        <pose>-0.019945 0.000000 0.012896 0.000000000 -0.411260474 3.141592654</pose>
+        <geometry><box><size>0.010560 0.014080 0.004286</size></box></geometry>
+      </collision>
+      <collision name="bore_chamfer1_07">
+        <pose>-0.017273 -0.009973 0.012896 0.000000000 -0.411260474 3.665191429</pose>
+        <geometry><box><size>0.010560 0.014080 0.004286</size></box></geometry>
+      </collision>
+      <collision name="bore_chamfer1_08">
+        <pose>-0.009973 -0.017273 0.012896 0.000000000 -0.411260474 4.188790205</pose>
+        <geometry><box><size>0.010560 0.014080 0.004286</size></box></geometry>
+      </collision>
+      <collision name="bore_chamfer1_09">
+        <pose>-0.000000 -0.019945 0.012896 0.000000000 -0.411260474 4.712388980</pose>
+        <geometry><box><size>0.010560 0.014080 0.004286</size></box></geometry>
+      </collision>
+      <collision name="bore_chamfer1_10">
+        <pose>0.009973 -0.017273 0.012896 0.000000000 -0.411260474 5.235987756</pose>
+        <geometry><box><size>0.010560 0.014080 0.004286</size></box></geometry>
+      </collision>
+      <collision name="bore_chamfer1_11">
+        <pose>0.017273 -0.009973 0.012896 0.000000000 -0.411260474 5.759586532</pose>
+        <geometry><box><size>0.010560 0.014080 0.004286</size></box></geometry>
+      </collision>
+      <collision name="bore_fill_chamfer2_00">
+        <pose>-0.042860 0.013000 0.010875 0.000000000 0.000000000 0.000000000</pose>
+        <geometry><box><size>0.056280 0.026000 0.003750</size></box></geometry>
+      </collision>
+      <collision name="bore_fill_chamfer2_01">
+        <pose>-0.042860 -0.013000 0.010875 0.000000000 0.000000000 0.000000000</pose>
+        <geometry><box><size>0.056280 0.026000 0.003750</size></box></geometry>
+      </collision>
+      <collision name="bore_fill_chamfer2_02">
+        <pose>0.000000 0.020360 0.010875 0.000000000 0.000000000 0.000000000</pose>
+        <geometry><box><size>0.029440 0.011280 0.003750</size></box></geometry>
+      </collision>
+      <collision name="bore_fill_chamfer2_03">
+        <pose>0.000000 -0.020360 0.010875 0.000000000 0.000000000 0.000000000</pose>
+        <geometry><box><size>0.029440 0.011280 0.003750</size></box></geometry>
+      </collision>
+      <collision name="bore_fill_chamfer2_04">
+        <pose>0.042860 0.013000 0.010875 0.000000000 0.000000000 0.000000000</pose>
+        <geometry><box><size>0.056280 0.026000 0.003750</size></box></geometry>
+      </collision>
+      <collision name="bore_fill_chamfer2_05">
+        <pose>0.042860 -0.013000 0.010875 0.000000000 0.000000000 0.000000000</pose>
+        <geometry><box><size>0.056280 0.026000 0.003750</size></box></geometry>
+      </collision>
+      <collision name="bore_chamfer2_00">
+        <pose>0.013812 0.000000 0.009698 0.000000000 -0.828582980 0.000000000</pose>
+        <geometry><box><size>0.005088 0.008781 0.003482</size></box></geometry>
+      </collision>
+      <collision name="bore_chamfer2_01">
+        <pose>0.011962 0.006906 0.009698 0.000000000 -0.828582980 0.523598776</pose>
+        <geometry><box><size>0.005088 0.008781 0.003482</size></box></geometry>
+      </collision>
+      <collision name="bore_chamfer2_02">
+        <pose>0.006906 0.011962 0.009698 0.000000000 -0.828582980 1.047197551</pose>
+        <geometry><box><size>0.005088 0.008781 0.003482</size></box></geometry>
+      </collision>
+      <collision name="bore_chamfer2_03">
+        <pose>0.000000 0.013812 0.009698 0.000000000 -0.828582980 1.570796327</pose>
+        <geometry><box><size>0.005088 0.008781 0.003482</size></box></geometry>
+      </collision>
+      <collision name="bore_chamfer2_04">
+        <pose>-0.006906 0.011962 0.009698 0.000000000 -0.828582980 2.094395102</pose>
+        <geometry><box><size>0.005088 0.008781 0.003482</size></box></geometry>
+      </collision>
+      <collision name="bore_chamfer2_05">
+        <pose>-0.011962 0.006906 0.009698 0.000000000 -0.828582980 2.617993878</pose>
+        <geometry><box><size>0.005088 0.008781 0.003482</size></box></geometry>
+      </collision>
+      <collision name="bore_chamfer2_06">
+        <pose>-0.013812 0.000000 0.009698 0.000000000 -0.828582980 3.141592654</pose>
+        <geometry><box><size>0.005088 0.008781 0.003482</size></box></geometry>
+      </collision>
+      <collision name="bore_chamfer2_07">
+        <pose>-0.011962 -0.006906 0.009698 0.000000000 -0.828582980 3.665191429</pose>
+        <geometry><box><size>0.005088 0.008781 0.003482</size></box></geometry>
+      </collision>
+      <collision name="bore_chamfer2_08">
+        <pose>-0.006906 -0.011962 0.009698 0.000000000 -0.828582980 4.188790205</pose>
+        <geometry><box><size>0.005088 0.008781 0.003482</size></box></geometry>
+      </collision>
+      <collision name="bore_chamfer2_09">
+        <pose>-0.000000 -0.013812 0.009698 0.000000000 -0.828582980 4.712388980</pose>
+        <geometry><box><size>0.005088 0.008781 0.003482</size></box></geometry>
+      </collision>
+      <collision name="bore_chamfer2_10">
+        <pose>0.006906 -0.011962 0.009698 0.000000000 -0.828582980 5.235987756</pose>
+        <geometry><box><size>0.005088 0.008781 0.003482</size></box></geometry>
+      </collision>
+      <collision name="bore_chamfer2_11">
+        <pose>0.011962 -0.006906 0.009698 0.000000000 -0.828582980 5.759586532</pose>
+        <geometry><box><size>0.005088 0.008781 0.003482</size></box></geometry>
+      </collision>
+      <!-- KURSAD_BORE_COLLISION_END -->
+    </link>
+  </model>
+</sdf>
