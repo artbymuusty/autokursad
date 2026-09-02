@@ -457,12 +457,25 @@ class PayloadReleaseService:
             cx, cy, expected_z = reference
             offset_m = ((x - cx) ** 2 + (y - cy) ** 2) ** 0.5
             z_error = abs(z - expected_z)
-            on_target = (on_ground and offset_m <= PAYLOAD_ON_TARGET_RADIUS_M
+            # E3 takibi (2026-09-03): esik artik SEKLE OZEL ve SDF
+            # geometrisinden turetiliyor. Tek bir 0.5 m degeri ucgen icin
+            # fazla gevsek (ic teget 0.289 m -- 0.5 m'de yuk seklin
+            # DISINDA), altigen icin gereksiz dardi (ic teget 0.866 m).
+            # Geometriyi veremeyen bir arka uc (gercek donanim: SDF yok)
+            # eski tek degere duser, yani davranisi degismez.
+            radius_m = getattr(self.actuator, "on_target_radius_m",
+                               lambda _s: None)(shape_type)
+            radius_source = "sekil_geometrisi"
+            if radius_m is None:
+                radius_m = PAYLOAD_ON_TARGET_RADIUS_M
+                radius_source = "sabit"
+            on_target = (on_ground and offset_m <= radius_m
                          and z_error <= PAYLOAD_ON_TARGET_Z_TOLERANCE_M)
             data.update(target_x=cx, target_y=cy,
                         offset_from_center_cm=round(offset_m * 100.0, 1),
                         expected_rest_z_m=expected_z, z_error_m=round(z_error, 3),
-                        on_target_radius_m=PAYLOAD_ON_TARGET_RADIUS_M,
+                        on_target_radius_m=round(radius_m, 3),
+                        on_target_radius_source=radius_source,
                         on_target_z_tolerance_m=PAYLOAD_ON_TARGET_Z_TOLERANCE_M)
         data["settled_on_target"] = on_target
 

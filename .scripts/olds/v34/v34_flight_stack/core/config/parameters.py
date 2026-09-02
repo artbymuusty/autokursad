@@ -582,6 +582,18 @@ PAYLOAD_EXPECTED_REST_Z_M: float = 0.031
 # 0.03 m catches a payload standing on edge (which rests at 0.156, half its
 # 0.30 m long side above the surface) as well as one that never landed.
 PAYLOAD_ON_TARGET_Z_TOLERANCE_M: float = 0.03
+# YEDEK DEGER (E3 takibi, 2026-09-03). Artik BIRINCIL esik degil: gz arka
+# ucu her sekil icin yaricapi SDF geometrisinden turetiyor
+# (gz_payload_actuator.read_on_target_radius_m), cunku tek bir sayi iki
+# hedef sekle birden uyamiyor -- olculdu:
+#     blue_hexagon  ic teget 0.866 m -> esik 0.716 m (yuk yaricapi 0.15 dusuldu)
+#     red_triangle  ic teget 0.289 m -> esik 0.139 m
+# 0.5 m boylece UCGEN icin fazla gevsekti (0.5 m'de yuk ucgenin disinda kalir)
+# ve ALTIGEN icin gereksiz dardi. Bu deger yalnizca geometriyi veremeyen bir
+# arka uc icin kalir -- gercek donanimda SDF yoktur, orada davranis degismez.
+# Buyutulmemesi bilincli: 2026-09-03 olcumunde isabet dagilimi iki kutupluydu
+# (yakinsayan bacaklar <=0.885 m, suresi dolanlar >=2.121 m); esigi buyutmek
+# yalnizca 2-5 m'lik iskalari "basarili" yazdirir, hicbir seyi duzeltmez.
 PAYLOAD_ON_TARGET_RADIUS_M: float = 0.5
 
 # --- A2 (2026-08-17): payload-centred aim ---

@@ -20,6 +20,7 @@ from gz_system.gz_payload_actuator import (
     PAYLOAD_DETACH_TOPIC,
     VEHICLE_MODEL_NAME,
     read_target_centers,
+    shape_inradius_m,
 )
 
 
@@ -472,3 +473,41 @@ async def test_drop_reports_failure_when_the_payload_never_leaves_the_hook():
     actuator._at_rest_height = lambda color: False
 
     assert await actuator.activate_drop_mechanism() is False
+
+
+# --- E3 takibi: sekil basina "hedefte" yaricapi ------------------------------
+
+def test_on_target_radius_is_derived_per_shape_from_sdf_geometry():
+    """Tek bir 0.5 m esigi iki sekle birden uyamiyordu: ucgenin ic tegeti
+    0.289 m, yani 0.5 m'de yuk ucgenin DISINDA sayilmasi gerekirken
+    "hedefte" yaziliyordu; altigenin ic tegeti ise 0.866 m, yani 0.5 m
+    gereksiz dardi."""
+    actuator = _actuator(_FakeMonitor())
+    hexagon = actuator.on_target_radius_m("MAVI_ALTIGEN")
+    triangle = actuator.on_target_radius_m("KIRMIZI_UCGEN")
+    assert hexagon == pytest.approx(0.866 - 0.15, abs=1e-3)
+    assert triangle == pytest.approx(0.866 / 3.0 - 0.15, abs=1e-3)
+    assert triangle < 0.5 < hexagon      # tek sabit ikisine de yanlisti
+
+
+def test_inradius_follows_the_collision_box_not_the_visual_mesh():
+    """ADR-011 oncesi gorsel ile carpisma ayrisip yukun %96 ihtimalle
+    sekilden gectigi olculmustu; "uzerine dustu mu" sorusunun muhatabi
+    carpisma geometrisidir."""
+    assert shape_inradius_m("MAVI_ALTIGEN") == pytest.approx(1.732 / 2.0, abs=1e-3)
+    # Eskenar ucgende agirlik merkezinden ic teget = yukseklik / 3.
+    assert shape_inradius_m("KIRMIZI_UCGEN") == pytest.approx(0.866 / 3.0, abs=1e-3)
+
+
+def test_missing_geometry_falls_back_to_the_flat_constant(monkeypatch, tmp_path):
+    """Gercek donanimda SDF yoktur; orada davranis degismemeli."""
+    monkeypatch.setenv("KURSAD_MODELS_ROOT", str(tmp_path))
+    actuator = _actuator(_FakeMonitor())
+    assert actuator.on_target_radius_m("MAVI_ALTIGEN") is None
+
+
+def test_radius_is_read_once_per_shape():
+    actuator = _actuator(_FakeMonitor())
+    first = actuator.on_target_radius_m("KIRMIZI_UCGEN")
+    assert actuator._on_target_radius["KIRMIZI_UCGEN"] == first
+    assert actuator.on_target_radius_m("KIRMIZI_UCGEN") == first

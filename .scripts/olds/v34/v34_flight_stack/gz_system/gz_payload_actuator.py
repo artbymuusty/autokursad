@@ -362,6 +362,142 @@ def world_sdf_path(world_name: str = "default") -> str:
                         "%s.sdf" % world_name)
 
 
+# --- Sekil basina "hedefte" yaricapi (E3 takibi, 2026-09-03) ------------------
+#
+# NEDEN TEK BIR SABIT YETMIYOR: PAYLOAD_ON_TARGET_RADIUS_M tek bir 0.5 m
+# degeriydi ve iki hedef sekle birden uyamiyordu. SDF'ten olculdu:
+#
+#   blue_hexagon  carpisma kutusu 2.000 x 1.732 m -> duzgun altigen,
+#                 cevrel yaricap 1.000, IC TEGET 1.732/2 = 0.866 m
+#   red_triangle  carpisma kutusu 1.000 x 0.866 m -> eskenar ucgen (kenar 1 m),
+#                 cevrel yaricap 0.577, IC TEGET yukseklik/3 = 0.289 m
+#
+# 0.5 m boylece ucgen icin FAZLA GEVSEK (0.5 m'de yuk ucgenin disinda) ve
+# altigen icin gereksiz DAR idi. Olculen 8 birakmada tek esikle 3/8 "hedefte"
+# gorunuyordu, gercek geometriye gore 2/8 sekil uzerindeydi.
+#
+# UCGENIN ORIJINI: carpisma kutusu <pose> ile +0.144 m otelenmis. Eskenar
+# ucgende sinir-kutu merkezi ile agirlik merkezi arasindaki fark tam olarak
+# yukseklik/2 - yukseklik/3 = 0.866/6 = 0.1443 m'dir; yani modelin orijini
+# AGIRLIK MERKEZI ve default.sdf'teki <include><pose> de oyle. Ic teget bu
+# yuzden yukseklik/3 olarak, agirlik merkezinden olculur.
+#
+# YUK PAYI: yuk 0.15 m yaricapli bir silindir. Yukun TAMAMEN seklin uzerinde
+# durmasi icin merkezi, ic tegetten yuk yaricapi kadar iceride olmali.
+#
+# Davranis degismiyor: bu yalnizca bir birakmanin nasil PUANLANDIGI.
+SHAPE_KIND = {"MAVI_ALTIGEN": "hexagon", "KIRMIZI_UCGEN": "triangle",
+              "KIRMIZI_DIKDORTGEN": "box", "MAVI_DIKDORTGEN": "box"}
+
+PAYLOAD_MODEL_NAME = "payload_cyl_red"
+
+# Modeller iki ayri koke dagilmis durumda; ikisi de aranir.
+MODELS_ROOT_ENV = "KURSAD_MODELS_ROOT"
+_MODEL_SUBDIRS = (("Tools", "simulation", "gz", "worlds", "models"),
+                  ("Tools", "simulation", "gz", "models"))
+
+_COLLISION_RE = re.compile(r"<collision.*?</collision>", re.S)
+_SIZE_RE = re.compile(r"<size>([^<]*)</size>")
+_RADIUS_RE = re.compile(r"<radius>([^<]*)</radius>")
+
+
+def _repo_root() -> str:
+    return os.path.abspath(os.path.join(
+        os.path.dirname(os.path.abspath(__file__)), *([os.pardir] * 5)))
+
+
+def _model_sdf_path(model_name: str):
+    """model.sdf yolu; bulunamazsa None."""
+    override = os.environ.get(MODELS_ROOT_ENV)
+    roots = ([os.path.join(r, model_name) for r in override.split(os.pathsep)]
+             if override else
+             [os.path.join(_repo_root(), *sub, model_name) for sub in _MODEL_SUBDIRS])
+    for root in roots:
+        candidate = os.path.join(root, "model.sdf")
+        if os.path.isfile(candidate):
+            return candidate
+    return None
+
+
+def _collision_size(model_name: str):
+    """(genislik_x, genislik_y) -- carpisma kutusundan. Yoksa None."""
+    path = _model_sdf_path(model_name)
+    if path is None:
+        return None
+    try:
+        with open(path, "r", encoding="utf-8") as fh:
+            sdf = fh.read()
+    except OSError:
+        return None
+    for block in _COLLISION_RE.findall(sdf):
+        size = _SIZE_RE.search(block)
+        if not size:
+            continue
+        parts = size.group(1).split()
+        if len(parts) < 2:
+            continue
+        try:
+            return (float(parts[0]), float(parts[1]))
+        except ValueError:
+            continue
+    return None
+
+
+def payload_radius_m():
+    """Birakilan yukun yaricapi (m). Okunamazsa None."""
+    path = _model_sdf_path(PAYLOAD_MODEL_NAME)
+    if path is None:
+        return None
+    try:
+        with open(path, "r", encoding="utf-8") as fh:
+            match = _RADIUS_RE.search(fh.read())
+    except OSError:
+        return None
+    if not match:
+        return None
+    try:
+        return float(match.group(1))
+    except ValueError:
+        return None
+
+
+def shape_inradius_m(shape_type: str):
+    """Seklin IC TEGET yaricapi (merkezden en yakin kenara). Yoksa None.
+
+    Kaynak carpisma kutusudur, gorsel mesh degil: ADR-011 oncesi gorsel ile
+    carpisma ayrisip yukun %96 ihtimalle sekilden gecmesine yol acmisti;
+    "uzerine dustu mu" sorusunun gercek muhatabi carpisma geometrisi."""
+    kind = SHAPE_KIND.get(shape_type)
+    model = SHAPE_TO_SDF_MODEL.get(shape_type)
+    if kind is None or model is None:
+        return None
+    size = _collision_size(model)
+    if size is None:
+        return None
+    width_x, width_y = size
+    if kind == "hexagon":
+        # Duz kenarlar Y boyunca: ic teget = kenardan kenara / 2.
+        return width_y / 2.0
+    if kind == "triangle":
+        # Eskenar ucgen, agirlik merkezinden: ic teget = yukseklik / 3.
+        return width_y / 3.0
+    # Dikdortgen: en dar yariboyut.
+    return min(width_x, width_y) / 2.0
+
+
+def read_on_target_radius_m(shape_type: str):
+    """Yukun TAMAMEN seklin uzerinde sayilacagi merkez-mesafe esigi (m).
+
+    ic_teget - yuk_yaricapi. Geometri okunamazsa None doner ve cagiran
+    PAYLOAD_ON_TARGET_RADIUS_M'e (tek, sekilden bagimsiz deger) duser --
+    gercek donanimda zaten oyle olur, cunku orada SDF yoktur."""
+    inradius = shape_inradius_m(shape_type)
+    payload_r = payload_radius_m()
+    if inradius is None or payload_r is None:
+        return None
+    return max(0.0, inradius - payload_r)
+
+
 def read_target_centers(world_name: str = "default", path: str = None) -> dict:
     """{shape_type: (x, y)} for the shapes THIS world actually contains.
 
@@ -429,6 +565,8 @@ class GzPayloadActuator(IPayloadActuator):
         # {} means "read and nothing usable found" (so it is not retried on
         # every drop).
         self._target_centers = None
+        # E3 takibi: sekil basina "hedefte" yaricapi, ayni tembel desen.
+        self._on_target_radius = {}
 
     def _relative_drop(self, color: str):
         """Vehicle z minus payload z. Constant (the mount offset) while the
@@ -646,6 +784,24 @@ class GzPayloadActuator(IPayloadActuator):
                                "merkezi okunamadi -- isabet puanlanmayacak.",
                                self.world_name)
         return self._target_centers
+
+    def on_target_radius_m(self, shape_type: str):
+        """Bu sekil icin "hedefte" esigi (m); geometri okunamazsa None.
+
+        Sekil basina, SDF geometrisinden turetilir -- tek bir sabit iki
+        sekle birden uyamiyordu (altigen ic teget 0.866 m, ucgen 0.289 m)."""
+        if shape_type not in self._on_target_radius:
+            radius = read_on_target_radius_m(shape_type)
+            self._on_target_radius[shape_type] = radius
+            if radius is None:
+                logger.warning("[ON_TARGET_RADIUS] %s icin sekil geometrisi "
+                               "okunamadi -- sabit esige dusuluyor.", shape_type)
+            else:
+                logger.info("[ON_TARGET_RADIUS] %s: %.3f m "
+                            "(ic teget %.3f - yuk yaricapi %.3f).",
+                            shape_type, radius, shape_inradius_m(shape_type),
+                            payload_radius_m())
+        return self._on_target_radius[shape_type]
 
     def landing_reference(self, shape_type: str):
         """F3: (target_x, target_y, expected_rest_z) so a landing can be
