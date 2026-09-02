@@ -18,6 +18,11 @@ class MockFlightBackend(IFlightBackend):
     def __init__(self):
         self.calls: List[Tuple[str, dict]] = []
         self._yaw_deg = 0.0
+        # (roll_deg, pitch_deg, yaw_deg) served to get_attitude_euler().
+        self._attitude_euler = (0.0, 0.0, 0.0)
+        # When non-empty, each get_attitude_euler() call pops the next
+        # tuple -- lets a test script a rocking vehicle that settles.
+        self._attitude_sequence: List[Tuple[float, float, float]] = []
         self._global_pos = (41.0, 29.0, 15.0)
         self._ned_pos = (0.0, 0.0, -15.0)
         # Defaults to stationary -- goto_global_position_and_wait()'s
@@ -147,6 +152,17 @@ class MockFlightBackend(IFlightBackend):
     async def get_yaw_deg(self) -> float:
         self.calls.append(('get_yaw_deg', {}))
         return self._yaw_deg
+
+    async def get_attitude_euler(self):
+        """Motion FSM's HOLD guard reads this. Default is a PERFECTLY LEVEL,
+        UNCHANGING attitude, so the derived roll/pitch rate is 0 deg/s and the
+        stability guard passes as soon as the minimum hold has elapsed --
+        which is what every test that does not care about attitude wants.
+        Tests that DO care drive it through `attitude_sequence`."""
+        self.calls.append(('get_attitude_euler', {}))
+        if self._attitude_sequence:
+            self._attitude_euler = self._attitude_sequence.pop(0)
+        return self._attitude_euler
         
     async def upload_mission(self, waypoints: list) -> None:
         self.calls.append(('upload_mission', {'waypoints': waypoints}))

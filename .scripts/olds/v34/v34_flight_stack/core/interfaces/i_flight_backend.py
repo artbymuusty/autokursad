@@ -163,3 +163,18 @@ class IFlightBackend(ABC):
         """Send a MAVLink STATUSTEXT to the GCS. Returns False when the
         backend has no channel for it. Must never raise."""
         return False
+
+    # MOTION-FSM: deliberately NOT abstract, for exactly the reason W4 gives
+    # above. The Climb-then-Cruise HOLD state would like to know the vehicle
+    # has actually stopped rocking before it hands over, but a backend that
+    # cannot report attitude must degrade to the minimum-hold timer rather
+    # than fail to instantiate -- and, critically, every existing
+    # IFlightBackend implementation (including tests/mocks/
+    # mock_flight_backend.py, which ~50 test files construct) keeps working
+    # unchanged. Returning None means "unavailable", never "level".
+    async def get_attitude_euler(self) -> "tuple[float, float, float] | None":
+        """Current (roll_deg, pitch_deg, yaw_deg), or None when the backend
+        has no attitude channel. Must never raise -- a backend whose
+        telemetry is merely STALE should let its own freshness guard raise
+        TelemetryStale from get_yaw_deg(); this accessor is advisory only."""
+        return None

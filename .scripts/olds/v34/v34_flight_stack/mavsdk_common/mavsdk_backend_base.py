@@ -525,6 +525,29 @@ class MavsdkBackendBase(IFlightBackend):
         iteration of goto_global_position_and_wait()."""
         return self._fresh(self._attitude_euler).yaw_deg
 
+    async def get_attitude_euler(self):
+        """Served from the SAME _attitude_watcher cache get_yaw_deg() uses --
+        no new MAVSDK stream is subscribed for this.
+
+        WHY NOT attitude_angular_velocity_body(): the motion FSM's HOLD guard
+        needs a RATE, and MAVSDK does offer one directly. Subscribing to it
+        would add a fifth concurrent telemetry consumer, and ADR-008 (B0/B1)
+        is this codebase's record of what extra concurrent consumers of the
+        same channel cost here. The cache already ticks at
+        TELEMETRY_STREAM_RATE_HZ (10 Hz), which is the same rate the FSM's
+        own loop runs at, so the FSM differentiates these samples itself.
+
+        Returns None instead of raising when the sample is stale: this is an
+        advisory guard (see the interface docstring), and a HOLD that cannot
+        prove stability must fall back to its timer, not abort the mission.
+        The control loops that genuinely need fresh telemetry keep using
+        get_global_position()/get_velocity_ned(), which still raise."""
+        try:
+            att = self._fresh(self._attitude_euler)
+        except TelemetryStale:
+            return None
+        return (att.roll_deg, att.pitch_deg, att.yaw_deg)
+
     def telemetry_stream_rates(self) -> dict:
         """Observed (not requested) Hz per cached stream -- for validation
         reporting and the dashboard, so "we asked for 10 Hz" is never
