@@ -132,6 +132,14 @@ __pycache__/
 # KURSAD40 runtime artifacts (mission logs, pid files, stray shell redirects)
 .scripts/olds/v32/logs/
 *.jsonl
+# ISTISNA -- kalibrasyon kayitlari (2026-09-02). Bunlar bir kosunun gecici
+# ciktisi DEGIL, ucus guvenligi esiklerinin ARKASINDAKI KANIT:
+# real_system.yaml'daki vz_settle_m_s ve attitude_rate_limit_deg_s dogrudan
+# bu olcumlerin p95'inden turetiliyor ve YAML yorumu ilgili dosya adina
+# atif yapiyor (docs/climb-then-cruise-hw-checklist.md 1. bolum). Repoda
+# olmazlarsa "bu esik nereden geldi" sorusu cevapsiz kalir.
+# Kucukler: 60 s / 10 Hz bir olcum ~78 KB.
+!.scripts/olds/v34/v34_flight_stack/logs/motion_noise_*.jsonl
 *.pid
 GZ_PARTITION=*
 →
