@@ -32,3 +32,36 @@ actuator:
 payload:
   real_mass_kg: 1.05
   simulated_mass_kg: 0.15   # Tools/simulation/gz/worlds/default.sdf
+
+# --- Climb-then-Cruise hareket makinesi (2026-09-02) -------------------------
+# GERCEK UCUS PROFILI -- SITL'den KASITLI OLARAK GEVSEK.
+#
+# Gerekce (docs/flight-control-analysis.md 2.4): gercek telemetri linkinde
+# (radio/4G) gecikme Gazebo'ya gore cok daha yuksek ve gercek IMU/GPS gurultulu.
+# Simulasyonda dogrulanmis dar bir esik gercek ucusta state'in HIC gecmemesine
+# yol acar -- ozellikle vz_settle ve attitude_rate_limit, ikisi de dogrudan
+# sensor gurultusu tabanina oturur.
+#
+# kp_vertical'da uygulanan ayni ilke: bir gercek-arac esigi simulator
+# olcumuyle DARALTILMAZ.
+#
+# TODO: butun bu degerler ilk saha ucusunun LOGLARIYLA kalibre edilecek.
+# Yontem: MOTION_STATE_CHANGED olaylarindaki guard verilerine bakip
+# (vz_m_s, attitude_rate_deg_s) gercek taban gurultusunu olcmek, esigi onun
+# ~3 katina koymak. Kalibrasyon oncesi bu profille UCULMAMALIDIR.
+motion_profile:
+  enabled: true
+  alt_tol_m: 0.50            # TODO: saha logu ile kalibre
+  vz_settle_m_s: 0.35        # TODO: saha logu ile kalibre (gurultu tabani)
+  hold_min_s: 0.50           # TODO: link gecikmesine gore
+  hold_max_s: 5.0
+  attitude_rate_limit_deg_s: 25.0   # TODO: gercek IMU gurultu tabani
+  attitude_stable_samples: 3
+  arrival_radius_m: 3.0      # TODO: gercek GPS dagilimina gore
+  arrival_speed_m_s: 0.50      # TODO: saha logu ile kalibre
+  cruise_speed_m_s: 2.0      # ilk ucuslar icin muhafazakar
+  accel_m_s2: 1.0
+  vertical_speed_m_s: 1.0
+  leg_timeout_s: 60.0
+  vertical_timeout_s: 20.0
+  arrival_hold_s: 1.0

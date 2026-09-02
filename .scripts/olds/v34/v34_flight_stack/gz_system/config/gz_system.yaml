@@ -29,3 +29,23 @@ control_gains:
   centering_tolerance_y: 0.01
 actuator:
   gazebo_service_name: "/v34/set_payload_state"
+
+# --- Climb-then-Cruise hareket makinesi (2026-09-02) -------------------------
+# Varsayilanlar core/config/parameters.py'de (MOTION_* sabitleri) ve orada
+# gerekceleriyle belgeli. Buradaki degerler SITL profilidir.
+motion_profile:
+  enabled: true
+  alt_tol_m: 0.30
+  vz_settle_m_s: 0.20
+  hold_min_s: 0.30
+  hold_max_s: 3.0
+  attitude_rate_limit_deg_s: 15.0
+  attitude_stable_samples: 3
+  arrival_radius_m: 2.0
+  arrival_speed_m_s: 0.30
+  cruise_speed_m_s: 3.0
+  accel_m_s2: 1.5
+  vertical_speed_m_s: 1.5
+  leg_timeout_s: 60.0
+  vertical_timeout_s: 20.0
+  arrival_hold_s: 1.0

@@ -730,3 +730,83 @@ HSV_COLOR_FRAC_RECT: float = 0.40
 # in the middle with ~2x margin on the duplicate side and ~140x on the
 # payload side.
 HSV_RECT_DUPLICATE_AREA_RATIO: float = 0.50
+
+# --- MOTION FSM: Climb-then-Cruise (2026-09-02) ------------------------------
+# Dikey ve yatay hareketi ZAMANDA ayiran hareket makinesinin esikleri.
+# Tamami gz_system.yaml / real_system.yaml icindeki `motion_profile` blogundan
+# EZILEBILIR -- control_gains ile ayni desen (main_gz.py, main_real.py,
+# main_dual.py). Buradaki degerler yalnizca varsayilandir.
+#
+# SITL ile HW'nin AYRI profil tasimasi kasitlidir: gercek telemetri linkinde
+# gecikme, gercek IMU/GPS'te gurultu var. Simulasyonda dogrulanmis dar bir
+# esik gercek ucusta state'in HIC gecmemesine yol acabilir (bkz.
+# docs/flight-control-analysis.md 2.4).
+
+#: Makine kapatilirsa cagiranlar eski goto_global_position_and_wait()
+#: davranisina duser. Geri donus yolu bir kod degisikligi gerektirmesin diye var.
+MOTION_FSM_ENABLED: bool = True
+
+#: CLIMB/DESCEND yakinsama bandi. ALTITUDE_CONVERGENCE_TOLERANCE_M ile ayni
+#: deger, ama AYRI bir sabit: o tolerans go_to_and_center ve climb_to_altitude
+#: tarafindan paylasiliyor ve ADR-010'da olculmus; hareket makinesi icin
+#: ayarlanmasi gerekirse onlari birlikte suruklememeli.
+MOTION_ALT_TOL_M: float = 0.30
+
+#: CLIMB/DESCEND cikis guard'inin IKINCI yarisi. climb_to_altitude()'un
+#: mevcut guard'i yalnizca |alt_error| bakiyordu; band icine HIZLA girip
+#: asmak "yakinsadi" sayiliyordu. Ayni sinif hata goto_global_position_and_
+#: wait()'te 2026-08-13'te olculmustu (arac hedefin 2 m yaricapindan ~11 m/s
+#: ile geciyordu) ve orada hiz kosulu eklenerek cozulmustu; ayni cozum burada.
+MOTION_VZ_SETTLE_M_S: float = 0.20
+
+#: HOLD'un ALT siniri (operator karari 2026-09-02: "sabit bekleme degil,
+#: min 0.3s + attitude-stability guard"). Attitude zaten durgunsa hold bu
+#: surede biter; degilse guard uzatir.
+MOTION_HOLD_MIN_S: float = 0.30
+#: HOLD'un UST siniri. Attitude hic durulmazsa (ruzgar, salinim) makine
+#: sonsuza kadar beklemez -- gorev butcesi 600 s ve HOLD onu yiyemez.
+#: Asildiginda WARN ile CRUISE'a gecilir, gorev dusurulmez.
+MOTION_HOLD_MAX_S: float = 3.0
+
+#: Attitude stabilite guard'i: roll ve pitch'in SAYISAL TUREVI bu esigin
+#: altinda MOTION_ATTITUDE_STABLE_SAMPLES ardisik ornek boyunca kalmali.
+#:
+#: NEDEN VARYANS DEGIL RATE: tasarim notu "attitude rate varyansi" diyordu.
+#: 10 Hz'de 3 ornekli bir pencerenin varyansi gurultu baskin ve yorumlanmasi
+#: zor bir sayidir; maksimum |rate| hem daha siki bir sinir hem de dogrudan
+#: fiziksel bir buyukluk (deg/s). Esik asildiginda ne kadar asildigi loglanir.
+MOTION_ATTITUDE_RATE_LIMIT_DEG_S: float = 15.0
+MOTION_ATTITUDE_STABLE_SAMPLES: int = 3
+
+#: CRUISE varis yaricapi. GPS_POSITION_CONVERGENCE_TOLERANCE_M ile ayni deger;
+#: ayri sabit olmasinin gerekcesi MOTION_ALT_TOL_M ile ayni.
+MOTION_ARRIVAL_RADIUS_M: float = 2.0
+#: CRUISE cikis guard'inin IKINCI yarisi -- yaricap TEK BASINA yetmez.
+#: goto_global_position_and_wait()'te tam bu eksiklik 2026-08-13'te olculmustu:
+#: konum kosulu arac hedefin 2 m yaricapindan ~11 m/s ile GECERKEN atesleniyor
+#: ve arac 10-25 m otesine suzuluyordu. Deger GPS_POSITION_VELOCITY_TOLERANCE_M_S
+#: ile ayni; profil zaten hedefte sifira inecek sekilde frenledigi icin bu
+#: kosul normalde profille birlikte saglanir, tek basina bir gecikme yaratmaz.
+MOTION_ARRIVAL_SPEED_M_S: float = 0.30
+
+#: Trapez profilin seyir tavani ve ivme rampasi (velocity_profile.py).
+#: MOTION_ACCEL_M_S2 varsayilani SETPOINT_MAX_DELTA_V_M_S / OFFBOARD_SETPOINT_
+#: INTERVAL_S = 0.15/0.1 = 1.5 m/s2 ile AYNI secildi: profil, ardindan gelen
+#: SetpointLimiter'in zaten uygulayacagi ivme tavaniyla catismasin, onu
+#: ONCEDEN bilerek uygulasin. Buradan buyuk bir deger vermek profili degil
+#: yalnizca limiter'i calistirir.
+MOTION_CRUISE_SPEED_M_S: float = 3.0
+MOTION_ACCEL_M_S2: float = 1.5
+#: Dikey bacaklarin tavani. MAX_CENTERING_SPEED_M_S'ten dusuk tutuldu: dikey
+#: asim irtifa bandindan tasar ve VZ_SETTLE guard'ini geciktirir.
+MOTION_VERTICAL_SPEED_M_S: float = 1.5
+
+#: Tek bir bacagin (bes state'in tamami) ust siniri. GLOBAL_POSITION_NAV_
+#: TIMEOUT_S ile ayni: bu makine onun yerine geciyor, butcesini buyutmuyor.
+MOTION_LEG_TIMEOUT_S: float = 60.0
+#: Tek bir dikey state'in ust siniri (climb_to_altitude'un kendi 20 s'i ile ayni).
+MOTION_VERTICAL_TIMEOUT_S: float = 20.0
+#: ARRIVAL_HOLD suresi -- varista yatay artik hizin inise/merkezlemeye
+#: tasinmamasi icin. master_fsm.py'nin donus bacaginda zaten uygulanan
+#: RETURN_TO_START_FINISH_HOLD_S ile ayni gerekce.
+MOTION_ARRIVAL_HOLD_S: float = 1.0
