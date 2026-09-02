@@ -237,7 +237,15 @@ MISSION_RESUME_MIN_INTERVAL_S: float = 6.0
 # history of PX4 wedging when resume spacing/confirmation was got wrong).
 # Flip only after SITL measurement shows the added offboard time does not
 # violate MISSION_RESUME_MIN_INTERVAL_S's margin.
-ENABLE_ROUTE_REJOIN: bool = True  # TEMP: SITL measurement only (2026-08-29 round 3: same-world repeat + control), reverting after
+# REVERTED to the documented default (2026-09-02). The TEMP flip above was
+# the SITL measurement round of 2026-08-29 and its own comment said
+# "reverting after"; it was never reverted. Left on, it also broke 9 tests
+# in three files (test_mission_route_resume, test_adr009_stale_health_
+# backoff_speed, test_adr010_retry_in_place_and_resume): those construct the
+# orchestrator with Gorev2Orchestrator.__new__() to bypass __init__, so the
+# _rejoin_route_axis() call this flag enables read a self._route_axis that
+# the bypassed __init__ never set -- AttributeError, not a flight bug.
+ENABLE_ROUTE_REJOIN: bool = False
 # Convergence tolerance for the rejoin manoeuvre is GPS_POSITION_CONVERGENCE_
 # TOLERANCE_M -- goto_global_position_and_wait() is reused UNCHANGED (it is
 # not parameterised for tolerance), so this is that same "close enough" as
