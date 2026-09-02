@@ -233,8 +233,15 @@ def test_signal_handlers_override_an_inherited_sig_ign():
     KeyboardInterrupt can never be raised and `kill -INT` is silently
     discarded -- main_gz's `except KeyboardInterrupt` was unreachable and
     the vehicle would be left airborne on any background-launched mission.
-    Installing our own handler overrides that inherited disposition."""
-    from gz_system.main_gz import _install_signal_handlers
+    Installing our own handler overrides that inherited disposition.
+
+    IMPORT TASINDI (2026-09-02): bu koruma bir donem yalnizca main_gz.py'de
+    yasiyordu; denetim (docs/v34-sistem-denetimi.md B4) main_real.py ve
+    main_dual.py'de HIC olmadigini gosterdi -- yani emniyet ozelligi tam da
+    GERCEK arac ucururken eksikti. Govde core/runtime/shutdown.py'ye cikarildi
+    ve uc entrypoint de oradan cagiriyor. Bu test ADR-010 R4'un pini olarak
+    KALDI, yalnizca davranisin yeni adresini gosteriyor."""
+    from core.runtime.shutdown import install_signal_handlers as _install_signal_handlers
 
     previous_int = signal.getsignal(signal.SIGINT)
     previous_term = signal.getsignal(signal.SIGTERM)
