@@ -35,25 +35,8 @@ import time
 from dataclasses import dataclass, field
 from typing import Callable, Optional
 
-from core.config.parameters import (
-    GOREV2_MAX_FLIGHT_DURATION_S,
-    MOTION_ACCEL_M_S2,
-    MOTION_ALT_TOL_M,
-    MOTION_ARRIVAL_HOLD_S,
-    MOTION_ARRIVAL_RADIUS_M,
-    MOTION_ARRIVAL_SPEED_M_S,
-    MOTION_ATTITUDE_RATE_LIMIT_DEG_S,
-    MOTION_ATTITUDE_STABLE_SAMPLES,
-    MOTION_CRUISE_SPEED_M_S,
-    MOTION_FSM_ENABLED,
-    MOTION_HOLD_MAX_S,
-    MOTION_HOLD_MIN_S,
-    MOTION_LEG_TIMEOUT_S,
-    MOTION_VERTICAL_SPEED_M_S,
-    MOTION_VERTICAL_TIMEOUT_S,
-    MOTION_VZ_SETTLE_M_S,
-    OFFBOARD_SETPOINT_INTERVAL_S,
-)
+from core.config import parameters as _params
+from core.config.parameters import OFFBOARD_SETPOINT_INTERVAL_S
 from core.interfaces.i_flight_backend import IFlightBackend, TelemetryStale
 from core.navigation.geo import gps_to_ned_delta, haversine_distance_m
 from core.navigation.motion_state import MotionState
@@ -72,21 +55,30 @@ logger = logging.getLogger(__name__)
 class MotionProfile:
     """Bir bacagin tum esikleri. Tamami YAML'dan ezilebilir (control_gains
     ile ayni desen); buradaki varsayilanlar parameters.py'den gelir."""
-    enabled: bool = MOTION_FSM_ENABLED
-    alt_tol_m: float = MOTION_ALT_TOL_M
-    vz_settle_m_s: float = MOTION_VZ_SETTLE_M_S
-    hold_min_s: float = MOTION_HOLD_MIN_S
-    hold_max_s: float = MOTION_HOLD_MAX_S
-    attitude_rate_limit_deg_s: float = MOTION_ATTITUDE_RATE_LIMIT_DEG_S
-    attitude_stable_samples: int = MOTION_ATTITUDE_STABLE_SAMPLES
-    arrival_radius_m: float = MOTION_ARRIVAL_RADIUS_M
-    arrival_speed_m_s: float = MOTION_ARRIVAL_SPEED_M_S
-    cruise_speed_m_s: float = MOTION_CRUISE_SPEED_M_S
-    accel_m_s2: float = MOTION_ACCEL_M_S2
-    vertical_speed_m_s: float = MOTION_VERTICAL_SPEED_M_S
-    leg_timeout_s: float = MOTION_LEG_TIMEOUT_S
-    vertical_timeout_s: float = MOTION_VERTICAL_TIMEOUT_S
-    arrival_hold_s: float = MOTION_ARRIVAL_HOLD_S
+    #: NEDEN default_factory: duz bir `alan: tip = SABIT` dataclass varsayilani
+    #: IMPORT aninda baglanir ve bir daha degismez -- conftest.py'nin
+    #: MISSION_START_HOLD_S icin yaptigi gibi parameters.py'yi patch'lemek
+    #: hicbir etki yaratmazdi (o dosyanin kendi notu: "Patched on the
+    #: ORCHESTRATOR module, not on `parameters`: the values are imported by
+    #: value there"). Fabrika ile deger ORNEKLEME aninda okunur, yani hem
+    #: testler hem calisma zamani parameters.py'yi tek kaynak olarak kullanir.
+    enabled: bool = field(default_factory=lambda: _params.MOTION_FSM_ENABLED)
+    alt_tol_m: float = field(default_factory=lambda: _params.MOTION_ALT_TOL_M)
+    vz_settle_m_s: float = field(default_factory=lambda: _params.MOTION_VZ_SETTLE_M_S)
+    hold_min_s: float = field(default_factory=lambda: _params.MOTION_HOLD_MIN_S)
+    hold_max_s: float = field(default_factory=lambda: _params.MOTION_HOLD_MAX_S)
+    attitude_rate_limit_deg_s: float = field(
+        default_factory=lambda: _params.MOTION_ATTITUDE_RATE_LIMIT_DEG_S)
+    attitude_stable_samples: int = field(
+        default_factory=lambda: _params.MOTION_ATTITUDE_STABLE_SAMPLES)
+    arrival_radius_m: float = field(default_factory=lambda: _params.MOTION_ARRIVAL_RADIUS_M)
+    arrival_speed_m_s: float = field(default_factory=lambda: _params.MOTION_ARRIVAL_SPEED_M_S)
+    cruise_speed_m_s: float = field(default_factory=lambda: _params.MOTION_CRUISE_SPEED_M_S)
+    accel_m_s2: float = field(default_factory=lambda: _params.MOTION_ACCEL_M_S2)
+    vertical_speed_m_s: float = field(default_factory=lambda: _params.MOTION_VERTICAL_SPEED_M_S)
+    leg_timeout_s: float = field(default_factory=lambda: _params.MOTION_LEG_TIMEOUT_S)
+    vertical_timeout_s: float = field(default_factory=lambda: _params.MOTION_VERTICAL_TIMEOUT_S)
+    arrival_hold_s: float = field(default_factory=lambda: _params.MOTION_ARRIVAL_HOLD_S)
 
     @classmethod
     def from_config(cls, config: Optional[dict]) -> "MotionProfile":
@@ -113,7 +105,8 @@ class MotionBudget:
     Bolum 5.6, ZORUNLU 600 s) butcesine karsi izlenebilir olmasi gerekiyor.
     Gorev boyunca TEK bir ornek yasar (CenteringController tutar), her HOLD
     ve ARRIVAL_HOLD buraya yazar."""
-    mission_timeout_s: float = GOREV2_MAX_FLIGHT_DURATION_S
+    mission_timeout_s: float = field(
+        default_factory=lambda: _params.GOREV2_MAX_FLIGHT_DURATION_S)
     cumulative_hold_s: float = 0.0
     legs: int = 0
     _by_state: dict = field(default_factory=dict)

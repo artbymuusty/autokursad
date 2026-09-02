@@ -38,3 +38,31 @@ def _no_mission_resume_spacing(monkeypatch):
     import core.mission.gorev2_orchestrator as gorev2_orchestrator
     monkeypatch.setattr(gorev2_orchestrator, "MISSION_RESUME_MIN_INTERVAL_S", 0.0)
     monkeypatch.setattr(gorev2_orchestrator, "MISSION_MODE_CONFIRM_TIMEOUT_S", 1.0)
+
+
+@pytest.fixture(autouse=True)
+def _fast_motion_profile(monkeypatch):
+    """Climb-then-Cruise'un DUVAR-SAATI maliyetlerini testten çıkarır.
+
+    Üretim profili her bacağa gerçek zaman ekler: hold_min 0.3 s +
+    arrival_hold 1.0 s, ve yakınsamayan bir bacak leg_timeout_s = 60 s
+    bekler. MockFlightBackend statiktir (komut verilince hareket etmez), yani
+    CRUISE onunla hiçbir zaman yakınsayamaz -- ölçüldü: bu fixture olmadan
+    test_mission_lifecycle_spec.py tek başına dakikalara çıkıyor.
+
+    Bu, MISSION_START_HOLD_S ve MISSION_RESUME_MIN_INTERVAL_S için yukarıda
+    yapılanın aynısı ve aynı gerekçeyle: testler zamanlamayı değil DAVRANIŞI
+    ölçmeli.
+
+    Guard MANTIĞI dokunulmadan kalır -- yalnızca süreler kısalır.
+    test_motion_fsm.py bu değerlere hiç güvenmez, kendi profilini açıkça
+    kurar ve eşikleri orada zorlar.
+
+    parameters ÜZERİNDE patch'leniyor (orchestrator modülü üzerinde değil):
+    MotionProfile alanları default_factory ile bu modülü ÖRNEKLEME anında
+    okur, tam da bunun mümkün olması için."""
+    monkeypatch.setattr(parameters, "MOTION_HOLD_MIN_S", 0.0)
+    monkeypatch.setattr(parameters, "MOTION_HOLD_MAX_S", 0.05)
+    monkeypatch.setattr(parameters, "MOTION_ARRIVAL_HOLD_S", 0.0)
+    monkeypatch.setattr(parameters, "MOTION_LEG_TIMEOUT_S", 1.0)
+    monkeypatch.setattr(parameters, "MOTION_VERTICAL_TIMEOUT_S", 0.5)
