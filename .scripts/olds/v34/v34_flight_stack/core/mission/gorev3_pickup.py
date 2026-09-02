@@ -12,6 +12,7 @@ from core.detection.camera_intrinsics import default_camera_intrinsics
 from gz_system.gz_payload_actuator import HOOK_WINCH_EXTEND_M
 from core.mission.visual_alignment import VisualHookAligner
 from core.config.parameters import (
+    GOREV3_CRUISE_ALTITUDE_M,
     GOREV3_TRANSIT_ALTITUDE_M,
     GOREV3_DESCENT_ALTITUDE_M,
     GOREV3_RETREAT_DISTANCE_M,
@@ -438,7 +439,37 @@ class Gorev3PickupPhase:
         # Faz 1 started searching for Kırmızı Dikdörtgen wherever Payload
         # Mission 2 happened to leave the vehicle (Kırmızı Üçgen's
         # position), never at Mavi Altıgen where the payload actually is.
-        converged = await self.centering.goto_global_position_and_wait(
+        # GOREV D (2026-09-03): CLIMB-THEN-CRUISE, IKI ASAMADA.
+        #
+        # Onceki hal tek bir goto_global_position_and_wait(..., 1.5 m) idi ve
+        # OLCULDU (PX4 ULog): 50.8 m yol, max |v_xy| 11.92 m/s, pitch max
+        # 42.09 derece, 0.9-1.7 m irtifada. Mutlak pozisyon setpoint'i hizi
+        # PX4'e birakiyor; tavan MPC_XY_VEL_MAX = 12.0 (olculen 11.92) ve
+        # MPC_TILTMAX_AIR = 45 (olculen 42.09).
+        #
+        # NEDEN IKI CAGRI, TEK DEGIL: motion_fsm'de cruise_alt =
+        # max(start_alt, target_alt) oldugu icin CLIMB ve DESCEND ayni bacakta
+        # ASLA birlikte tetiklenemez (motion_fsm.py:221-225). Tek bir
+        # goto_waypoint(..., 1.5) cagrisi max(1.5,1.5)=1.5 verir, yani duz
+        # 1.5 m'de seyir -- istenen "once 3 m'ye cik, sonra yatay" profili
+        # cikmaz. motion_fsm DEGISTIRILMEDI; iki cagri istenen profili
+        # mevcut mekanizmayla uretiyor:
+        #
+        #   1) CLIMB (1.5 -> 3.0) -> HOLD -> CRUISE (~50 m @3 m) -> ARRIVAL_HOLD
+        #   2) DESCEND (3.0 -> 1.5) -> ARRIVAL_HOLD          (yatay mesafe ~0)
+        #
+        # Kapi: motion_profile.enabled False iken goto_waypoint zaten eski
+        # goto_global_position_and_wait'e duser, yani gercek ucus davranisi
+        # degismez.
+        converged = await self.centering.goto_waypoint(
+            mavi_altigen_point.gps_lat, mavi_altigen_point.gps_lon, GOREV3_CRUISE_ALTITUDE_M)
+        if not converged:
+            logger.warning("Mavi Altigen'e seyir irtifasinda (%.1f m) navigasyon zaman "
+                           "asimina ugradi -- yine de devam ediliyor.", GOREV3_CRUISE_ALTITUDE_M)
+
+        # Hedefin UZERINDE dikey alcalma: yatay mesafe ~0 oldugu icin bu cagri
+        # yalnizca DESCEND + ARRIVAL_HOLD calistirir.
+        converged = await self.centering.goto_waypoint(
             mavi_altigen_point.gps_lat, mavi_altigen_point.gps_lon, GOREV3_TRANSIT_ALTITUDE_M)
         if not converged:
             logger.warning("Mavi Altigen konumuna navigasyon zaman asimina ugradi -- yine de devam ediliyor.")

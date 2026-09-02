@@ -10,7 +10,10 @@ from core.detection.types import Detection
 from core.mission.gorev3_pickup import Gorev3PickupPhase
 from core.mission.rectangle_alignment_strategy import RectangleAlignmentStrategy
 from core.position_log.position_store import PositionStore
-from core.config.parameters import GOREV3_TRANSIT_ALTITUDE_M
+from core.config.parameters import (
+    GOREV3_CRUISE_ALTITUDE_M,
+    GOREV3_TRANSIT_ALTITUDE_M,
+)
 from core.mission.gorev3_pickup import HOOK_ALIGN_ALTITUDE_M
 
 
@@ -136,6 +139,13 @@ class _RecordingCentering:
         self._converges = converges
         self._centers = centers
 
+    async def goto_waypoint(self, lat, lon, alt) -> bool:
+        """Faz 1 gecis bacagi 2026-09-03'ten beri goto_waypoint() kullaniyor
+        (Gorev D). Ikisinin sozlesmesi ayni; double ikisini de tanir ve AYNI
+        listeye kaydeder ki cagri SIRASI test edilebilsin."""
+        self.calls.append((lat, lon, alt))
+        return self._converges
+
     async def goto_global_position_and_wait(self, lat, lon, alt) -> bool:
         self.calls.append((lat, lon, alt))
         return self._converges
@@ -182,7 +192,22 @@ async def test_pickup_full_sequence_succeeds_and_confirms_shape_gone(tmp_path):
     assert ('activate_pickup_mechanism', {}) in actuator.calls
     # Real navigation to the recorded Mavi Altıgen GPS position (BUG FIX,
     # continuous audit 2026-08-13) -- previously this never happened at all.
-    assert centering.calls == [(41.0, 29.0, GOREV3_TRANSIT_ALTITUDE_M)]
+    # GOREV D (2026-09-03): gecis artik IKI ASAMALI -- once SEYIR irtifasina
+    # cikilip yatay hareket orada yapiliyor, sonra hedefin uzerinde DIKEY
+    # olarak calisma irtifasina iniliyor.
+    #
+    # Onceki hal tek cagriydi (dogrudan 1.5 m) ve olculdu: 50.8 m'lik transit
+    # 0.9-1.7 m irtifada, max 11.92 m/s, pitch max 42.09 derece. Mutlak
+    # pozisyon setpoint'i hizi PX4'e birakiyor (MPC_XY_VEL_MAX = 12.0).
+    #
+    # SIRA onemli: once 3.0 m, SONRA 1.5 m. Ters olsaydi yatay hareket yine
+    # alcakta yapilirdi ve degisiklik anlamsizlasirdi.
+    assert centering.calls == [
+        (41.0, 29.0, GOREV3_CRUISE_ALTITUDE_M),
+        (41.0, 29.0, GOREV3_TRANSIT_ALTITUDE_M),
+    ], centering.calls
+    assert GOREV3_CRUISE_ALTITUDE_M > GOREV3_TRANSIT_ALTITUDE_M, \
+        "seyir irtifasi calisma irtifasindan YUKSEK olmali"
     # Alignment happens at the vision-friendly altitude, not at the pickup
     # altitude: at 0.30 m the frame is only 0.71 x 0.53 m and the target
     # falls out of it (measured, mission17).

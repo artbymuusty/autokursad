@@ -18,6 +18,24 @@ GOREV2_MAX_FLIGHT_DURATION_S: int = 600          # Şartname Bölüm 5.6 (10 dak
 # Faz 1 dikdortgeni hic goremezdi. 1.5 m'de 50.4 x 18.0 px =
 # 907 px2, esikten 2.3x uzak.
 GOREV3_TRANSIT_ALTITUDE_M: float = 1.5
+#: Gorev 3 gecis bacaklarinin SEYIR irtifasi (Gorev D, 2026-09-03).
+#: GOREV3_TRANSIT_ALTITUDE_M ile KARISTIRILMAMALI: o, aracin CALISMA/alma
+#: irtifasi (1.5 m) ve gorev3_transport/gorev3_redrop/gorev2_fsm tarafindan
+#: tirmanis hedefi olarak da kullaniliyor -- degistirmek alma geometrisini
+#: kaydirirdi. Bu sabit YALNIZCA yatay transitin yapildigi ara irtifadir.
+#:
+#: NEDEN 1.5 DEGIL (olculdu, PX4 ULog, 2. payload -> grapple bacagi):
+#:   50.8 m yol, max |v_xy| 11.92 m/s, pitch max 42.09 derece, irtifa 0.9-1.7 m
+#: Sebep: goto_global_position_and_wait MUTLAK POZISYON setpoint'i gonderir,
+#: hizi PX4 secer ve tavan MPC_XY_VEL_MAX = 12.0 (ULog parametresi; olculen
+#: 11.92 ile birebir). MPC_TILTMAX_AIR = 45 derece; olculen 42.09.
+#: GOREV3_TRANSIT_SPEED_M_S = 2.0 tanimli ama UYGULANMIYOR
+#: (gorev3_transport.py:33 bunu kendisi belgeliyor).
+#:
+#: 3.0 m, yatay hareketi yer etkisi bolgesinden cikarir ve varis overshoot'unun
+#: (15 m'de 0.56 m olculdu) hedefi kacirmasini onler; alcalma hedefin uzerinde
+#: DIKEY olarak yapilir.
+GOREV3_CRUISE_ALTITUDE_M: float = 3.0
 
 # Gorev 2'nin SON (ikinci) yuk birakmasindan sonraki geri tirmanis irtifasi.
 # 2026-08-26 olcumu: uc gercek gorevde payload 2, 0.435 / 0.473 / 0.477 m'de
@@ -825,3 +843,22 @@ MOTION_VERTICAL_TIMEOUT_S: float = 20.0
 #: tasinmamasi icin. master_fsm.py'nin donus bacaginda zaten uygulanan
 #: RETURN_TO_START_FINISH_HOLD_S ile ayni gerekce.
 MOTION_ARRIVAL_HOLD_S: float = 1.0
+
+# --- Payload birakma penceresi pozisyon kilidi (Gorev C, 2026-09-03) --------
+#: Servo cagrisi boyunca konumu tutan arka plan gorevinin UST siniri.
+#:
+#: NEDEN VAR (olculdu, 4 birakma, PX4 ULog): birakma dizisi
+#: (irtifa okuma -> mount vektoru -> servo -> ayrilma onayi) 1.13-1.31 s
+#: suruyor ve o pencerede AKTIF POZISYON KILIDI YOK. nudge_forward bitiste
+#: sifir HIZ gonderiyor, ama sifir hiz konumu geri GETIRMEZ -- yalnizca
+#: sonumler. Pencereye artik hizla girilirse o hiz boyunca alinan yol kalici
+#: oluyor: giris hizi 0.09-0.14 m/s olan uc birakmada sapma 0.05-0.16 m,
+#: 0.52 m/s ile girilen dorduncude 2.225 m (43 kat).
+#:
+#: Ayrilmanin KENDISI tetikleyici degil: dordunun de kutlesi, mekanizmasi ve
+#: irtifasi ayni; nav_state dort pencerede de sabit 14 (OFFBOARD) kaldi.
+#:
+#: Bu bir TAVAN: aktuator dondugu anda gorev iptal ediliyor, yani normalde
+#: ~1.2 s kullanilir. Genis birakildi ki yavas bir ayrilma onayi (F2 yolu)
+#: kilidi erken dusurmesin.
+PAYLOAD_RELEASE_HOLD_MAX_S: float = 8.0

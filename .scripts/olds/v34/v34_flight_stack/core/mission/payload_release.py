@@ -13,6 +13,7 @@ from core.config.parameters import (
     LOW_ALT_VISION_LIMIT_M, PAYLOAD_FINAL_POSE_DELAY_S,
     PAYLOAD_DETACH_HOLD_MAX_S, PAYLOAD_ON_TARGET_RADIUS_M,
     PAYLOAD_ON_TARGET_Z_TOLERANCE_M, PAYLOAD_MOUNT_OFFSET_BODY_M,
+    PAYLOAD_RELEASE_HOLD_MAX_S,
 )
 from core.telemetry.event_bus import NULL_PUBLISHER, EventPublisher
 from core.telemetry.events import Category, Event, Severity
@@ -232,10 +233,36 @@ class PayloadReleaseService:
                                     PAYLOAD_MOUNT_OFFSET_BODY_M.get(shape_type) or ())})
 
         servo_at = time.monotonic()
-        if shape_type == "MAVI_ALTIGEN":
-            confirmed = await self.actuator.release_payload_at_mavi_altigen()
-        else:
-            confirmed = await self.actuator.release_payload_at_kirmizi_ucgen()
+
+        # GOREV C (2026-09-03): SERVO PENCERESI BOYUNCA POZISYON KILIDI.
+        #
+        # Olculdu (4 birakma, PX4 ULog): asagidaki aktuator cagrisi 1.13-1.31 s
+        # blokluyor ve o pencerede aktif bir pozisyon kilidi YOKTU. nudge_forward
+        # bitiste sifir HIZ gonderiyor; sifir hiz konumu geri getirmez, yalnizca
+        # sonumler. Pencereye artik hizla girilirse o hiz boyunca alinan yol
+        # kalici oluyor -- 0.52 m/s ile girilen birakmada +2 s'de 2.225 m sapma,
+        # 0.09-0.14 m/s ile girilen ucunde 0.05-0.16 m.
+        #
+        # Ayrilmanin kendisi tetikleyici DEGIL (ayni kutle/mekanizma, 43 kat
+        # fark) ve Offboard da kaybedilmiyordu (nav_state dort pencerede de 14).
+        # Eksik olan tek sey konumun TUTULMASIYDI.
+        #
+        # Desen gorev3_pickup.py:840-850'den alindi (ayni sinif sorun icin ayni
+        # cozum): arka plan gorevi mutlak NED pozisyon setpoint'ini akitir,
+        # islem bitince IPTAL edilir. Ayri bir 10 Hz dongusu yazilmiyor --
+        # akisi zaten goto_position_ned_and_hold yapiyor.
+        #
+        # KRITIK: ayni anda IKI kaynak setpoint yayinlamamali, yoksa PX4
+        # celiskili hedef alir. Bu yuzden kilit, _hold_until_detached (kendi
+        # akisini yapar) CAGRILMADAN ONCE finally'de durduruluyor.
+        hold_task = await self._start_release_hold(shape_type)
+        try:
+            if shape_type == "MAVI_ALTIGEN":
+                confirmed = await self.actuator.release_payload_at_mavi_altigen()
+            else:
+                confirmed = await self.actuator.release_payload_at_kirmizi_ucgen()
+        finally:
+            await self._stop_release_hold(hold_task)
 
         # F2: the actuator now answers "did the body actually leave", not
         # just "was a message sent". An unconfirmed release must not be
@@ -301,6 +328,43 @@ class PayloadReleaseService:
         await self.centering.climb_to_altitude(climb_back_alt_m)
 
         return verified
+
+    async def _start_release_hold(self, shape_type: str):
+        """Servo penceresi boyunca MEVCUT konumu tutan arka plan gorevi.
+
+        Doner: iptal edilecek asyncio.Task, ya da None (telemetri bayatsa).
+        Telemetri okunamazsa birakma YINE DE yapilir -- elde tutulan bir
+        payload'la beklemek, kilitsiz birakmaktan daha kotudur."""
+        try:
+            north, east, down = await self.flight.get_position_ned()
+            yaw = await self.flight.get_yaw_deg()
+        except Exception as e:  # noqa: BLE001 -- TelemetryStale dahil
+            logger.warning("[RELEASE_HOLD] konum okunamadi (%s) -- kilit YOK, "
+                           "birakma yine de yapiliyor.", e)
+            self._publish("PAYLOAD_RELEASE_HOLD_SKIPPED", shape_type,
+                          severity=Severity.WARN,
+                          data={"shape_type": shape_type, "reason": str(e)})
+            return None
+
+        logger.info("[RELEASE_HOLD] %s: servo penceresi boyunca konum tutuluyor "
+                    "(n=%.2f e=%.2f d=%.2f yaw=%.1f).", shape_type, north, east, down, yaw)
+        self._publish("PAYLOAD_RELEASE_HOLD_STARTED", shape_type,
+                      data={"shape_type": shape_type, "north_m": round(north, 3),
+                            "east_m": round(east, 3), "down_m": round(down, 3),
+                            "yaw_deg": round(yaw, 2),
+                            "max_s": PAYLOAD_RELEASE_HOLD_MAX_S})
+        return asyncio.create_task(self.flight.goto_position_ned_and_hold(
+            north, east, down, yaw, PAYLOAD_RELEASE_HOLD_MAX_S))
+
+    async def _stop_release_hold(self, task) -> None:
+        """Kilidi durdur. Ayni anda iki setpoint kaynagi olmamali."""
+        if task is None:
+            return
+        task.cancel()
+        try:
+            await task
+        except (asyncio.CancelledError, Exception):  # noqa: BLE001
+            pass
 
     async def _hold_until_detached(self, shape_type: str) -> bool:
         """F2: the payload did not separate. Hold at release altitude and
