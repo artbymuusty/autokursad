@@ -109,7 +109,7 @@ git submodule status | head -5
 
 ## 3. Faz 2 — Python ortamı
 
-Launcher'lar interpreter'ı `.scripts/olds/v32/resolve_python.sh` üzerinden
+Launcher'lar interpreter'ı `.scripts/olds/v34/resolve_python.sh` üzerinden
 **şu sırayla** arar:
 
 1. `$VIRTUAL_ENV/bin/python` — aktif venv her zaman kazanır
@@ -124,16 +124,16 @@ değişkenini ayarla:
 ```bash
 python3 -m venv --system-site-packages ~/Projects/kursad40-venv
 export KURSAD40_VENV=$HOME/Projects/kursad40-venv     # kabuğun rc dosyasına ekle
-"$KURSAD40_VENV/bin/pip" install -e .scripts/olds/v32/v32_flight_stack
+"$KURSAD40_VENV/bin/pip" install -e .scripts/olds/v34/v34_flight_stack
 ```
 
-Bağımlılıklar (`.scripts/olds/v32/v32_flight_stack/pyproject.toml`):
+Bağımlılıklar (`.scripts/olds/v34/v34_flight_stack/pyproject.toml`):
 `mavsdk`, `opencv-python`, `numpy`, `pyyaml`, `pytest`, `pytest-asyncio`,
 `ultralytics`, `pyzmq`, `psutil`.
 
 **Doğrulama:**
 ```bash
-source .scripts/olds/v32/resolve_python.sh && echo "PYTHON_BIN=$PYTHON_BIN"
+source .scripts/olds/v34/resolve_python.sh && echo "PYTHON_BIN=$PYTHON_BIN"
 "$PYTHON_BIN" -c "import mavsdk, cv2, zmq, psutil; print('deps OK')"
 PYTHONPATH="$(brew --prefix 2>/dev/null || echo /usr)/lib/python$("$PYTHON_BIN" -c 'import sys;print(f"{sys.version_info.major}.{sys.version_info.minor}")')/site-packages" \
   "$PYTHON_BIN" -c "from gz.transport13 import Node; print('gz bindings OK')"
@@ -153,7 +153,7 @@ Belirti: `gz topic -l` boş döner, `camera_service.py` "no live camera topic
 found" der — Gazebo tüm bu süre boyunca 1280x960 @30Hz yayın yapıyorken.
 
 Çözüm: sabit bir partition. Tek doğruluk kaynağı
-[gz_env.sh](.scripts/olds/v32/v32_flight_stack/gz_system/gz_env.sh#L24-L25):
+[gz_env.sh](.scripts/olds/v34/v34_flight_stack/gz_system/gz_env.sh#L24-L25):
 
 ```bash
 export GZ_PARTITION="${GZ_PARTITION:-kursad40}"
@@ -169,9 +169,9 @@ export GZ_IP="${GZ_IP:-127.0.0.1}"
 | Sim ile mission farklı makinelerde | `GZ_IP`'yi 127.0.0.1'den gerçek arayüz IP'sine çevir; **her iki makinede aynı** `GZ_PARTITION` |
 
 **Değiştireceksen üç yeri birden değiştir** (aksi halde süreçler ayrışır):
-- [gz_env.sh:24-25](.scripts/olds/v32/v32_flight_stack/gz_system/gz_env.sh#L24-L25)
-- [gz_env.py:18-19](.scripts/olds/v32/v32_flight_stack/gz_system/gz_env.py#L18-L19)
-- [process_manager.py:32-33](.scripts/olds/v32/process_manager.py#L32-L33)
+- [gz_env.sh:24-25](.scripts/olds/v34/v34_flight_stack/gz_system/gz_env.sh#L24-L25)
+- [gz_env.py:18-19](.scripts/olds/v34/v34_flight_stack/gz_system/gz_env.py#L18-L19)
+- [process_manager.py:32-33](.scripts/olds/v34/process_manager.py#L32-L33)
 
 En temizi hiçbirini elle düzenlememek ve kabuk ortamından override etmektir —
 üçü de `setdefault`/`:-` kullanır, yani ortam değişkeni kazanır:
@@ -181,7 +181,7 @@ export GZ_PARTITION=kursad40-muusty
 
 **Doğrulama:** simülatörü başlattıktan sonra (§5), *ayrı bir terminalde*:
 ```bash
-source .scripts/olds/v32/v32_flight_stack/gz_system/gz_env.sh
+source .scripts/olds/v34/v34_flight_stack/gz_system/gz_env.sh
 gz topic -l | grep camera    # boş dönerse partition uyuşmuyor demektir
 ```
 
@@ -214,7 +214,7 @@ olarak şunları da yapar (her biri yaşanmış bir hataya karşılık gelir):
 
 **Doğrulama:**
 ```bash
-source .scripts/olds/v32/v32_flight_stack/gz_system/gz_env.sh
+source .scripts/olds/v34/v34_flight_stack/gz_system/gz_env.sh
 gz topic -l | grep "/link/camera_link/sensor/camera/image"
 ```
 Beklenen çıktı:
@@ -226,10 +226,10 @@ Beklenen çıktı:
 
 Ayrı bir terminalde:
 ```bash
-.scripts/olds/v32/run_mission_v32_gz.sh
+.scripts/olds/v34/run_mission_v34_gz.sh
 ```
 
-Bu launcher `PYTHONPATH`'i `v32_flight_stack`'e ayarlar, `gz_env.sh`'yi source
+Bu launcher `PYTHONPATH`'i `v34_flight_stack`'e ayarlar, `gz_env.sh`'yi source
 eder, `resolve_python.sh` ile interpreter'ı bulur ve `gz_system/main_gz.py`'yi
 çalıştırır.
 
@@ -237,16 +237,37 @@ eder, `resolve_python.sh` ile interpreter'ı bulur ve `gz_system/main_gz.py`'yi
 
 | Değer | Dosya | Varsayılan | Ne zaman değişir |
 |---|---|---|---|
-| MAVSDK bağlantısı | [gz_system.yaml:2](.scripts/olds/v32/v32_flight_stack/gz_system/config/gz_system.yaml#L2) | `udp://:14540` | 14540 doluysa veya PX4 farklı port yayınlıyorsa |
-| Kamera gz topic'i | [gz_system.yaml:9](.scripts/olds/v32/v32_flight_stack/gz_system/config/gz_system.yaml#L9) | `/world/default/model/x500_mono_cam_down_0/...` | Dünya adı veya model instance adı değişirse |
-| ZMQ kare kanalı | [gz_system.yaml:10](.scripts/olds/v32/v32_flight_stack/gz_system/config/gz_system.yaml#L10) | `tcp://127.0.0.1:5555` | 5555 doluysa |
-| Payload servisi | [gz_system.yaml:31](.scripts/olds/v32/v32_flight_stack/gz_system/config/gz_system.yaml#L31) | `/v32/set_payload_state` | SDF eklenti servis adı değişirse |
-| Araç model instance adı | [gz_payload_actuator.py:44](.scripts/olds/v32/v32_flight_stack/gz_system/gz_payload_actuator.py#L44) | `x500_mono_cam_down_0` | Farklı model/instance ile spawn edilirse |
+| MAVSDK bağlantısı | [gz_system.yaml:2](.scripts/olds/v34/v34_flight_stack/gz_system/config/gz_system.yaml#L2) | `udp://:14540` | 14540 doluysa veya PX4 farklı port yayınlıyorsa |
+| Kamera gz topic'i | [gz_system.yaml:9](.scripts/olds/v34/v34_flight_stack/gz_system/config/gz_system.yaml#L9) | `/world/default/model/x500_mono_cam_down_0/...` | Dünya adı veya model instance adı değişirse |
+| ZMQ kare kanalı | [gz_system.yaml:10](.scripts/olds/v34/v34_flight_stack/gz_system/config/gz_system.yaml#L10) | `tcp://127.0.0.1:5555` | 5555 doluysa |
+| Payload servisi | [gz_system.yaml:31](.scripts/olds/v34/v34_flight_stack/gz_system/config/gz_system.yaml#L31) | `/v34/set_payload_state` | SDF eklenti servis adı değişirse |
+| Araç model instance adı | [gz_payload_actuator.py:303](.scripts/olds/v34/v34_flight_stack/gz_system/gz_payload_actuator.py#L303) | `x500_mono_cam_down_0` | Farklı model/instance ile spawn edilirse |
 
 > Kamera topic'inde `_0` soneki PX4'ün spawn ettiği **instance numarasıdır**.
 > Birden fazla araç spawn edersen `_1`, `_2` olur. `camera_service.py` ve
 > `process_manager.py` tam eşleşme bulamazsa `/link/camera_link/sensor/camera/image`
 > **sonekine** göre otomatik keşif yapar, yani çoğu varyantı kendi bulur.
+
+---
+
+### 6.1 İki dashboard mekanizması
+
+Her iki çalıştırma yolunda da yer kontrol ekranı açılır, ama **farklı
+mekanizmayla** (gerekçe: [`ops_center.py`](.scripts/olds/v34/v34_flight_stack/core/telemetry/ops_center.py)):
+
+| | GZ | Gerçek / Dual |
+|---|---|---|
+| In-process `MissionOpsDashboard` | **kapalı** (`legacy_dashboard_default="0"`) | **açık** (varsayılan) |
+| Ayrı process unified dashboard | ✅ `run_mission_v34_gz.sh` başlatır | — |
+| Nerede başlar | [`tools/mission_dashboard_unified.py`](.scripts/olds/v34/v34_flight_stack/tools/mission_dashboard_unified.py) | `build_ops_center()` → `ops_center.start()` |
+
+Neden farklı: sim akışında yalnızca ayrı process'te koşan zengin dashboard
+isteniyor; **gerçek uçuşta operatörün tek ekranı** in-process dashboard, orada
+varsayılan açık kalmak zorunda.
+
+Ortam değişkenleriyle ezilebilir:
+- `KURSAD40_LEGACY_DASHBOARD=0/1` — in-process dashboard'ı her iki yönde de ezer
+- `KURSAD40_UNIFIED_DASHBOARD=0` — GZ'de ayrı process'i kapatır
 
 ---
 
@@ -256,7 +277,7 @@ eder, `resolve_python.sh` ile interpreter'ı bulur ve `gz_system/main_gz.py`'yi
 göre doldurulmalıdır. Simülasyon değerlerini kopyalama.
 
 ### 7.1 Uçuş kontrolcüsü seri portu
-[real_system.yaml:2](.scripts/olds/v32/v32_flight_stack/real_system/config/real_system.yaml#L2) — varsayılan `serial:///dev/ttyUSB0:57600`
+[real_system.yaml:2](.scripts/olds/v34/v34_flight_stack/real_system/config/real_system.yaml#L2) — varsayılan `serial:///dev/ttyUSB0:57600`
 
 Portu bul:
 ```bash
@@ -275,7 +296,7 @@ sudo usermod -aG dialout $USER    # yeniden oturum aç
 ```
 
 ### 7.2 Kamera cihaz index'i
-[real_system.yaml:4](.scripts/olds/v32/v32_flight_stack/real_system/config/real_system.yaml#L4) — varsayılan `0`
+[real_system.yaml:4](.scripts/olds/v34/v34_flight_stack/real_system/config/real_system.yaml#L4) — varsayılan `0`
 
 macOS'ta `0` genelde dahili FaceTime kamerasıdır; **aşağı bakan kamera değildir.**
 Index'i doğrula:
@@ -291,14 +312,39 @@ for i in range(6):
 PY
 ```
 
-### 7.3 Servo / AUX kanalı
-[real_system.yaml:14](.scripts/olds/v32/v32_flight_stack/real_system/config/real_system.yaml#L14) — varsayılan `null`
+### 7.3 Servo / AUX kanalları — **dört ayrı nokta**
 
-`null` bırakılırsa payload bırakma **çalışmaz**. QGroundControl → Actuators
-ekranından payload servosunun bağlı olduğu AUX çıkışını oku ve numarasını yaz.
+Kodda **dört** servo noktası var, dolayısıyla `real_system.yaml`'da da dört
+ayrı kanal alanı var (önceden tek bir `pickup_channel` vardı; tek alan
+dördünü de aynı çıkışa bağlamak gibi okunuyordu):
+
+| İşaret | Metot | Görev | Alan | Satır |
+|---|---|---|---|---|
+| `FIRST MISSION SERVO` | `release_payload_at_mavi_altigen` | Görev 2, 1. bırakma | `actuator.mavi_altigen_release_channel` | [27](.scripts/olds/v34/v34_flight_stack/real_system/config/real_system.yaml#L27) |
+| `SECOND MISSION SERVO` | `release_payload_at_kirmizi_ucgen` | Görev 2, 2. bırakma | `actuator.kirmizi_ucgen_release_channel` | [29](.scripts/olds/v34/v34_flight_stack/real_system/config/real_system.yaml#L29) |
+| `THIRD MISSION SERVO` | `activate_pickup_mechanism` | Görev 3 Faz 1 (alma) | `actuator.pickup_channel` | [31](.scripts/olds/v34/v34_flight_stack/real_system/config/real_system.yaml#L31) |
+| `GRAB SERVO` | `activate_drop_mechanism` | Görev 3 Faz 3 (bırakma) | `actuator.drop_channel` | [34](.scripts/olds/v34/v34_flight_stack/real_system/config/real_system.yaml#L34) |
+
+Hepsi varsayılan `null`. `null` bırakılan bir kanal, o noktanın donanıma
+**hiç bağlanmadığı** anlamına gelir; ilgili metot yalnızca
+`SIMULE edildi - gercek servo BAGLI DEGIL` uyarısını basar — sessizce
+başarılı görünmez.
+
+**Numarayı nereden okursun:** QGroundControl → Actuators ekranı, ilgili
+servonun bağlı olduğu AUX çıkışı. Doğrudan GPIO kullanılacaksa pin numarası.
+
+**Manuel açı/süre ayarı:** gerçek donanım komutunun yazılacağı **tek yer**
+[`real_system/real_payload_actuator.py`](.scripts/olds/v34/v34_flight_stack/real_system/real_payload_actuator.py).
+`core/` ve `gz_system/` içinde donanıma özel kod yoktur. Her metodun içindeki
+`# AYAR:` bloğu beklenen davranışı, açıyı, süreyi, kanalı ve önerilen
+kütüphaneyi tek yerde toplar. Değeri `TODO` olanlar **henüz ölçülmedi** —
+uydurulmuş bir açı yazmak, yanlış bir açıyla uçmaktan farksızdır.
+
+3. ve 4. nokta (kanca kilitleme/açma) **aynı fiziksel servo** olabilir;
+öyleyse iki alana da aynı numarayı yaz.
 
 ### 7.4 Kontrol kazançları
-[real_system.yaml:6-8](.scripts/olds/v32/v32_flight_stack/real_system/config/real_system.yaml#L6-L8)
+[real_system.yaml:6-8](.scripts/olds/v34/v34_flight_stack/real_system/config/real_system.yaml#L6-L8)
 
 > **Bu değerleri simülasyondan kopyalama.** `gz_system.yaml` içinde
 > `kp_vertical` 0.5'tir, `real_system.yaml`'da 0.3'tür ve bu **bilinçlidir**:
@@ -306,7 +352,7 @@ ekranından payload servosunun bağlı olduğu AUX çıkışını oku ve numaras
 > test ile kalibre et.
 
 ### 7.5 Payload kütlesi
-[real_system.yaml:33-34](.scripts/olds/v32/v32_flight_stack/real_system/config/real_system.yaml#L33-L34)
+[real_system.yaml:53](.scripts/olds/v34/v34_flight_stack/real_system/config/real_system.yaml#L53)
 
 Gerçek payload 1.05 kg; simülasyon bilinçli olarak 0.15 kg taşır (ADR-011).
 İki gerçek payload x500 gövdesine +%101 kütle demektir, bu da MPC_THR_HOVER'ı
@@ -315,15 +361,69 @@ gövden x500 **değil** — bu sayı ekibin kendi kütle/itki bütçesi içindir
 
 Çalıştır:
 ```bash
-.scripts/olds/v32/run_mission_v32_real.sh
+.scripts/olds/v34/run_mission_v34_real.sh
 ```
+
+---
+
+### 7.6 Climb-then-Cruise ve **kalibrasyon kapısı**
+
+Bir seyahat bacağı beş state'ten geçer; dikey ve yatay hareket zamanda
+ayrılmıştır (eskiden hedefe tek bir mutlak 3B pozisyon setpoint'i gidiyordu ve
+üç eksende birden hata gören kontrolcü aşım/salınım üretiyordu):
+
+```
+CLIMB ──► HOLD ──► CRUISE ──► DESCEND ──► ARRIVAL_HOLD
+```
+
+- `CLIMB`/`DESCEND` **koşulludur** — irtifa farkı toleransın altındaysa atlanır.
+- Seyir her zaman iki ucun **yüksek** olanından yapılır; hedef aşağıdaysa
+  `DESCEND` `CRUISE`'dan **sonra** gelir (alçakta seyir engel riski taşır).
+- `HOLD` **saf bekleme değildir**: çıkış "en az `hold_min_s` (2 s) geçti **VE**
+  roll/pitch türevi eşik altında `attitude_stable_samples` ardışık örnek kaldı"
+  koşuluna bağlı. `hold_max_s` emniyet tavanıdır.
+
+Eşiklerin tamamı `motion_profile` bloğundan okunur; SITL ve gerçek uçuş **ayrı
+profil** taşır ([gz_system.yaml](.scripts/olds/v34/v34_flight_stack/gz_system/config/gz_system.yaml),
+[real_system.yaml](.scripts/olds/v34/v34_flight_stack/real_system/config/real_system.yaml)).
+
+#### ⚠️ Gerçek uçuşta KAPALI — ve açmadan önce ölçüm şart
+
+`real_system.yaml` → `motion_profile.enabled: **false**`. Bu kasıtlıdır.
+
+`vz_settle_m_s` ve `attitude_rate_limit_deg_s` doğrudan **sensör gürültü
+tabanına** oturur ve şu an tahmindir (`TODO` işaretli). Kalibre edilmeden
+açılırsa state makinesi **ilerlemez**: `CLIMB` `vertical_timeout_s`'te (20 s)
+düşer, `HOLD` her bacakta tavanı yer ve 600 s'lik **zorunlu** görev bütçesi
+erir.
+
+Kapalıyken `goto_waypoint()` aynen eski `goto_global_position_and_wait()`
+davranışına düşer — gerçek uçuş bilinen bir zeminde yapılır.
+
+**Açma prosedürü** (ayrıntı:
+[climb-then-cruise-hw-checklist.md](.scripts/olds/v34/v34_flight_stack/docs/climb-then-cruise-hw-checklist.md) §1):
+
+```bash
+cd .scripts/olds/v34/v34_flight_stack
+PYTHONPATH=$PWD "$PYTHON_BIN" tools/measure_motion_noise.py \
+    --config real_system/config/real_system.yaml
+```
+
+1. Aracı **pilot** hover'a alır. Araç arm etmez, setpoint göndermez, Offboard'a
+   girmez — 60 s boyunca yalnızca telemetri okur.
+2. Çıktıdaki `p95` değerlerinin **~3 katı** eşik olarak yazılır.
+3. `TODO` işaretleri ölçüm tarihi + log dosyası referansıyla kapatılır.
+4. `enabled: true` yapılır.
+
+`tests/test_calibration_gate.py` bu sırayı zorlar: `enabled: true` iken
+kalibrasyon `TODO`'ları hâlâ duruyorsa test **düşer**.
 
 ---
 
 ## 8. Faz 7 — Görüntü işleme kalibrasyonu
 
 ### 8.1 HSV eşikleri (saha ışığına özel)
-[parameters.py:549-554](.scripts/olds/v32/v32_flight_stack/core/config/parameters.py#L549-L554)
+[parameters.py:693-698](.scripts/olds/v34/v34_flight_stack/core/config/parameters.py#L693-L698)
 
 ```python
 HSV_RED_LO_1  = (0, 40, 40)      HSV_RED_HI_1  = (15, 255, 255)
@@ -338,14 +438,14 @@ kalibre edilmelidir.** Kalibrasyon için sahada kaydedilmiş kare üzerinde
 `camera_viewer.py` ile bak.
 
 ### 8.2 Kamera intrinsics
-[camera_intrinsics.py](.scripts/olds/v32/v32_flight_stack/core/detection/camera_intrinsics.py) —
+[camera_intrinsics.py](.scripts/olds/v34/v34_flight_stack/core/detection/camera_intrinsics.py) —
 **elle sabit girme.** FOV ve görüntü boyutu
 `Tools/simulation/gz/models/mono_cam/model.sdf` dosyasından parse edilir; ikinci
 bir doğruluk kaynağı bilinçli olarak yoktur. Gerçek kameraya geçerken SDF'yi
 gerçek lensin FOV'una göre güncelle ya da açık konfigürasyon fallback'ini kullan.
 
 ### 8.3 YOLO modeli
-Repodaki `.scripts/olds/v32/yolov8n.pt` **stok COCO-pretrained** modeldir ve
+Repodaki `.scripts/olds/v34/yolov8n.pt` **stok COCO-pretrained** modeldir ve
 `MAVI_ALTIGEN` / `KIRMIZI_UCGEN` sınıflarını **içermez** — gerçek tespit
 üretmez. Varsayılan tespit yolu HSV+kontur'dur. YOLO kullanacaksan yarışma
 öncesi kendi sınıflarınla eğitilmiş bir ağırlık koy.
@@ -355,19 +455,60 @@ Repodaki `.scripts/olds/v32/yolov8n.pt` **stok COCO-pretrained** modeldir ve
 ## 9. Faz 8 — Testler
 
 ```bash
-export PYTHONPATH=$PWD/.scripts/olds/v32/v32_flight_stack
-"$PYTHON_BIN" -m pytest .scripts/olds/v32/v32_flight_stack/tests -q
+export PYTHONPATH=$PWD/.scripts/olds/v34/v34_flight_stack
+"$PYTHON_BIN" -m pytest .scripts/olds/v34/v34_flight_stack/tests -q
 ```
 
 Testler donanım gerektirmez (mock backend kullanır). Kurulum sonrası ilk
 yapman gereken doğrulama budur — geçmiyorsa Python ortamı eksiktir.
+
+### 9.1 Canlı SITL entegrasyon testi
+
+Simülatörü kendisi ayağa kaldırır, tek bir seyahat bacağı uçurur ve
+Climb-then-Cruise state sırasını gerçek PX4 + gerçek EKF + gerçek Gazebo
+fiziği altında doğrular, sonra her durumda temizler:
+
+```bash
+.scripts/olds/v34/v34_flight_stack/tests/integration/run_sitl_integration.sh
+```
+
+`KURSAD_SITL` ayarlı değilse bu testler normal `pytest tests` koşumunda
+**atlanır** — hermetik kalır, CI simülatör gerektirmez.
+
+### 9.2 `main_real` vision zinciri — mimari doğrulama (2026-09-02)
+
+**Bu bir GERÇEK DONANIM TESTİ DEĞİLDİR ve onun yerine geçmez.**
+
+`main_real.py` bir dönem `VisionRuntime`'ı hiç kurmuyordu; `DetectionFeed`
+üretimde yalnızca oradan doldurulduğu için gerçek uçuş yolu **vision açısından
+kördü** (denetim bulgusu B1,
+[v34-sistem-denetimi.md](.scripts/olds/v34/v34_flight_stack/docs/v34-sistem-denetimi.md)). Düzeltme
+şu şekilde doğrulandı:
+
+- `real_system.yaml` **geçici olarak** SITL'e yönlendirildi
+  (`connection_string → udp://:14540`, kamera → sentetik video dosyası);
+  orijinal dosya yedeklendi ve iş bitince **SHA-256 ile birebir** geri yüklendi.
+- `./run_mission_v34_real.sh` çalıştırıldı.
+- Kanıt: `[VISION] pipeline basladi` → 25 karede
+  `['KIRMIZI_UCGEN', 'MAVI_ALTIGEN']` tespiti → `MAVI_ALTIGEN hedefine
+  merkezleniyor` → 93 merkezleme adımı. Yani besleme yalnızca **üretilmedi**,
+  tüketildi de.
+
+Neyi kanıtlar: `main_real` kod yolunda vision **veri yolunun bağlı olduğunu**.
+Neyi kanıtlamaz: gerçek kamera, gerçek servo, gerçek uçuş kontrolcüsü ya da
+kontrol performansı hakkında **hiçbir şey**. Kamera hareketsiz bir video
+olduğu için merkezleme hatası sabit kalır — bu fikstür kaynaklı bir yapaylıktır.
+
+Gerçek donanım doğrulaması hâlâ
+[climb-then-cruise-hw-checklist.md](.scripts/olds/v34/v34_flight_stack/docs/climb-then-cruise-hw-checklist.md)
+§5'teki protokole bağlıdır.
 
 ---
 
 ## 10. Mimari kararlar (ADR)
 
 Bir davranışı değiştirmeden önce ilgili ADR'yi oku —
-[docs/adr/](.scripts/olds/v32/v32_flight_stack/docs/adr/):
+[docs/adr/](.scripts/olds/v34/v34_flight_stack/docs/adr/):
 
 | ADR | Konu |
 |---|---|
@@ -416,7 +557,7 @@ ekibin geri kalanının kurulumunu bozarsın. Tercihen:
   `GZ_PARTITION`, `GZ_IP` — hepsi override edilebilir)
 - Gerçekten dosya değiştirmen gerekiyorsa ayrı bir branch'te tut
 
-**Repoya commit'lenmeyenler** (`.gitignore`'da): `.scripts/olds/v32/logs/`
+**Repoya commit'lenmeyenler** (`.gitignore`'da): `.scripts/olds/v34/logs/`
 (çalışma anı görev log'ları, ~70 MB), `*.jsonl`, `*.pid`, `__pycache__/`,
 `*.log`, venv dizinleri.
 
@@ -440,41 +581,44 @@ nereden tespit edileceğini söyler — tahmin edilecek hiçbir satır yoktur.
 
 | # | Değer | Yer | Varsayılan | Nasıl tespit edilir |
 |---|---|---|---|---|
-| G1 | `GZ_PARTITION` | [gz_env.sh:24](.scripts/olds/v32/v32_flight_stack/gz_system/gz_env.sh#L24), [gz_env.py:18](.scripts/olds/v32/v32_flight_stack/gz_system/gz_env.py#L18), [process_manager.py:32](.scripts/olds/v32/process_manager.py#L32) | `kursad40` | Tek kullanıcıysan değiştirme; ortak ağda benzersiz yap |
+| G1 | `GZ_PARTITION` | [gz_env.sh:24](.scripts/olds/v34/v34_flight_stack/gz_system/gz_env.sh#L24), [gz_env.py:18](.scripts/olds/v34/v34_flight_stack/gz_system/gz_env.py#L18), [process_manager.py:32](.scripts/olds/v34/process_manager.py#L32) | `kursad40` | Tek kullanıcıysan değiştirme; ortak ağda benzersiz yap |
 | G2 | `GZ_IP` | aynı üç dosya | `127.0.0.1` | Sim ve mission farklı makinedeyse gerçek arayüz IP'si: `ipconfig getifaddr en0` / `hostname -I` |
 
 ### 12.3 Simülasyon
 
 | # | Değer | Yer | Varsayılan | Nasıl tespit edilir |
 |---|---|---|---|---|
-| S1 | MAVSDK bağlantısı | [gz_system.yaml:2](.scripts/olds/v32/v32_flight_stack/gz_system/config/gz_system.yaml#L2) | `udp://:14540` | `lsof -i :14540` — doluysa değiştir |
-| S2 | Kamera gz topic'i | [gz_system.yaml:9](.scripts/olds/v32/v32_flight_stack/gz_system/config/gz_system.yaml#L9) | `.../x500_mono_cam_down_0/...` | `gz topic -l \| grep camera` |
-| S3 | ZMQ adresi | [gz_system.yaml:10](.scripts/olds/v32/v32_flight_stack/gz_system/config/gz_system.yaml#L10) | `tcp://127.0.0.1:5555` | `lsof -i :5555` |
-| S4 | Payload servis adı | [gz_system.yaml:31](.scripts/olds/v32/v32_flight_stack/gz_system/config/gz_system.yaml#L31) | `/v32/set_payload_state` | `gz service -l \| grep payload` |
-| S5 | Araç model instance adı | [gz_payload_actuator.py:44](.scripts/olds/v32/v32_flight_stack/gz_system/gz_payload_actuator.py#L44) | `x500_mono_cam_down_0` | `gz model -l` |
-| S6 | SITL make hedefi | [safe_sitl_launcher.sh:114](safe_sitl_launcher.sh#L114) | `gz_x500_mono_cam_down` | Değiştirme (`_payload` varyantı yok) |
-| S7 | QGC UDP portu | [parameters.py:176](.scripts/olds/v32/v32_flight_stack/core/config/parameters.py#L176) | `14550` | QGC varsayılanı |
+| S1 | MAVSDK bağlantısı | [gz_system.yaml:2](.scripts/olds/v34/v34_flight_stack/gz_system/config/gz_system.yaml#L2) | `udp://:14540` | `lsof -i :14540` — doluysa değiştir |
+| S2 | Kamera gz topic'i | [gz_system.yaml:9](.scripts/olds/v34/v34_flight_stack/gz_system/config/gz_system.yaml#L9) | `.../x500_mono_cam_down_0/...` | `gz topic -l \| grep camera` |
+| S3 | ZMQ adresi | [gz_system.yaml:10](.scripts/olds/v34/v34_flight_stack/gz_system/config/gz_system.yaml#L10) | `tcp://127.0.0.1:5555` | `lsof -i :5555` |
+| S4 | Payload servis adı | [gz_system.yaml:31](.scripts/olds/v34/v34_flight_stack/gz_system/config/gz_system.yaml#L31) | `/v34/set_payload_state` | `gz service -l \| grep payload` |
+| S5 | Araç model instance adı | [gz_payload_actuator.py:303](.scripts/olds/v34/v34_flight_stack/gz_system/gz_payload_actuator.py#L303) | `x500_mono_cam_down_0` | `gz model -l` |
+| S6 | SITL make hedefi | [safe_sitl_launcher.sh:192](safe_sitl_launcher.sh#L192) | `gz_x500_mono_cam_down` | Değiştirme (`_payload` varyantı yok) |
+| S7 | QGC UDP portu | [parameters.py:274](.scripts/olds/v34/v34_flight_stack/core/config/parameters.py#L274) | `14550` | QGC varsayılanı |
 
 ### 12.4 Gerçek uçuş donanımı — **hepsi cihaza özel, hepsi doldurulmalı**
 
 | # | Değer | Yer | Varsayılan | Nasıl tespit edilir |
 |---|---|---|---|---|
-| R1 | FC seri portu + baud | [real_system.yaml:2](.scripts/olds/v32/v32_flight_stack/real_system/config/real_system.yaml#L2) | `serial:///dev/ttyUSB0:57600` **TODO** | `ls /dev/tty.usb*` (macOS) / `ls /dev/ttyACM*` (Linux) |
-| R2 | Kamera index/pipeline | [real_system.yaml:4](.scripts/olds/v32/v32_flight_stack/real_system/config/real_system.yaml#L4) | `0` **TODO** | §7.2'deki OpenCV tarama scripti |
-| R3 | Servo/AUX kanalı | [real_system.yaml:14](.scripts/olds/v32/v32_flight_stack/real_system/config/real_system.yaml#L14) | `null` **TODO** | QGroundControl → Actuators |
-| R4 | `kp_horizontal` | [real_system.yaml:6](.scripts/olds/v32/v32_flight_stack/real_system/config/real_system.yaml#L6) | `0.5` **TODO** | Fiziksel uçuş testi — simden kopyalama |
-| R5 | `kp_vertical` | [real_system.yaml:7](.scripts/olds/v32/v32_flight_stack/real_system/config/real_system.yaml#L7) | `0.3` **TODO** | Fiziksel uçuş testi (sim 0.5, kasıtlı fark) |
-| R6 | `kp_altitude` | [real_system.yaml:8](.scripts/olds/v32/v32_flight_stack/real_system/config/real_system.yaml#L8) | `0.5` **TODO** | Fiziksel uçuş testi |
-| R7 | Gerçek payload kütlesi | [real_system.yaml:33](.scripts/olds/v32/v32_flight_stack/real_system/config/real_system.yaml#L33) | `1.05` kg | Payload'u tart |
+| R1 | FC seri portu + baud | [real_system.yaml:2](.scripts/olds/v34/v34_flight_stack/real_system/config/real_system.yaml#L2) | `serial:///dev/ttyUSB0:57600` **TODO** | `ls /dev/tty.usb*` (macOS) / `ls /dev/ttyACM*` (Linux) |
+| R2 | Kamera index/pipeline | [real_system.yaml:4](.scripts/olds/v34/v34_flight_stack/real_system/config/real_system.yaml#L4) | `0` **TODO** | §7.2'deki OpenCV tarama scripti |
+| R3a | Servo AUX — Görev 2, 1. bırakma | [real_system.yaml:27](.scripts/olds/v34/v34_flight_stack/real_system/config/real_system.yaml#L27) | `null` **TODO** | QGroundControl → Actuators |
+| R3b | Servo AUX — Görev 2, 2. bırakma | [real_system.yaml:29](.scripts/olds/v34/v34_flight_stack/real_system/config/real_system.yaml#L29) | `null` **TODO** | QGroundControl → Actuators |
+| R3c | Servo AUX — Görev 3 alma | [real_system.yaml:31](.scripts/olds/v34/v34_flight_stack/real_system/config/real_system.yaml#L31) | `null` **TODO** | QGroundControl → Actuators |
+| R3d | Servo AUX — Görev 3 bırakma | [real_system.yaml:34](.scripts/olds/v34/v34_flight_stack/real_system/config/real_system.yaml#L34) | `null` **TODO** | QGroundControl → Actuators |
+| R4 | `kp_horizontal` | [real_system.yaml:6](.scripts/olds/v34/v34_flight_stack/real_system/config/real_system.yaml#L6) | `0.5` **TODO** | Fiziksel uçuş testi — simden kopyalama |
+| R5 | `kp_vertical` | [real_system.yaml:7](.scripts/olds/v34/v34_flight_stack/real_system/config/real_system.yaml#L7) | `0.3` **TODO** | Fiziksel uçuş testi (sim 0.5, kasıtlı fark) |
+| R6 | `kp_altitude` | [real_system.yaml:8](.scripts/olds/v34/v34_flight_stack/real_system/config/real_system.yaml#L8) | `0.5` **TODO** | Fiziksel uçuş testi |
+| R7 | Gerçek payload kütlesi | [real_system.yaml:53](.scripts/olds/v34/v34_flight_stack/real_system/config/real_system.yaml#L53) | `1.05` kg | Payload'u tart |
 
 ### 12.5 Görüntü işleme — saha/lens'e özel
 
 | # | Değer | Yer | Varsayılan | Nasıl tespit edilir |
 |---|---|---|---|---|
-| V1 | Kırmızı HSV (2 aralık) | [parameters.py:549-552](.scripts/olds/v32/v32_flight_stack/core/config/parameters.py#L549-L552) | `(0,40,40)-(15,255,255)` + `(165,40,40)-(180,255,255)` | Saha karesi üzerinde kalibrasyon |
-| V2 | Mavi HSV | [parameters.py:553-554](.scripts/olds/v32/v32_flight_stack/core/config/parameters.py#L553-L554) | `(90,80,40)-(140,255,255)` | Saha karesi üzerinde kalibrasyon |
+| V1 | Kırmızı HSV (2 aralık) | [parameters.py:693-696](.scripts/olds/v34/v34_flight_stack/core/config/parameters.py#L693-L696) | `(0,40,40)-(15,255,255)` + `(165,40,40)-(180,255,255)` | Saha karesi üzerinde kalibrasyon |
+| V2 | Mavi HSV | [parameters.py:697-698](.scripts/olds/v34/v34_flight_stack/core/config/parameters.py#L697-L698) | `(90,80,40)-(140,255,255)` | Saha karesi üzerinde kalibrasyon |
 | V3 | Kamera FOV / çözünürlük | `Tools/simulation/gz/models/mono_cam/model.sdf` | SDF'den parse edilir | Gerçek lens FOV'u — kod içine sabit yazma |
-| V4 | YOLO ağırlığı | `.scripts/olds/v32/yolov8n.pt` | stok COCO | Kendi sınıflarınla eğit; stok model tespit üretmez |
+| V4 | YOLO ağırlığı | `.scripts/olds/v34/yolov8n.pt` | stok COCO | Kendi sınıflarınla eğit; stok model tespit üretmez |
 
 ### 12.6 Görev parametreleri — yarışma şartnamesine bağlı, cihaza değil
 
@@ -562,9 +706,25 @@ kalıyor ve oradan arm etmeyi reddediyor (`is_armable=False`).
 
 ### 13.7 macOS'ta dashboard penceresi açılmıyor / cv2 exception
 **Neden:** Cocoa **her** `cv2` GUI çağrısının ana thread'de olmasını şart koşar.
-**Çözüm (ADR-006):** `main_gz.py` görev coroutine'ini worker thread'de
-çalıştırır, ana thread `paint_bridge.py`'den kareleri çekip ~30 Hz `imshow`/
-`waitKey` yapar. Linux/Windows değişmedi. Bu yapıyı bozma.
+Dashboard macOS'ta `cv2.imshow` yerine `MAIN_THREAD_PAINT` köprüsüne yayın
+yapar; köprüyü ana thread'de boşaltan bir **pompa** olmazsa kareler yazılır,
+kimse okumaz ve **hiçbir pencere açılmaz** (hata da vermez).
+
+**Çözüm (ADR-006):** görev coroutine'i worker thread'de koşar, ana thread
+köprüden kareleri çekip ~30 Hz `imshow`/`waitKey` yapar. **Üç entrypoint de**
+bu pompayı çalıştırır:
+
+| Entrypoint | Pompa |
+|---|---|
+| `main_gz.py` | kendi `_run_with_main_thread_gui()` fonksiyonu |
+| `main_real.py` | ortak [`core/runtime/main_thread_gui.py`](.scripts/olds/v34/v34_flight_stack/core/runtime/main_thread_gui.py) |
+| `main_dual.py` | ortak `core/runtime/main_thread_gui.py` |
+
+2026-09-02 öncesinde bu pompa **yalnızca `main_gz.py`'de** vardı — yani macOS'ta
+gerçek uçuş dashboard'u hiç açılmıyordu (denetim bulgusu B3). Linux/Windows
+değişmedi: orada dashboard kendi thread'inde boyar. Bu yapıyı bozma;
+`tests/test_entrypoint_composition_parity.py` üçünde de pompanın varlığını
+zorlar.
 
 ### 13.8 Launcher "No such file or directory" ile ölüyor
 **Neden:** Eski launcher'lar `../../.venv/bin/python`'u doğrudan çağırıyordu —
@@ -578,23 +738,30 @@ Ubuntu repo-içi venv yolu, macOS'ta yok.
 ```bash
 # Simülasyon (iki terminal)
 ./safe_sitl_launcher.sh                        # terminal 1
-.scripts/olds/v32/run_mission_v32_gz.sh        # terminal 2
+.scripts/olds/v34/run_mission_v34_gz.sh        # terminal 2
 
 # Gerçek uçuş
-.scripts/olds/v32/run_mission_v32_real.sh
+.scripts/olds/v34/run_mission_v34_real.sh
 
 # Dual (gölge test: sim + gerçek eşzamanlı)
-.scripts/olds/v32/run_mission_v32_dual.sh
+.scripts/olds/v34/run_mission_v34_dual.sh
 
 # Sadece kamera görüntüsü
-"$PYTHON_BIN" .scripts/olds/v32/v32_flight_stack/gz_system/camera_viewer.py
+"$PYTHON_BIN" .scripts/olds/v34/v34_flight_stack/gz_system/camera_viewer.py
 
-# Testler
-PYTHONPATH=$PWD/.scripts/olds/v32/v32_flight_stack \
-  "$PYTHON_BIN" -m pytest .scripts/olds/v32/v32_flight_stack/tests -q
+# Testler (donanim gerektirmez)
+PYTHONPATH=$PWD/.scripts/olds/v34/v34_flight_stack \
+  "$PYTHON_BIN" -m pytest .scripts/olds/v34/v34_flight_stack/tests -q
+
+# Canli SITL entegrasyon testi (simulatoru kendisi ayaga kaldirir)
+.scripts/olds/v34/v34_flight_stack/tests/integration/run_sitl_integration.sh
+
+# Hover gurultu olcumu (gercek ucus esik kalibrasyonu -- arac PILOT ile hover'da)
+cd .scripts/olds/v34/v34_flight_stack && PYTHONPATH=$PWD \
+  "$PYTHON_BIN" tools/measure_motion_noise.py --config real_system/config/real_system.yaml
 
 # Ortam teşhisi
-source .scripts/olds/v32/v32_flight_stack/gz_system/gz_env.sh && env | grep GZ_
-source .scripts/olds/v32/resolve_python.sh && echo $PYTHON_BIN
+source .scripts/olds/v34/v34_flight_stack/gz_system/gz_env.sh && env | grep GZ_
+source .scripts/olds/v34/resolve_python.sh && echo $PYTHON_BIN
 gz topic -l | grep camera
 ```

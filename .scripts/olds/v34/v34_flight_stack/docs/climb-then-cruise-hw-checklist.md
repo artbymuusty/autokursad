@@ -88,10 +88,16 @@ teyit et:
 - `ned_to_body()` her tick'te güncel yaw ile dönüşüm yapıyor. Araç CRUISE
   sırasında yaw değiştirirse (rüzgar ağırlıklı) komut yönü takip eder; bu
   doğru ama yaw hızlı dönerse yatay komut titreyebilir. SITL'de gözlenmedi.
-- Trapez profil `accel_m_s2` ile `SETPOINT_MAX_DELTA_V_M_S`/tick aynı olacak
-  şekilde seçildi. `real_system.yaml`'da `accel_m_s2: 1.0` verildi ama
-  `SETPOINT_MAX_DELTA_V_M_S` hâlâ 0.15 (=1.5 m/s²) — yani gerçek profilde
-  **fren profili değil limiter** baskın olacak. Bu bilinçli (muhafazakâr),
-  ama kalibrasyonda gözden geçirilmeli.
+- Trapez profilin ivmesi ile `SETPOINT_MAX_DELTA_V_M_S` (rate limiter)
+  ilişkisi, **DÜZELTME 2026-09-02** — bu maddenin ilk hâli tersini yazıyordu:
+  - SITL: `accel_m_s2 = 1.5` → tick başı `1.5 × 0.1 = 0.15 m/s`, limiter de
+    `0.15`. **İkisi tam olarak çakışır** (kasıtlı, bkz. `parameters.py`).
+  - Gerçek: `accel_m_s2 = 1.0` → tick başı `0.10 m/s`, limiter `0.15`.
+    `0.10 < 0.15` olduğundan **bağlayıcı olan PROFİLDİR**, limiter değil.
+    Yani gerçek profil limiter'dan daha muhafazakâr — istenen yön budur.
+  - Kalibrasyonda gerçek `accel_m_s2` yükseltilirse `0.15`'i (yani
+    `SETPOINT_MAX_DELTA_V_M_S / OFFBOARD_SETPOINT_INTERVAL_S = 1.5 m/s²`)
+    aşmamalı; aştığı noktadan sonra profil değil limiter frenler ve profilin
+    mesafeye kilitli yavaşlaması etkisizleşir.
 - Entegrasyon testi yalnızca **Görev 2 bacağını** kapsıyor. Görev 3 Faz 1
   ayrı iş kalemi.
