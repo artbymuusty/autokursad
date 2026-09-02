@@ -33,6 +33,13 @@ cleanup() {
     pkill -9 -f "px4_sitl_default/bin/px4$" 2>/dev/null
     pkill -9 -f "bin/px4$" 2>/dev/null
     pkill -9 -f "gz sim" 2>/dev/null
+    # mavsdk_server: MAVSDK-Python'un System() ile OTOMATIK baslattigi yardimci
+    # surec. Testle birlikte olmuyor ve UDP 14540'i tutmaya devam ediyor;
+    # bir sonraki kosum "bind error: Address already in use (udp_connection.cpp:93)"
+    # alip sessizce oluyor. Olculdu 2026-09-02: iki basarisiz kosum ardinda
+    # UC yetim mavsdk_server birikti. Desen gercek binary yoluna cipli
+    # (ADR-010 R3'un anchored-pattern dersi).
+    pkill -9 -f "mavsdk/bin/mavsdk_server" 2>/dev/null
     rm -f "$FIFO"
     echo "[SITL-IT] Simulator logu: $SIM_LOG"
     exit $rc
@@ -47,6 +54,10 @@ fi
 # stdin'i ACIK TUTAN FIFO. /dev/null verilirse PX4'un pxh kabugu EOF'ta
 # prompt'u sonsuz dongude yeniden cizer -- olculdu 2026-09-02: log 60
 # saniyede 186 MB'a ulasti. FIFO ile pxh'nin read()'i bloklanir.
+# ON TEMIZLIK: onceki bir kosum cokup yetim birakmis olabilir. safe_sitl_
+# launcher.sh px4/gz icin bunu kendisi yapiyor ama mavsdk_server'i bilmiyor.
+pkill -9 -f "mavsdk/bin/mavsdk_server" 2>/dev/null && sleep 1
+
 rm -f "$FIFO"; mkfifo "$FIFO"
 sleep 86400 > "$FIFO" 2>/dev/null &
 HOLDER_PID=$!
@@ -75,12 +86,26 @@ if [ "$ready" -ne 1 ]; then
 fi
 echo "[SITL-IT] PX4 hazir."
 
+# set -u GECICI OLARAK KAPALI: resolve_python.sh ve gz_env.sh tanimsiz
+# degiskene dokunuyor ve `set -u` altinda source edildiklerinde kabugu
+# OLDURUYORLAR. Olculdu 2026-09-02: script "PX4 hazir." dedikten hemen sonra
+# sessizce cikiyor, trap temizligi calisiyor ve pytest HIC baslamiyordu --
+# hicbir hata mesaji olmadan. Bu iki dosya bu deponun paylasilan
+# yardimcilari, imzalarini bu test icin degistirmek dogru olmaz.
+set +u
 source "$STACK_DIR/../resolve_python.sh" 2>/dev/null
 PYTHON="${PYTHON_BIN:-python3}"
 
 # Simulator ve testin gz-transport partition'i AYNI olmali, yoksa kesif
 # sessizce bos doner (gz_env.sh'in kendi aciklamasi).
 source "$STACK_DIR/gz_system/gz_env.sh"
+set -u
+
+if ! "$PYTHON" -c "import mavsdk" 2>/dev/null; then
+    echo "[SITL-IT] HATA: python ($PYTHON) mavsdk goremiyor." >&2
+    exit 2
+fi
+echo "[SITL-IT] python=$PYTHON GZ_PARTITION=${GZ_PARTITION:-?}"
 
 echo "[SITL-IT] Test calistiriliyor..."
 KURSAD_SITL=1 PYTHONPATH="$STACK_DIR" "$PYTHON" -m pytest \

@@ -60,13 +60,6 @@ class _RecordingPublisher:
         return [e for e in self.events if e.code == code]
 
 
-@pytest.fixture(scope="module")
-def event_loop():
-    loop = asyncio.new_event_loop()
-    yield loop
-    loop.close()
-
-
 @pytest.mark.asyncio
 async def test_gorev2_leg_runs_climb_hold_cruise_arrival_on_real_sitl():
     publisher = _RecordingPublisher()
