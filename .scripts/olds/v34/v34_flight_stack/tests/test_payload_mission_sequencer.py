@@ -18,6 +18,14 @@ class _RecordingCentering:
         self.calls = []
         self._converges = converges
 
+    async def goto_waypoint(self, lat, lon, alt) -> bool:
+        """PayloadMissionSequencer'in KULLANDIGI metot (2026-09-02'den beri):
+        _navigate_to_recorded artik Climb-then-Cruise yolundan geciyor.
+        Ikisinin sozlesmesi ayni oldugu icin double her ikisini de tanir --
+        digeri hala Gorev 3 ve donus bacaginda kullaniliyor."""
+        self.calls.append(('goto_waypoint', lat, lon, alt))
+        return self._converges
+
     async def goto_global_position_and_wait(self, lat, lon, alt) -> bool:
         self.calls.append(('goto_global_position_and_wait', lat, lon, alt))
         return self._converges

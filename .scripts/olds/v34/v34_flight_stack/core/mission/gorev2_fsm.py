@@ -52,14 +52,25 @@ class PayloadMissionSequencer:
     async def _navigate_to_recorded(self, shape_type: str) -> None:
         """Search sırasında kaydedilen GPS konumuna döner -- araç o an
         büyük olasılıkla İKİNCİ hedefin yakınındadır, kaydedilen konumda
-        DEĞİL (bkz. CenteringController.goto_global_position_and_wait)."""
+        DEĞİL.
+
+        CLIMB-THEN-CRUISE (2026-09-02): bu bacak artık goto_waypoint()
+        kullanıyor, goto_global_position_and_wait() değil. İkisinin sözleşmesi
+        aynı (imza ve dönüş anlamı); fark, eskisinin hedefe mutlak 3B pozisyon
+        setpoint'i gönderip X/Y/Z'yi birlikte hareket ettirmesi, yenisinin ise
+        dikey ile yatayı zamanda ayırmasıdır. motion_profile.enabled False
+        iken goto_waypoint zaten eski davranışa düşer.
+
+        Bu, Görev 2'nin İKİ payload bacağının da geçtiği tek navigasyon
+        noktası -- Climb-then-Cruise'un bu PR'daki tek adopter'ı kasıtlı
+        olarak burası. Görev 3 fazları ve dönüş bacağı eski yolda kaldı."""
         tp = self.position_store.get(shape_type)
         if tp is None:
             raise RuntimeError(
                 f"PayloadMissionSequencer: {shape_type} icin kayitli konum yok -- "
                 "bu yalnizca both_required_targets_found() True iken cagrilmali."
             )
-        converged = await self.centering.goto_global_position_and_wait(
+        converged = await self.centering.goto_waypoint(
             tp.gps_lat, tp.gps_lon, MISSION_ALTITUDE_M)
         if not converged:
             logger.warning(f"{shape_type} kayitli konumuna navigasyon zaman asimina ugradi -- "

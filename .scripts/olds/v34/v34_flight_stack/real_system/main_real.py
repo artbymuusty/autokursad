@@ -16,6 +16,7 @@ from core.mission.debounce import DebounceTracker
 from core.position_log.position_store import PositionStore
 from core.mission.interlock import PayloadInterlock
 from core.navigation.centering_controller import CenteringController
+from core.navigation.motion_fsm import MotionProfile
 from core.mission.payload_release import PayloadReleaseService
 from core.mission.gorev2_fsm import PayloadMissionSequencer
 from core.navigation.checkpoint import MissionCheckpoint
@@ -89,6 +90,10 @@ async def _run(config: dict, mission_id: str) -> None:
         centering.kp_altitude = config["control_gains"]["kp_altitude"]
         centering.tolerance_x = config["control_gains"]["centering_tolerance_x"]
         centering.tolerance_y = config["control_gains"]["centering_tolerance_y"]
+        # Climb-then-Cruise esikleri -- GERCEK UCUS profili.
+        # control_gains ile AYNI desen: YAML blogu yoksa ya da bir anahtar
+        # eksikse o alan parameters.py varsayilaninda kalir.
+        centering.motion_profile = MotionProfile.from_config(config.get("motion_profile"))
 
         release_service = PayloadReleaseService(actuator, detection_feed, camera, centering, flight,
                                                 publisher=publisher)

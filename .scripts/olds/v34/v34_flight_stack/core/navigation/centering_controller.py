@@ -26,6 +26,11 @@ from core.config.parameters import (
     CAMERA_LEVER_ARM_BODY_M,
 )
 from core.navigation.setpoint_limiter import SetpointLimiter
+from core.navigation.motion_fsm import (
+    MotionBudget,
+    MotionProfile,
+    MotionStateMachine,
+)
 from core.navigation.geo import gps_to_ned_delta, haversine_distance_m
 from core.telemetry.event_bus import NULL_PUBLISHER, EventPublisher
 from core.telemetry.events import Category, Event, Severity
@@ -113,6 +118,13 @@ class CenteringController:
         # per-call) so a ramp is not restarted by every go_to_and_center(),
         # but reset() is called at the start of each session -- see there.
         self._limiter = SetpointLimiter()
+        # Climb-then-Cruise hareket makinesi. Profil ve butce CONTROLLER'da
+        # yasar (makinenin kendisinde degil) cunku ikisi de GOREV omurlu:
+        # esikler bir kez config'den enjekte edilir (main_gz/main_real/
+        # main_dual, kp_* ile ayni satirlarda) ve kumulatif hold suresi tum
+        # bacaklar boyunca birikmelidir. Makine bacak basina kurulur.
+        self.motion_profile = MotionProfile()
+        self.motion_budget = MotionBudget()
         # ADR-010 P1: last known yaw, refreshed each centering session. The
         # pixel->ground back-projection needs it to rotate body offsets into
         # north/east, and the open-loop descent needs it to steer at a GPS
@@ -1049,6 +1061,40 @@ class CenteringController:
                       data={"target_altitude_m": target_altitude_m},
                       severity=Severity.INFO if converged else Severity.WARN)
         return converged
+
+    async def goto_waypoint(self, target_lat: float, target_lon: float,
+                            target_alt_m: float) -> bool:
+        """Climb-then-Cruise ile tek bir seyahat bacagi.
+
+        goto_global_position_and_wait()'in AYNI sozlesmesi (ayni imza, ayni
+        donus anlami), farkli yurutme: o metot hedefe mutlak 3B pozisyon
+        setpoint'i gonderip X/Y/Z'yi birlikte hareket ettiriyor; bu, dikey
+        ile yatayi zamanda ayiriyor (CLIMB -> HOLD -> CRUISE -> DESCEND ->
+        ARRIVAL_HOLD).
+
+        motion_profile.enabled False ise cagri AYNEN eski metoda duser --
+        geri donus yolu bir kod degisikligi gerektirmez.
+
+        Doner: yakinsandi mi. Cagiran taraf bunu eski metodun donusuyle
+        birebir ayni sekilde yorumlayabilir."""
+        if not self.motion_profile.enabled:
+            return await self.goto_global_position_and_wait(
+                target_lat, target_lon, target_alt_m)
+
+        machine = MotionStateMachine(
+            self.flight,
+            self._send_setpoint,          # ADR-010 P4 rate limit'i atlanmasin
+            profile=self.motion_profile,
+            budget=self.motion_budget,    # kumulatif hold gorev omurlu
+            kp_altitude=self.kp_altitude,
+            publisher=self.publisher,
+        )
+        # Bacak basi sifirlama: rampa, onceki bacagin birakip gittigi
+        # komuttan degil aracin gercek (sifir) komutlu halinden baslamali
+        # (bkz. SetpointLimiter.reset docstring'i).
+        self._limiter.reset()
+        self._last_motion_machine = machine
+        return await machine.fly_leg(target_lat, target_lon, target_alt_m)
 
     async def goto_global_position_and_wait(self, target_lat: float, target_lon: float,
                                               target_alt_m: float,
