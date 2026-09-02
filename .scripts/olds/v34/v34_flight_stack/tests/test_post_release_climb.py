@@ -67,6 +67,14 @@ class _RecordingCentering:
         self.calls.append(('climb_to_altitude', altitude_m))
         return True
 
+    async def goto_waypoint(self, lat, lon, alt) -> bool:
+        """PayloadMissionSequencer'in KULLANDIGI metot (2026-09-02'den beri):
+        _navigate_to_recorded artik Climb-then-Cruise yolundan geciyor.
+        Ikisinin sozlesmesi ayni oldugu icin double her ikisini de tanir --
+        goto_global_position_and_wait hala Gorev 3 ve donus bacaginda."""
+        self.calls.append(('goto_waypoint', lat, lon, alt))
+        return True
+
     async def goto_global_position_and_wait(self, lat, lon, alt) -> bool:
         self.calls.append(('goto_global_position_and_wait', lat, lon, alt))
         return True
