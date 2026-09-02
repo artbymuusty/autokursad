@@ -54,7 +54,12 @@ async def _run(config: dict, mission_id: str) -> None:
     # ayri process'teki tools/mission_dashboard_unified.py'ye devredildi.
     # main_real.py/main_dual.py bu argumani VERMEZ, yani orada varsayilan
     # ACIK kalir (gercek ucusta operatorun tek ekrani odur).
-    ops_center = build_ops_center(mission_id=mission_id, log_dir=config.get("log_dir", "logs"),
+    # KURSAD40_LOG_DIR: gorev loglarini baska bir dizine yonlendirir. Demo
+    # kosumlari gercek test loglariyla karismasin diye var; unified dashboard
+    # AYNI degiskeni zaten okuyor (tools/mission_dashboard_unified.py:1183),
+    # yani tek env ile ikisi ayni dizine bakar. Verilmezse davranis degismez.
+    log_dir = os.environ.get("KURSAD40_LOG_DIR", config.get("log_dir", "logs"))
+    ops_center = build_ops_center(mission_id=mission_id, log_dir=log_dir,
                                   legacy_dashboard_default="0")
     ops_center.start()
     publisher = ops_center.bus
@@ -106,7 +111,7 @@ async def _run(config: dict, mission_id: str) -> None:
         # for a brand-new mission before it ever searched anything.
         # Mission-ID-scoped path, same convention as EventStore's own
         # per-mission log file, guarantees a clean slate every run.
-        position_store_path = os.path.join(config.get("log_dir", "logs"), f"mission_positions_{mission_id}.json")
+        position_store_path = os.path.join(log_dir, f"mission_positions_{mission_id}.json")
         position_store = PositionStore(storage_path=position_store_path, publisher=publisher)
         interlock = PayloadInterlock(publisher=publisher)
         checkpoint = MissionCheckpoint(publisher=publisher)

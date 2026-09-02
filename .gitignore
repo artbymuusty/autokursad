@@ -166,3 +166,7 @@ GZ_PARTITION=*
 # Yol temizligi yedegi: TEMIZLENMEMIS orijinalleri iceriyor (mutlak
 # /Users/... yollari). Depoya girerse temizligin anlami kalmaz.
 .scripts/olds/v34/backups/faz3_pathclean_*/
+
+# Demo kosumlarinin ciktilari (demo/run_demo_gz.sh). Gercek test loglariyla
+# karismasin diye ayri dizine yaziliyor; repoya girmesi gerekmiyor.
+.scripts/olds/v34/v34_flight_stack/demo_logs/
