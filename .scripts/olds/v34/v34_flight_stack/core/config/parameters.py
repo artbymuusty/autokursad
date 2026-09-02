@@ -759,14 +759,29 @@ MOTION_ALT_TOL_M: float = 0.30
 #: ile geciyordu) ve orada hiz kosulu eklenerek cozulmustu; ayni cozum burada.
 MOTION_VZ_SETTLE_M_S: float = 0.20
 
-#: HOLD'un ALT siniri (operator karari 2026-09-02: "sabit bekleme degil,
-#: min 0.3s + attitude-stability guard"). Attitude zaten durgunsa hold bu
-#: surede biter; degilse guard uzatir.
-MOTION_HOLD_MIN_S: float = 0.30
+#: HOLD'un ALT siniri. 0.30 -> 2.0 (operator karari 2026-09-02, Blok 6).
+#:
+#: TALEP "sabit ~2 s hold yeterli" idi; UYGULAMA "EN AZ 2 s VE STABIL". Guard
+#: KALDIRILMADI, saf sleep'e cevrilmedi: cikis hala min sure DOLDU **VE**
+#: roll/pitch turevi esik altinda MOTION_ATTITUDE_STABLE_SAMPLES ardisik
+#: ornek kaldi kosuluna bagli. Yani 2 s bir TABAN, bir hedef degil --
+#: 2 s sonunda arac hala sallaniyorsa makine beklemeye devam eder.
+#:
+#: Neden 2 s'lik bir taban anlamli: eski 0.30 s, attitude guard'inin ilk
+#: orneklerini almaya bile zor yetiyordu (10 Hz'de 3 ornek = 0.3 s), yani
+#: pratikte cikisi neredeyse hep guard degil sayac belirliyordu. 2 s'de guard
+#: gercekten olcum yapabiliyor.
+MOTION_HOLD_MIN_S: float = 2.0
 #: HOLD'un UST siniri. Attitude hic durulmazsa (ruzgar, salinim) makine
 #: sonsuza kadar beklemez -- gorev butcesi 600 s ve HOLD onu yiyemez.
 #: Asildiginda WARN ile CRUISE'a gecilir, gorev dusurulmez.
-MOTION_HOLD_MAX_S: float = 3.0
+#:
+#: 3.0 -> 4.0 (2026-09-02): taban 2 s'ye ciktigi icin eski tavan guard'a
+#: yalnizca 1 s hareket alani birakiyordu. Tavan tabana bu kadar yakin
+#: oldugunda guard fiilen devre disi kalir (her sallanan aracta hemen
+#: tavana carpar). 4.0, tabandan sonra 2 s'lik gercek bir durulma penceresi
+#: birakir.
+MOTION_HOLD_MAX_S: float = 4.0
 
 #: Attitude stabilite guard'i: roll ve pitch'in SAYISAL TUREVI bu esigin
 #: altinda MOTION_ATTITUDE_STABLE_SAMPLES ardisik ornek boyunca kalmali.

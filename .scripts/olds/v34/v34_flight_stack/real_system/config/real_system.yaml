@@ -11,7 +11,27 @@ control_gains:
   centering_tolerance_x: 0.01
   centering_tolerance_y: 0.01
 actuator:
-  pickup_channel: null  # TODO: gerçek servo/AUX kanal numarası
+  # DÖRT SERVO NOKTASI, DÖRT KANAL (denetim B8, 2026-09-02).
+  # Önceden tek bir `pickup_channel` vardı ama kodda DÖRT ayrı servo noktası
+  # var (real_payload_actuator.py başlığındaki tabloya bakınız) -- tek alan,
+  # dördünü de aynı çıkışa bağlamak gibi okunuyordu.
+  #
+  # `null` bırakılan bir kanal, o noktanın donanıma HİÇ bağlanmadığı anlamına
+  # gelir; ilgili metot yalnızca "SIMULE edildi - gercek servo BAGLI DEGIL"
+  # uyarısını basar.
+  #
+  # Numarayı nereden okuyacaksın: QGroundControl -> Actuators ekranı, ilgili
+  # servonun bağlı olduğu AUX çıkışı. Doğrudan GPIO kullanılacaksa pin numarası.
+  #
+  # Görev 2, 1. bırakma -- FIRST MISSION SERVO (Mavi Altıgen / RED payload)
+  mavi_altigen_release_channel: null   # TODO: gerçek servo/AUX kanal numarası
+  # Görev 2, 2. bırakma -- SECOND MISSION SERVO (Kırmızı Üçgen / BLUE payload)
+  kirmizi_ucgen_release_channel: null  # TODO: gerçek servo/AUX kanal numarası
+  # Görev 3 Faz 1 (alma) -- THIRD MISSION SERVO (kanca kilitleme)
+  pickup_channel: null                 # TODO: gerçek servo/AUX kanal numarası
+  # Görev 3 Faz 3 (bırakma) -- GRAB SERVO (kanca kilidini açma).
+  # 3. nokta ile AYNI fiziksel servo olabilir; öyleyse aynı numarayı yaz.
+  drop_channel: null                   # TODO: gerçek servo/AUX kanal numarası
 
 # ADR-011 (2026-08-17): real payload mass, recorded here because the
 # SIMULATION deliberately does not use it.
@@ -71,13 +91,23 @@ motion_profile:
   enabled: false
   alt_tol_m: 0.50            # TODO: saha logu ile kalibre
   vz_settle_m_s: 0.35        # TODO: saha logu ile kalibre (gurultu tabani)
-  hold_min_s: 0.50           # TODO: link gecikmesine gore
-  hold_max_s: 5.0
+  hold_min_s: 2.0            # EN AZ bu kadar VE attitude stabil (guard kaldirilmadi)
+  hold_max_s: 6.0           # gercek: link gecikmesi + IMU gurultusu icin daha genis pencere
   attitude_rate_limit_deg_s: 25.0   # TODO: gercek IMU gurultu tabani
   attitude_stable_samples: 3
   arrival_radius_m: 3.0      # TODO: gercek GPS dagilimina gore
   arrival_speed_m_s: 0.50      # TODO: saha logu ile kalibre
-  cruise_speed_m_s: 2.0      # ilk ucuslar icin muhafazakar
+  # HIZ/IVME: SITL'den KASITLI OLARAK DUSUK -- config drift DEGIL.
+  # Ucu de bu profille birlikte (2026-09-02) bilerek dusuk secildi; gerekce
+  # ilk gercek ucuslarda hata payini buyutmek. SITL karsiliklari sirasiyla
+  # 3.0 / 1.5 / 1.5.
+  #
+  # accel_m_s2 icin UST SINIR VAR: SETPOINT_MAX_DELTA_V_M_S /
+  # OFFBOARD_SETPOINT_INTERVAL_S = 0.15/0.1 = 1.5 m/s2. 1.0 bunun altinda
+  # oldugu icin baglayici olan PROFILDIR (tick basi 0.10 m/s < limiter 0.15).
+  # 1.5'i asarsa profil degil limiter frenler ve profilin mesafeye kilitli
+  # yavaslamasi etkisizlesir -- kalibrasyonda bu tavani asma.
+  cruise_speed_m_s: 2.0
   accel_m_s2: 1.0
   vertical_speed_m_s: 1.0
   leg_timeout_s: 60.0
