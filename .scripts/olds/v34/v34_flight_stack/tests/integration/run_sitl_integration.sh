@@ -39,7 +39,28 @@ cleanup() {
     # alip sessizce oluyor. Olculdu 2026-09-02: iki basarisiz kosum ardinda
     # UC yetim mavsdk_server birikti. Desen gercek binary yoluna cipli
     # (ADR-010 R3'un anchored-pattern dersi).
-    pkill -9 -f "mavsdk/bin/mavsdk_server" 2>/dev/null
+    #
+    # TEK ATISLIK bir pkill BURADA YETMEZ ve bunun nedeni ince: launcher'i
+    # oldurup PX4'u pkill'ledigimizde safe_sitl_launcher.sh'in onundeki
+    # `make` DONER, o da launcher'i ADIM 6/6'ya (clear_land_mode.py)
+    # ilerletir. O script KENDI MAVSDK System()'ini kurar, yani BIZ
+    # temizledikten SONRA yepyeni bir mavsdk_server dogar ve olmus bir
+    # PX4'e sonsuza kadar baglanmaya calisir -- 14540'i tutarak.
+    # Olculdu 2026-09-02: basarili bir kosumdan 59 dakika sonra hala
+    # ayaktaydi, ebeveyni canli bir clear_land_mode.py idi.
+    # Bu yuzden once hijyen zincirinin KENDISI kesilir, sonra dogrulanana
+    # kadar tekrarlanir.
+    for _ in 1 2 3 4 5; do
+        pkill -9 -f "safe_sitl_launcher.sh" 2>/dev/null
+        pkill -9 -f "clear_land_mode.py" 2>/dev/null
+        pkill -9 -f "mavsdk/bin/mavsdk_server" 2>/dev/null
+        sleep 1
+        pgrep -f "mavsdk/bin/mavsdk_server" > /dev/null 2>&1 || break
+    done
+    if pgrep -f "mavsdk/bin/mavsdk_server" > /dev/null 2>&1; then
+        echo "[SITL-IT] UYARI: mavsdk_server temizlenemedi -- sonraki kosum" >&2
+        echo "[SITL-IT] 'bind error: Address already in use' alabilir." >&2
+    fi
     rm -f "$FIFO"
     echo "[SITL-IT] Simulator logu: $SIM_LOG"
     exit $rc
@@ -56,6 +77,7 @@ fi
 # saniyede 186 MB'a ulasti. FIFO ile pxh'nin read()'i bloklanir.
 # ON TEMIZLIK: onceki bir kosum cokup yetim birakmis olabilir. safe_sitl_
 # launcher.sh px4/gz icin bunu kendisi yapiyor ama mavsdk_server'i bilmiyor.
+pkill -9 -f "clear_land_mode.py" 2>/dev/null
 pkill -9 -f "mavsdk/bin/mavsdk_server" 2>/dev/null && sleep 1
 
 rm -f "$FIFO"; mkfifo "$FIFO"
