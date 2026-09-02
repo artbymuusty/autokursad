@@ -355,3 +355,23 @@ bunlar yalnızca `docs/climb-then-cruise-hw-checklist.md`'de.
 
 > 1-4 arası maddeler **gerçek donanım denemesinden önce** kapatılmalıdır;
 > hiçbiri simülasyonda görünmez çünkü hepsi yalnızca `real_system` yolunda.
+
+---
+
+## 7. Uygulama Sonrası Durum (2026-09-02, FAZ 3B)
+
+§0'daki bulguların tamamı kapatıldı: **B1** (`VisionRuntime` üç entrypoint'te),
+**B2** (aktüatör imzası), **B3** (macOS boyama pompası), **B4** (sinyal
+işleyicileri), **B5/B6** (`publisher` + `FeedDetector`), **B7** (README/SETUP
+v34'e taşındı), **B8** (dört servo noktası + dört kanal).
+
+Doğrulama: 469 birim testi (73'ü yeni) · canlı SITL entegrasyon testi ·
+`main_gz` görev regresyonu · `main_real` vision duman testi (§9.2, SETUP.md).
+
+### 7.1 Bilinen borç — kapatılmadı
+
+| # | Borç | Etki | Neden bekliyor |
+|---|---|---|---|
+| **D1** | `main_gz.py` `main()`'in **Linux/Windows dalı** `asyncio.run(_run(...))` diyor ve **hiçbir sinyal işleyicisi kurmuyor** — o platformda `kill -INT` B4'ün tarif ettiği şekilde yutulabilir ve araç havada kalabilir. macOS dalı (`_run_with_main_thread_gui` → ortak pompa) ve `main_real`/`main_dual`'in Linux dalı (`_run_with_shutdown`) bu boşluğu **taşımıyor**. | Yalnızca GZ + Linux/Windows | Ekip macOS'ta çalışıyor; düşük öncelik. Kapatması tek sarmalayıcı (`main_real.py`'deki `_run_with_shutdown` deseninin aynısı). |
+
+> D1 kodda da işaretli: `gz_system/main_gz.py:206-211`.
