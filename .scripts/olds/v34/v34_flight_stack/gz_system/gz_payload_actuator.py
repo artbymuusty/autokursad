@@ -2,6 +2,7 @@ import asyncio
 import logging
 import os
 import math
+import re
 import time
 from core.interfaces.i_payload_actuator import IPayloadActuator
 from core.config.parameters import (
@@ -303,13 +304,102 @@ GZ_STATE_LISTEN_TIMEOUT_S = 3.0
 VEHICLE_MODEL_NAME = "x500_mono_cam_down_0"
 PAYLOAD_MODEL = "payload_%s"
 
-# Sim ground truth, read straight off Tools/simulation/gz/worlds/default.sdf.
+# Sim ground truth, read AT RUN TIME off the world SDF the simulator loaded.
 # NOT mission input -- the mission is vision-driven and never learns where a
 # target is. This exists only so a post-drop observation can be scored
 # honestly ("0.41 m from the hexagon centre") instead of merely "above
 # ground", which was the weak check that let a 4.9 m miss pass as a success
 # on the first ADR-011 flight (F3).
-TARGET_CENTERS = {"MAVI_ALTIGEN": (0.0, 15.0), "KIRMIZI_UCGEN": (0.0, 40.0)}
+#
+# WHY IT IS READ AND NOT WRITTEN DOWN (E1, 2026-09-03): this used to be the
+# literal {"MAVI_ALTIGEN": (0.0, 15.0), "KIRMIZI_UCGEN": (0.0, 40.0)}, with
+# a comment claiming it was "read straight off default.sdf". That was true
+# once. It stopped being true when safe_sitl_launcher.sh step 4a started
+# REGENERATING default.sdf with randomised shape positions on every single
+# launch (generate_competition_area.py). From then on every
+# offset_from_center_cm, every settled_on_target and every "HEDEF DISINDA"
+# verdict was scored against coordinates no shape had occupied since the
+# layout went random -- measured on 2026-09-03: a payload that actually
+# landed 15.3 cm from the triangle was reported as 3373.0 cm off, and one
+# 47.4 cm from the hexagon as 7203.7 cm off. The scoring was noise, and
+# because it was noise it could not answer the only question that matters:
+# are the payloads landing on the shapes.
+#
+# Reading the world file removes the whole failure mode -- if the layout
+# moves, the score moves with it. Same principle, and the same parsing
+# approach, as tests/sdf_geometry.py.
+#
+# NO FALLBACK CONSTANTS ON PURPOSE: when the world cannot be read,
+# landing_reference() returns None and core degrades to the documented
+# above-ground check. A missing score is honest; a stale score is not.
+SHAPE_TO_SDF_MODEL = {"MAVI_ALTIGEN": "blue_hexagon",
+                      "KIRMIZI_UCGEN": "red_triangle",
+                      "KIRMIZI_DIKDORTGEN": "red_square",
+                      "MAVI_DIKDORTGEN": "blue_square"}
+
+# Test/diagnostic override. Points at a world SDF to score against instead
+# of the one derived from the repo layout.
+WORLD_SDF_ENV = "KURSAD_WORLD_SDF"
+
+# generate_competition_area.py rewrites exactly the span between these two
+# markers, so the shapes are read from inside it and nothing else in the
+# world file can be mistaken for a target.
+_AREA_START = "KURSAD_COMPETITION_AREA_START"
+_AREA_END = "KURSAD_COMPETITION_AREA_END"
+_INCLUDE_RE = re.compile(r"<include>(.*?)</include>", re.S)
+_NAME_RE = re.compile(r"<name>([^<]*)</name>")
+_POSE_RE = re.compile(r"<pose>([^<]*)</pose>")
+
+
+def world_sdf_path(world_name: str = "default") -> str:
+    """Where the world SDF lives. KURSAD_WORLD_SDF overrides it outright."""
+    override = os.environ.get(WORLD_SDF_ENV)
+    if override:
+        return override
+    root = os.path.abspath(os.path.join(
+        os.path.dirname(os.path.abspath(__file__)), *([os.pardir] * 5)))
+    return os.path.join(root, "Tools", "simulation", "gz", "worlds",
+                        "%s.sdf" % world_name)
+
+
+def read_target_centers(world_name: str = "default", path: str = None) -> dict:
+    """{shape_type: (x, y)} for the shapes THIS world actually contains.
+
+    Returns {} on any failure -- unreadable file, missing markers, malformed
+    pose. Callers treat an absent shape as "no reference known", which is
+    the honest answer and the one that degrades safely."""
+    path = path or world_sdf_path(world_name)
+    try:
+        with open(path, "r", encoding="utf-8") as fh:
+            sdf = fh.read()
+    except OSError as e:
+        logger.warning("[TARGET_CENTERS] dunya dosyasi okunamadi (%s): %s -- "
+                       "birakma isabeti PUANLANMAYACAK.", path, e)
+        return {}
+    start, end = sdf.find(_AREA_START), sdf.find(_AREA_END)
+    if start < 0 or end < 0 or end <= start:
+        logger.warning("[TARGET_CENTERS] %s icinde %s/%s isaretleri yok -- "
+                       "birakma isabeti PUANLANMAYACAK.", path,
+                       _AREA_START, _AREA_END)
+        return {}
+    model_to_shape = {v: k for k, v in SHAPE_TO_SDF_MODEL.items()}
+    centers = {}
+    for block in _INCLUDE_RE.findall(sdf[start:end]):
+        name = _NAME_RE.search(block)
+        pose = _POSE_RE.search(block)
+        if not name or not pose:
+            continue
+        shape = model_to_shape.get(name.group(1).strip())
+        if shape is None:
+            continue
+        parts = pose.group(1).split()
+        if len(parts) < 2:
+            continue
+        try:
+            centers[shape] = (float(parts[0]), float(parts[1]))
+        except ValueError:
+            continue
+    return centers
 SHAPE_TO_COLOR = {"MAVI_ALTIGEN": "red", "KIRMIZI_UCGEN": "blue"}
 
 
@@ -335,6 +425,10 @@ class GzPayloadActuator(IPayloadActuator):
         self.pose_monitor = pose_monitor or GzPoseMonitor(world_name)
         # F2 reporting: servo command -> observed separation, per colour.
         self.detach_latency_s = {}
+        # E1: lazily filled by target_centers(); None means "not read yet",
+        # {} means "read and nothing usable found" (so it is not retried on
+        # every drop).
+        self._target_centers = None
 
     def _relative_drop(self, color: str):
         """Vehicle z minus payload z. Constant (the mount offset) while the
@@ -534,12 +628,31 @@ class GzPayloadActuator(IPayloadActuator):
             return False
         return await self._burst_detach(color)
 
+    def target_centers(self) -> dict:
+        """This world's shape centres, read once and remembered.
+
+        E1: read lazily rather than at import so a test or a diagnostic can
+        set KURSAD_WORLD_SDF before the first call, and so an unreadable
+        world file is reported against the run that actually needed it."""
+        if self._target_centers is None:
+            self._target_centers = read_target_centers(self.world_name)
+            if self._target_centers:
+                logger.info("[TARGET_CENTERS] %s dunyasindan okundu: %s",
+                            self.world_name,
+                            ", ".join("%s=(%.3f, %.3f)" % (k, v[0], v[1])
+                                      for k, v in sorted(self._target_centers.items())))
+            else:
+                logger.warning("[TARGET_CENTERS] %s dunyasindan hicbir hedef "
+                               "merkezi okunamadi -- isabet puanlanmayacak.",
+                               self.world_name)
+        return self._target_centers
+
     def landing_reference(self, shape_type: str):
         """F3: (target_x, target_y, expected_rest_z) so a landing can be
         scored against the shape it was aimed at. Sim-only ground truth;
         returns None for shapes with no known centre, and core code then
         degrades to the old above-ground check."""
-        centre = TARGET_CENTERS.get(shape_type)
+        centre = self.target_centers().get(shape_type)
         if centre is None:
             return None
         return (centre[0], centre[1], PAYLOAD_EXPECTED_REST_Z_M)

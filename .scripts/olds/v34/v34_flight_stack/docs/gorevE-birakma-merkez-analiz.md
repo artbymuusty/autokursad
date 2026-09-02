@@ -157,7 +157,22 @@ uyarılarının **tamamı yanlış referansa karşı hesaplanıyor**. Ölçülen
 raporlanan 1396.7 cm, gerçek 3351.6 cm — ikisi de aracın gerçek 14 cm'lik
 isabetiyle ilgisiz.
 
-### D2 — `PAYLOAD_FINAL_POSE` bırakma noktasıyla tutarsız (açıklanmadı)
+### D2 — GEÇERSİZ: bu tutarsızlık benim okuma hatamdı
+
+> **DÜZELTME (2026-09-03, E2 ölçümü sonrası).** Aşağıdaki 33.5 m'lik
+> tutarsızlık **gerçek değil**. `PAYLOAD_FINAL_POSE`'u
+> `mission_ef9d617d8725.jsonl`'den (01:26–01:29 koşumu), uçuş telemetrisini
+> ise `mission_0b9d78556168.jsonl`'den (01:30–01:35 koşumu) okumuşum — iki
+> ayrı koşumu karşılaştırmışım. Doğru eşleştirmede aynı bırakma **0.157 m**
+> tutarlı çıkıyor. Yükün erken ayrıldığına dair de kanıt yok:
+> `MOUNT_VECTOR_MEASURED` servo anında yükü araçtan **3.4–3.6 cm** ötede
+> ölçüyor (dört bırakmanın dördünde). `PAYLOAD_FINAL_POSE` okuması bağımsız
+> bir ~150 Hz poz iziyle doğrulandı: hata **0.0–0.2 cm**, önbellek yaşı
+> **3–5 ms**. Ayrıntı: `docs/gorevE-E2-E3-olcum-raporu.md`.
+>
+> Aşağıdaki özgün metin, ne iddia edildiğinin kaydı olarak duruyor.
+
+### D2 (özgün, GEÇERSİZ) — `PAYLOAD_FINAL_POSE` bırakma noktasıyla tutarsız
 
 Aynı bırakma için:
 - araç dünya konumu (−4.91, **73.45**), bırakma irtifası 0.49 m
@@ -183,7 +198,7 @@ Sıradaki iş kalemi olarak önerim, öncelik sırasıyla:
 | # | İş | Gerekçe | Risk |
 |---|---|---|---|
 | **E1** | `TARGET_CENTERS`'ı `default.sdf`'ten **koşum anında** oku (ya da `generate_competition_area.py`'ın yazdığı bir dosyadan) | Bugün hiçbir isabet ölçümü güvenilir değil; bu düzelmeden "merkeze bırakıyor muyuz" sorusu **cevaplanamaz** | Düşük — yalnızca ölçüm yolu, kontrol yolu değil |
-| **E2** | D2'yi araştır: yük gerçekten erken mi ayrılıyor, yoksa poz okuma mı bozuk | Erken ayrılma gerçekse bu Görev C/D'den daha ciddi | Orta — önce teşhis |
+| ~~E2~~ | ~~D2'yi araştır~~ — **YAPILDI, kusur yok**: okuma doğru (0.0–0.2 cm), erken ayrılma dışlandı | — | — |
 | **E3** | E1 sonrası 2-3 koşumda gerçek isabet dağılımını ölç, `PAYLOAD_ON_TARGET_RADIUS_M = 0.5` eşiğinin makul olup olmadığına karar ver | 0.79 m bugün "başarısız" sayılır ama şeklin içinde | Düşük |
 
 Kararı size bırakıyorum.

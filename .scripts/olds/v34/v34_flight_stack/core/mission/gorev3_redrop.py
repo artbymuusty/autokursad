@@ -6,7 +6,6 @@ from core.interfaces.i_flight_backend import IFlightBackend
 from core.interfaces.i_payload_actuator import IPayloadActuator
 from core.navigation.centering_controller import CenteringController
 from core.position_log.position_store import PositionStore
-from gz_system.gz_payload_actuator import TARGET_CENTERS
 from core.config.parameters import GOREV3_DESCENT_ALTITUDE_M
 from core.mission.visual_placement import (
     VisualPlacementAligner, carried_payload_ned_offset, settle_onto_ned,
@@ -152,13 +151,25 @@ class Gorev3RedropPhase:
         if pose is None:
             logger.warning("[GOREV3_FINAL_POSE] yuk pozu okunamadi.")
         else:
-            cx, cy = TARGET_CENTERS["KIRMIZI_UCGEN"]
-            dist = math.hypot(pose[0] - cx, pose[1] - cy)
+            # E1: hedef merkezi artik kosum aninda dunya SDF'inden okunuyor
+            # (bkz. gz_payload_actuator.read_target_centers). Sabit bir
+            # sozlukten okumak, layout randomize edildikten sonra HER
+            # mesafeyi anlamsiz kilmisti. Referans yoksa mesafe HIC
+            # yazilmaz -- yanlis sayi basmaktansa susmak dogrusu.
+            reference = getattr(self.actuator, "landing_reference",
+                                lambda _s: None)("KIRMIZI_UCGEN")
             at_rest = pose[2] < GOREV3_REDROP_REST_HEIGHT_M
-            logger.info("[GOREV3_FINAL_POSE] x=%.3f y=%.3f z=%.3f -- Kirmizi Ucgen "
-                        "merkezine %.1f cm, %s",
-                        pose[0], pose[1], pose[2], dist * 100,
-                        "YERDE" if at_rest else "HAVADA (hala kancada olabilir)")
+            rest_text = "YERDE" if at_rest else "HAVADA (hala kancada olabilir)"
+            if reference is None:
+                logger.info("[GOREV3_FINAL_POSE] x=%.3f y=%.3f z=%.3f -- hedef "
+                            "merkezi bilinmiyor, mesafe olculemedi, %s",
+                            pose[0], pose[1], pose[2], rest_text)
+            else:
+                cx, cy = reference[0], reference[1]
+                dist = math.hypot(pose[0] - cx, pose[1] - cy)
+                logger.info("[GOREV3_FINAL_POSE] x=%.3f y=%.3f z=%.3f -- Kirmizi Ucgen "
+                            "merkezine %.1f cm, %s",
+                            pose[0], pose[1], pose[2], dist * 100, rest_text)
             if not at_rest:
                 logger.error("[GOREV3_FINAL_POSE] yuk yere inmemis (z=%.3f) -- "
                              "birakma dogrulanamadi.", pose[2])

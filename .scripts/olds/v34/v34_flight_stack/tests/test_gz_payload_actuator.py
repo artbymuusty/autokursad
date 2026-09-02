@@ -7,13 +7,19 @@ ADR-011 flight the servo fired, the log said RELEASED, and the payload was
 still bolted on -- it let go seconds later during the climb-out and landed
 4.9 m past the target.
 """
+import inspect
+import os
+
 import pytest
 from unittest.mock import AsyncMock, patch
 
+from core.config.parameters import PAYLOAD_EXPECTED_REST_Z_M
+from gz_system import gz_payload_actuator
 from gz_system.gz_payload_actuator import (
     GzPayloadActuator,
     PAYLOAD_DETACH_TOPIC,
     VEHICLE_MODEL_NAME,
+    read_target_centers,
 )
 
 
@@ -132,13 +138,82 @@ async def test_release_returns_false_when_every_publish_fails():
         assert await actuator.release_payload_at_mavi_altigen() is False
 
 
-def test_landing_reference_carries_the_target_centre_and_rest_height():
-    """F3: without a reference, "settled" could only ever mean "not below
-    ground" -- which is how a 4.9 m miss passed."""
+_WORLD_FIXTURE = """<sdf version='1.9'><world name='default'>
+  <include><uri>model://ground_plane</uri><name>ground_plane</name>
+    <pose>0 0 0 0 0 0</pose></include>
+  <!-- KURSAD_COMPETITION_AREA_START -->
+  <include><uri>model://blue_hexagon</uri><name>blue_hexagon</name>
+    <pose>-6.649 86.259 0.003 0 0 0</pose></include>
+  <include><uri>model://red_triangle</uri><name>red_triangle</name>
+    <pose>8.642 14.533 0.003 0 0 0</pose></include>
+  <!-- KURSAD_COMPETITION_AREA_END -->
+  <include><uri>model://blue_square</uri><name>blue_square</name>
+    <pose>999 999 0 0 0 0</pose></include>
+</world></sdf>"""
+
+
+def _world_file(tmp_path, text=_WORLD_FIXTURE):
+    path = tmp_path / "world.sdf"
+    path.write_text(text, encoding="utf-8")
+    return str(path)
+
+
+def test_landing_reference_reads_the_centre_from_the_world_the_sim_loaded(tmp_path, monkeypatch):
+    """E1 (2026-09-03): the centres used to be the literal (0,15)/(0,40).
+    safe_sitl_launcher.sh step 4a regenerates default.sdf with RANDOM shape
+    positions every launch, so those literals scored every drop against
+    coordinates no shape had occupied in months -- a payload 15.3 cm from
+    the triangle was reported 3373.0 cm off. Read the world, not a memory."""
+    monkeypatch.setenv("KURSAD_WORLD_SDF", _world_file(tmp_path))
     actuator = _actuator(_FakeMonitor())
-    assert actuator.landing_reference("MAVI_ALTIGEN")[:2] == (0.0, 15.0)
-    assert actuator.landing_reference("KIRMIZI_UCGEN")[:2] == (0.0, 40.0)
-    assert actuator.landing_reference("KIRMIZI_DIKDORTGEN") is None
+    assert actuator.landing_reference("MAVI_ALTIGEN")[:2] == (-6.649, 86.259)
+    assert actuator.landing_reference("KIRMIZI_UCGEN")[:2] == (8.642, 14.533)
+    # Rest height still comes from the parameter, not the world.
+    assert actuator.landing_reference("MAVI_ALTIGEN")[2] == PAYLOAD_EXPECTED_REST_Z_M
+
+
+def test_only_shapes_inside_the_generated_block_are_targets(tmp_path, monkeypatch):
+    """generate_competition_area.py rewrites exactly the marker span, so a
+    model outside it (ground_plane, or a stray blue_square) must never be
+    mistaken for a drop target."""
+    monkeypatch.setenv("KURSAD_WORLD_SDF", _world_file(tmp_path))
+    centres = read_target_centers()
+    assert set(centres) == {"MAVI_ALTIGEN", "KIRMIZI_UCGEN"}
+    assert "MAVI_DIKDORTGEN" not in centres      # sits outside the markers
+
+
+def test_unreadable_world_scores_nothing_rather_than_scoring_wrongly(tmp_path, monkeypatch):
+    """A missing score is honest; a stale score is not. core then degrades
+    to the documented above-ground check."""
+    monkeypatch.setenv("KURSAD_WORLD_SDF", str(tmp_path / "yok.sdf"))
+    actuator = _actuator(_FakeMonitor())
+    assert actuator.landing_reference("MAVI_ALTIGEN") is None
+    assert read_target_centers() == {}
+
+
+def test_world_without_the_markers_scores_nothing(tmp_path, monkeypatch):
+    monkeypatch.setenv("KURSAD_WORLD_SDF",
+                       _world_file(tmp_path, "<sdf><world name='x'></world></sdf>"))
+    assert read_target_centers() == {}
+
+
+def test_centres_are_read_once_and_remembered(tmp_path, monkeypatch):
+    """The world cannot change mid-run, and re-reading it on every drop
+    would put a file read in the release path."""
+    path = _world_file(tmp_path)
+    monkeypatch.setenv("KURSAD_WORLD_SDF", path)
+    actuator = _actuator(_FakeMonitor())
+    assert actuator.landing_reference("KIRMIZI_UCGEN")[:2] == (8.642, 14.533)
+    os.remove(path)
+    assert actuator.landing_reference("KIRMIZI_UCGEN")[:2] == (8.642, 14.533)
+
+
+def test_no_hard_coded_target_centres_survive_anywhere():
+    """Regression guard for the actual E1 defect: the module must not carry
+    a literal centre dictionary again."""
+    src = inspect.getsource(gz_payload_actuator)
+    assert "TARGET_CENTERS = {" not in src
+    assert not hasattr(gz_payload_actuator, "TARGET_CENTERS")
 
 
 def test_tilt_is_reported_so_edge_landings_are_visible():
