@@ -278,6 +278,9 @@ async def test_10_landing_navigates_to_checkpoint_not_search_waypoints():
     class _RecordingCentering:
         def __init__(self):
             self.calls = []
+        async def goto_waypoint(self, lat, lon, alt):
+            self.calls.append((lat, lon, alt))
+            return True
         async def goto_global_position_and_wait(self, lat, lon, alt):
             self.calls.append((lat, lon, alt))
             return True

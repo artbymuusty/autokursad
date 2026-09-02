@@ -279,7 +279,24 @@ class MasterMissionController:
         if not await self._ensure_offboard():
             raise RuntimeError("OFFBOARD_UNAVAILABLE_FOR_RETURN: PX4 did not enter OFFBOARD")
 
-        converged = await centering.goto_global_position_and_wait(lat, lon, MISSION_ALTITUDE_M)
+        # CLIMB-THEN-CRUISE (2026-09-02, Gorev A): donus bacagi artik
+        # goto_waypoint() kullaniyor. Ikisinin sozlesmesi ayni (imza + donus
+        # anlami); fark, eskisinin hedefe MUTLAK 3B pozisyon setpoint'i
+        # gonderip X/Y/Z'yi birlikte hareket ettirmesi.
+        #
+        # NEDEN TAM BU BACAK: Climb-then-Cruise'un onceki tek adopteri
+        # (_navigate_to_recorded) hedefe MERKEZLENDIKTEN HEMEN SONRA
+        # cagriliyor, yani arac zaten hedefin uzerinde -- olculdu 2026-09-02:
+        # iki bacakta da yatay mesafe 0.0 m, CRUISE aninda yakinsiyor. Donus
+        # bacagi ise gorevin TEK gercek yatay seyahati (olculdu: 16.9 m ve
+        # 90.8 m) ve arac o noktada genellikle alcakta oluyor
+        # (GOREV2_FINAL_RELEASE_CLIMB_ALTITUDE_M = 1.5 m) -- yani hem CRUISE
+        # hem CLIMB gercekten calisiyor.
+        #
+        # KAPI: motion_profile.enabled False iken (gercek ucus, kalibrasyon
+        # kapisi) goto_waypoint zaten eski metoda duser, yani gercek ucus
+        # davranisi DEGISMEZ.
+        converged = await centering.goto_waypoint(lat, lon, MISSION_ALTITUDE_M)
 
         # Settle before descending, same reason hover_and_confirm() exists:
         # arriving and immediately landing bleeds residual lateral velocity

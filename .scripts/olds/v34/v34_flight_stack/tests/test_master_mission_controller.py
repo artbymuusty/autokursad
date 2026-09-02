@@ -55,6 +55,13 @@ class _StubCentering:
         self._converges = converges
         self._offboard_ok = offboard_ok
 
+    async def goto_waypoint(self, lat, lon, alt_m):
+        """Donus bacagi 2026-09-02'den beri goto_waypoint() kullaniyor
+        (master_fsm._fly_to_start_finish); sozlesme ayni. Double her ikisini
+        de tanir -- goto_global_position_and_wait hala Gorev 3 bacaklarinda."""
+        self.goto_calls.append((lat, lon, alt_m))
+        return self._converges
+
     async def goto_global_position_and_wait(self, lat, lon, alt_m):
         self.goto_calls.append((lat, lon, alt_m))
         return self._converges
@@ -226,6 +233,9 @@ async def test_lands_in_place_when_checkpoint_was_never_recorded():
 async def test_return_navigation_failure_still_lands():
     """A failed return must never cost the landing itself."""
     class _ExplodingCentering(_StubCentering):
+        async def goto_waypoint(self, lat, lon, alt_m):
+            raise RuntimeError("offboard rejected mid-return")
+
         async def goto_global_position_and_wait(self, lat, lon, alt_m):
             raise RuntimeError("offboard rejected mid-return")
 
@@ -299,6 +309,10 @@ async def test_abort_return_is_bounded_and_still_lands_if_it_overruns():
     from core.config import parameters
 
     class _HangingCentering(_StubCentering):
+        async def goto_waypoint(self, lat, lon, alt_m):
+            self.goto_calls.append((lat, lon, alt_m))
+            await asyncio.sleep(3600)
+
         async def goto_global_position_and_wait(self, lat, lon, alt_m):
             self.goto_calls.append((lat, lon, alt_m))
             await asyncio.sleep(3600)
