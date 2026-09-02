@@ -50,7 +50,25 @@ payload:
 # (vz_m_s, attitude_rate_deg_s) gercek taban gurultusunu olcmek, esigi onun
 # ~3 katina koymak. Kalibrasyon oncesi bu profille UCULMAMALIDIR.
 motion_profile:
-  enabled: true
+  # KAPALI -- KALIBRASYON KAPISI (2026-09-02, operator karari).
+  #
+  # false iken CenteringController.goto_waypoint() aynen eski
+  # goto_global_position_and_wait() davranisina duser; yani gercek donanimda
+  # kim calistirirsa calistirsin Climb-then-Cruise DEVREYE GIRMEZ ve ucus
+  # bilinen bir zeminde yapilir.
+  #
+  # Neden mekanik bir kapi: asagidaki vz_settle_m_s ve
+  # attitude_rate_limit_deg_s dogrudan SENSOR GURULTU TABANINA oturuyor ve
+  # su an TAHMIN. Kalibre edilmeden acilirsa state makinesi ilerlemez --
+  # CLIMB vertical_timeout_s'te (20 s) duser, HOLD her bacakta hold_max_s'i
+  # (5 s) yer ve 600 s'lik zorunlu gorev butcesi erir.
+  #
+  # ACMADAN ONCE: docs/climb-then-cruise-hw-checklist.md 1. bolumundeki
+  # hover olcum protokolu calistirilacak, esikler olculen p95'in ~3 katina
+  # cekilecek ve asagidaki TODO'lar olcum tarihi + log referansiyla
+  # kapatilacak. SITL profili (gz_system.yaml) bundan ETKILENMEZ, orada
+  # enabled: true kalir.
+  enabled: false
   alt_tol_m: 0.50            # TODO: saha logu ile kalibre
   vz_settle_m_s: 0.35        # TODO: saha logu ile kalibre (gurultu tabani)
   hold_min_s: 0.50           # TODO: link gecikmesine gore
