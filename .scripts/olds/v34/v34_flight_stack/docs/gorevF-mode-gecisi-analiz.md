@@ -266,3 +266,142 @@ F3-a saf verimlilik, uçuş güvenliğine dokunmuyor.
 ---
 
 Kod değişikliği yapılmadı. Görev C/D/E4e'ye ve `motion_fsm.py`'a dokunulmadı.
+
+---
+
+# EK — Külliyat ölçümü (129 log) ve raporun düzeltilmesi
+
+Yukarıdaki bölümler tek koşum + kod okumasına dayanıyordu. 129 mission log'luk
+külliyat taraması birkaç sayıyı **düzeltti** ve F1'i çok daha kesinleştirdi.
+
+## D1 — F1'in gerçek istatistiği ve mekanizması
+
+**Doğru sayılar:** 250 takip geçişi, **61 başarısızlık = %24.4** (raporda
+"176/45" yazıyordu; o kısmi bir taramaydı).
+
+**68 `OFFBOARD_SWITCH_FAILED` olayının TAMAMI `{"timeout_s": 3.0}` taşıyor;
+HİÇBİRİ `{"error": ...}` taşımıyor.** Külliyatta PX4 bir kez bile reddetme
+üretmemiş.
+
+**Belirleyici bulgu — başarısızlıklar HOLD'a gidiyor, OFFBOARD'a hiç değil:**
+- 61 başarısızlığın **0 tanesinde** tek bir OFFBOARD örneği yok
+- Başarısızlıkların 43'ü MISSION→**HOLD**, 12'si zaten HOLD
+- **55'inin 14'ünde** araç `offboard.start()`'tan sonra **0.6 s içinde** zaten
+  HOLD'da (en erken 0.18 s). PX4'ün offboard-kayıp failsafe'i (`COM_OF_LOSS_T`
+  varsayılan 1.0 s) bu kadar hızlı ateşleyemez.
+→ En az bu vakalarda araç **hiç OFFBOARD'a girmemiş**; mod isteği,
+`pause_mission()` aracı AUTO.LOITER'a oturttuktan sonra **onurlandırılmamış**.
+
+**Zamanlama kesimi YOK.** Başarılılar 0.218–1.245 s, başarısızlar 3.020–3.229 s;
+`[1.245, 3.020]` aralığı 176 temiz denemede **tamamen boş**. İlk-gözlem
+gecikmeleri iki sonuç arasında **tamamen örtüşüyor**.
+
+**Onay döngüsünün gözlediği şey 1 Hz.** Başarı gecikmeleri 0.2 s'lik bir tarağa
+düşüyor (`asyncio.sleep(0.2)`, `centering_controller.py:203-209`) ve
+`TELEMETRY_STREAM_RATES`'te `flight_mode` **{0.1, 0.9, 1.0, 1.1}** Hz iken
+`position`/`velocity`/`attitude` **10.0** Hz.
+
+**Setpoint çölü GERÇEK ama nedeni kanıtlanmadı:**
+`mavsdk_backend_base.py:389-393` tek bir `VelocityBodyYawspeed(0,0,0,0)`
+gönderip onay döngüsü boyunca **3.0 s'ye kadar hiçbir şey akıtmıyor** — oysa bu
+depo PX4'ün ~500 ms sınırını `parameters.py:343-346`'da belgeliyor ve kardeş
+bir yorumda (`gorev2_orchestrator.py:989-991`) bunu **yasaklıyor**. Hijyen
+kusuru kesin; **%24.4'ün nedeni olduğu kanıtlanmadı**.
+
+## D2 — Döngünün SINIRSIZ olmasının sebebi: üç korumanın da ölü olması
+
+| koruma | durum |
+|---|---|
+| `TargetValidator._consecutive_counts` (`target_validator.py:24`) | tekdüze artıyor, kaçan karede bile azalmıyor; `reset()` (`:85-94`) **`core/` içinde hiç çağrılmıyor** → bir şekil 5 kareye ulaştıysa **kalıcı olarak** track-ready |
+| `_note_centering_failure` (`gorev2_orchestrator.py:1015`) | `_centering_cooldown_until`'ın **tek yazarı** ve **üretimde hiç çağrılmıyor** (yalnızca testlerde) → `:684`'teki aday filtresi **kalıcı boş** bir sözlüğü sınıyor |
+| `DebounceTracker` | yalnızca **başarılı GPS kaydından sonra** kuruluyor |
+
+`:716-724` dalı bunların hiçbirine dokunmuyor. Sonuç: yeniden nitelenme
+**101 ms** sürüyor (referans koşum; iki başka koşumda 100–102 ms).
+
+Ayrıca: `CENTERING_RETRY_COOLDOWN_S` **5.0** olarak gönderiliyor,
+ADR-009'un yazdığı 10.0 değil.
+
+## D3 — F1→F2 bağı SAYISALLAŞTI (doz-yanıt)
+
+Takip yapan koşumlar (n=93):
+
+| koşumdaki Offboard başarısızlığı | rota erken bitti (arama tamamlanmadan) |
+|---|---|
+| 0 | **%2** |
+| 1 | **%4** |
+| **≥2** | **%60** |
+
+Mekanizma ADR-011 T3 (`ADR-011:255-268`): her resume rotanın **son** indeksini
+yeniden dayatıyor, dolayısıyla her biri yalnızca son bacağı yeniden uçuruyor ve
+`is_mission_finished()`'ı True'ya yaklaştırıyor.
+
+> **F1 resume üretir; resume rotayı tüketir; rotanın tükenmesi F2'nin
+> görev-bitiren biçimidir.**
+
+Bağ nedensel ama **münhasır değil**: `mission_b291abb2aba8` tek takip, sıfır
+Offboard hatası, tek resume ile de rotayı erken bitirmiş.
+
+## D4 — DENENMEMESİ GEREKENLER (ölçümle elendi)
+
+Bunlar yazıya geçmeli, yoksa biri mutlaka deneyecek:
+
+1. **Onay zaman aşımını büyütmek İŞE YARAMAZ.** `[1.245, 3.020] s` aralığı 176
+   temiz denemede boş; ek bütçe yalnızca başarısızlık başına daha uzun
+   takılma satın alır.
+2. **Settle süresi eklemek zaten yapıldı ve oranı oynatmadı**
+   (`gorev2_orchestrator.py:708`, `:1004-1013`): settle'sız %26.1, settle'lı
+   %20.3 (n=176/74).
+
+## D5 — Güncellenmesi gereken ADR listesi genişledi
+
+Bölüm 6'daki beşe ek olarak:
+
+| ADR | sorun |
+|---|---|
+| **ADR-010 R2** (`:295`) | `MISSION_RESUME_MIN_INTERVAL_S` 15→6 gerekçesi tek koşumdan ("`OFFBOARD_SWITCH_FAILED` 4→0"); **n=1** ve tekrarlanmıyor (o günden beri 250 denemede 61 hata) |
+| **ADR-009 D3** (`:87-91`) | Cap/cooldown Offboard-hatası sınıfını **kapsamıyor** ve cooldown yazarı **ölü kod**; gönderilen değer 5.0, ADR'de 10.0 |
+| **ADR-008 B0** (`:53-62`) / **ADR-009 D1** (`:63-75`) | `flight_mode`'u "değişim-güdümlü, sessizlik normal" varsayıyor; ölçüm **1 Hz düzenli akış** diyor — `TELEMETRY_STALE_AFTER_FLIGHT_MODE_S = 3.0`'ın dayanağı bu |
+
+## D6 — Yan bulgu: hız kapısı olmayan yakınsama
+
+`CENTERING_CONVERGED` **tek kare**lik bir konum testi ve **hız kapısı yok**;
+araç MISSION seyir hızını Offboard'a taşıyabiliyor. 165 yakınsamanın **2'sinde**
+15 m'de yanlış yakınsama gözlendi, sonuçta 2.7–4.0 m GPS hatası.
+n=2, genellenebilirliği **kanıtlanmadı** — ama mekanizma görünür.
+
+## D7 — Kapatılamayanlar (dürüstçe)
+
+- **PX4 neden %24.4'te OFFBOARD'ı reddediyor.** Elenenler: resume kümelenmesi,
+  onay bütçesi, bayat/yavaş mod önbelleği, yer hızı, irtifa, bırakma anındaki
+  mod, build regresyonu, koşum-başı koşullar. **Yerine kanıtlanmış bir sebep
+  konulamadı.** Kapatmak için PX4 tarafı gerekiyor: SITL parametrelerinden
+  `COM_OF_LOSS_T` ve commander'ın kendi mod-geçiş satırları — o log bu ağaçta yok.
+- **Saniye-altı bir OFFBOARD penceresi olup kaçırıldı mı.** 1 Hz'lik bir
+  gözlenebilir bunu göremez. 61 başarısızlıkta geçici OFFBOARD örneği
+  bulunamadı ama "kanıt yok" ≠ "yok".
+- **Onay sırasında setpoint akıtmanın (3a) fayda edip etmeyeceği.** Doğru
+  hijyen ve bedava; oranı değiştireceğine dair **ölçüm yok**, aksini düşündüren
+  iki ölçüm var. Uygulayan, sonucu **deney** saymalı, çözüm değil.
+
+## D8 — Sıra önerisi (güncellendi)
+
+1. **Gözlenebilirlik** (saatler, uçuş riski sıfır): `OFFBOARD_SWITCH_FAILED`'a
+   her onay yoklamasında gözlenen modu, yoklama zamanlarını ve
+   `pause_mission()`'dan geçen süreyi ekle; `MISSION_ROUTE_CONFIRMED`'da ham
+   mission seq/command listesini yayınla. ADR-004 `:277`'nin ulaşmaya
+   çalıştığı ama yanlış tarif ettiği şey budur. 3a ile 3b arasında karar
+   vermenin **tek ucuz yolu**.
+2. **F1 döngüsünü sınırla** (en yüksek ölçülmüş görev-sonucu kaldıracı):
+   ≥2 hata → %60 kayıp, 0–1 hata → %2–4. `:716-724` dalı **bedava olmaktan
+   çıkmalı**. (2a) bu dal için **ayrı** bir sayaç + cooldown; (2b)
+   `TargetValidator` streak'ini sıfırla / DebounceTracker'ı kur.
+   **Gerilim:** bu, ADR-004 `:499`'un "escalate, don't retry" ilkesine karşı
+   duruyor ve **operatör kararı** gerektirir. Ama mevcut davranışın ne olduğu
+   da yazılmalı: *rota resume'u dahil tüm takibin kör tekrarı* — önerilenlerin
+   hepsinden kötü.
+3. **Mekanizmaya saldır** (ikisi de hipotez): (3a) `offboard.start()` öncesinden
+   onay gelene kadar `OFFBOARD_SETPOINT_INTERVAL_S`'te sıfır-hız akıt;
+   (3b) PX4 tarafını ULog'dan incele.
+
+F2 için bölüm 7'deki sıra geçerli (**F2-a** hâlâ en yüksek etki/en düşük risk).
