@@ -118,3 +118,79 @@ mevcut cap-3 mantığı, ADR dosyaları.
 2. **Guard tetiklenince Seçenek A** (şekli terk et, arama ve rota devam etsin)
    mi, yoksa **B** (HOLD + operatöre escalate) mi? ADR-004 `:499` bu noktada
    açık değil ve yorum farkı sizin kararınız.
+
+---
+
+# UYGULANDI (2026-09-04) — implementasyon raporu
+
+## ⚠ MADDE 1 (operatör isteği): bu düzeltme SEMPTOMU sınırlıyor, KÖK NEDENİ KAPATMIYOR
+
+Guard, F1 döngüsünün **sınırsız olmasını** engelliyor. Ama kök neden —
+`offboard.start()`'ın OFFBOARD mod komutunu PX4'e **hiç göndermeden, istisna
+da atmadan sessizce dönmesi** — **açık**. Araç hâlâ, gördüğü ve gerçekten
+orada olan bir hedefi, otopilotta hiçbir hata yokken terk ediyor.
+
+**Guard bir zarar sınırlayıcıdır, düzeltme değildir.**
+F1'in gerçek kapanışı: `docs/TODO-offboard-start-kok-neden.md` — ③'ten sonra.
+
+## Yapılan
+
+| dosya | değişiklik |
+|---|---|
+| `core/config/parameters.py` | `OFFBOARD_FAILURE_MAX_PER_TARGET = 3` (ayrı sabit, gerekçesi doz-yanıtla yazılı) |
+| `core/mission/gorev2_orchestrator.py` | `_offboard_failures` sayacı; `_note_offboard_failure()`; `:756` başarısızlık dalından çağrı |
+| `tests/test_gorevF_offboard_failure_guard.py` | 8 yeni test |
+
+Üç koruma da dirildi: `validator.reset()` (**`core/`'daki ilk üretim çağrısı**),
+`_centering_cooldown_until` yazımı, `debounce.mark_processed()`.
+`_centering_attempts` **kirletilmedi** — testle çakılı.
+
+## Testler
+**492 → 500 geçti, 1 atlandı.** Regresyon yok.
+
+## CANLI SITL DOĞRULAMASI (birim testte değil)
+
+Guard N=3'te doğal olarak ~%1.5 olasılıkla ateşlenir; mekanizmayı kanıtlamak
+için **geçici olarak N=1** yapıldı, koşum sonrası **SHA ile birebir geri
+yüklendi** (`506fc82a…`, doğrulandı; yürürlükteki değer tekrar **3**).
+
+Koşum `logs/mission_57670f47d43e.jsonl`, 01:39:32 → 01:40:37:
+
+```
+01:40:03  TARGET_SELECTED KIRMIZI_UCGEN (0.9)
+01:40:06  OFFBOARD_SWITCH_FAILED  stage=confirm_timeout
+          modes_seen=["HOLD","MISSION"]  poll_count=15  pause_s=0.017
+01:40:06  OFFBOARD_PURSUIT_ABANDONED  {offboard_failures:1, max:1,
+                                       action:"abandon_shape_continue_search"}
+01:40:06  MISSION_PHASE_CHANGED -> SEARCHING (reason offboard_switch_failed)
+01:40:06  MISSION_CURRENT_ITEM_SET {index:2}
+01:40:07  MISSION_ROUTE_RESUMED                    <-- ROTA DEVAM ETTI
+01:40:13  TARGET_SELECTED MAVI_ALTIGEN (0.9)       <-- DIGER SEKIL PESINE DUSULDU
+01:40:16  OFFBOARD_PURSUIT_ABANDONED (MAVI_ALTIGEN)
+01:40:18  MISSION_ROUTE_RESUMED                    <-- ROTA YINE DEVAM ETTI
+01:40:34  MISSION_FAILED (search_incomplete_mission_finished) -> RETURN -> LANDING
+```
+
+**Kanıtlanan Seçenek A davranışı:**
+- Şekil terk edildi, **görev durmadı** — `SEARCHING`'e dönüldü
+- **Rota devam etti** (iki kez `MISSION_ROUTE_RESUMED`)
+- **Diğer şeklin peşine düşüldü** (KIRMIZI terk edildikten 7 s sonra MAVI seçildi)
+- **HOLD'da beklenmedi, abort edilmedi** — B ve C elenmişti, davranış A ile uyumlu
+- Sonunda görev başarısız oldu çünkü **N=1'de her iki şekil de ilk hatada
+  terk edildi** — bu tam olarak N=1'in anlamı ve gerçek değerin neden 3
+  olduğunun kanıtı
+
+**①'in gözlenebilirliği aynı koşumda karşılığını verdi:**
+`Gozlenen modlar: 1.41s:HOLD, 1.61s:HOLD, … 2.81s:HOLD` — 15 yoklamanın
+**hiçbirinde OFFBOARD yok**, külliyat bulgusu canlıda birebir doğrulandı.
+Ayrıca `pause_duration_s ≈ 0.017–0.021 s`: duraklama **anlık**, yani
+ADR-009/010'un "pause resume'dan ~1 s sonra düşüyor" anlatısı bir kez daha
+çürüdü.
+
+**Dikkat:** bu koşumda ~35 saniyede **üç** Offboard hatası görüldü — külliyat
+ortalaması %24.4'ün belirgin üstünde. Oranın koşuma/derlemeye göre değişip
+değişmediği kök-neden görevinde ölçülmeli.
+
+## Dokunulmayanlar
+Görev C/D/E4e, `motion_fsm.py`, `_center_with_retries`'ın cap-3 mantığı,
+ADR dosyaları.

@@ -24,6 +24,7 @@ from core.config.parameters import (
     MISSION_ALTITUDE_M, CONNECTION_ESTABLISH_TIMEOUT_S, MISSION_UPLOAD_ACK_TIMEOUT_S,
     MISSION_MODE_CONFIRM_TIMEOUT_S,
     CENTERING_MAX_ATTEMPTS_PER_TARGET, CENTERING_RETRY_COOLDOWN_S,
+    OFFBOARD_FAILURE_MAX_PER_TARGET,
     MISSION_RESUME_MIN_INTERVAL_S, MISSION_MODE_CONFIRM_TIMEOUT_S,
     OFFBOARD_AFTER_RESUME_SETTLE_S, POST_LOCK_DRIFT_WINDOW_S,
     OFFBOARD_SETPOINT_INTERVAL_S, ROUTE_REJOIN_TIMEOUT_S,
@@ -136,6 +137,9 @@ class Gorev2Orchestrator:
         # paused than flying. Both are prevented here rather than in the
         # controller, because "how many times do we chase this shape" is a
         # search-policy question, not a control-loop one.
+        # GOREV F (2): Offboard-gecis hatalari icin AYRI sayac. Merkezleme
+        # sayacina KARISTIRILMAZ -- bkz. parameters.py::OFFBOARD_FAILURE_MAX_PER_TARGET.
+        self._offboard_failures: dict = {}
         self._centering_attempts: dict = {}
         self._centering_cooldown_until: dict = {}
         self._centering_abandoned: set = set()
@@ -733,6 +737,23 @@ class Gorev2Orchestrator:
                     # unconfirmed PX4 mode change was never checked here.
                     # Abandon this pursuit, resume Mission (search is not
                     # complete -- only one target could even be pending).
+                    #
+                    # GOREV F (2), 2026-09-04 -- UC OLU KORUMAYI DIRILT.
+                    # Bu dal daha once HICBIR koruma isletmiyordu, dolayisiyla
+                    # ayni hedef 101 ms sonra yeniden secilip ayni takip
+                    # KORU KORUNE tekrarlaniyordu -- ve her tekrar bir rota
+                    # resume'u harcadigi icin (ADR-011 T3) rotayi tuketiyordu.
+                    # Olculen doz-yanit: kosumda 0-1 Offboard hatasi -> %2-4
+                    # erken rota bitisi, >=2 -> %60.
+                    #
+                    # BU ADR-004 §17 ILE CELISMEZ, ONA DONUSTUR. :493 zaten
+                    # "re-enter SEARCHING, let debounce/track-ready re-qualify
+                    # NATURALLY" diyor; ama TargetValidator streak'i hicbir
+                    # yerde sifirlanmadigi icin "dogal yeniden nitelenme"
+                    # 101 ms surugordu -- yani :499'un yasakladigi blind
+                    # retry'nin ta kendisi. Asagidaki uc satir, ADR'nin
+                    # YAZDIGI ama gerceklesmemis davranisi fiilen kuruyor.
+                    self._note_offboard_failure(selected.shape_type, now)
                     self.validator.set_navigating_to(selected.shape_type, False)
                     self.context.transition_to(MissionPhase.SEARCHING, reason="offboard_switch_failed")
                     await self._resume_mission_route()
@@ -1025,6 +1046,60 @@ class Gorev2Orchestrator:
             return
         logger.info(f"[OFFBOARD] resume sonrasi {wait_s:.1f}s oturma payi bekleniyor.")
         await asyncio.sleep(wait_s)
+
+    def _note_offboard_failure(self, shape_type: str, now: float) -> None:
+        """GOREV F (2): Offboard gecisi basarisiz oldugunda UC KORUMAYI da
+        isletir. Hepsi zaten yazilmisti; hicbiri bu dala bagli degildi.
+
+        1. TargetValidator streak'ini SIFIRLA -- reset()'in ILK uretim
+           cagrisi. Bugune kadar _consecutive_counts kacan karede bile
+           azalmiyordu, yani 5 kareye ulasan sekil KALICI track-ready
+           kaliyordu ve yeniden secim 101 ms suruyordu.
+        2. COOLDOWN kur -- _centering_cooldown_until, aday filtresinde
+           (:684) zaten sinaniyor ama tek yazari olan
+           _note_centering_failure'in uretimde hic cagrisi yoktu, yani
+           filtre kalici bos bir sozlugu siniyordu.
+        3. DEBOUNCE kur -- mark_processed(), bugune kadar yalnizca BASARILI
+           GPS kaydindan sonra cagriliyordu.
+
+        SAYAC AYRI: _centering_attempts'e DOKUNULMAZ. Offboard hatasi
+        hedefin gorunurluguyle ilgili degil; ikisini toplamak bir otopilot
+        aksakligi yuzunden gorunur bir hedefi kalici terk ettirirdi.
+
+        SECENEK A (operator karari, 2026-09-04): sinir asilinca hedef BU TUR
+        icin terk edilir, arama ve rota DEVAM EDER. HOLD'da bekleme ya da
+        gorev abort'u ELENDI -- olcum zararin TEKRAR SAYISIYLA biriktigini
+        gosteriyor, tek olayla degil; dogru cevap "durdur ve bekle" degil
+        "tekrari kes"."""
+        count = self._offboard_failures.get(shape_type, 0) + 1
+        self._offboard_failures[shape_type] = count
+        self.validator.reset(shape_type)
+        self._centering_cooldown_until[shape_type] = now + CENTERING_RETRY_COOLDOWN_S
+        self.debounce.mark_processed(shape_type, now)
+
+        if count >= OFFBOARD_FAILURE_MAX_PER_TARGET:
+            self._centering_abandoned.add(shape_type)
+            logger.critical(
+                "OFFBOARD SWITCH GIVEN UP: %s icin Offboard gecisi %d kez basarisiz -- "
+                "bu hedef icin pursuit BIRAKILDI, arama ve rota devam ediyor.",
+                shape_type, count)
+            self._publish("OFFBOARD_PURSUIT_ABANDONED", shape_type, severity=Severity.CRITICAL,
+                          category=Category.NAVIGATION,
+                          data={"shape_type": shape_type, "offboard_failures": count,
+                                "max_failures": OFFBOARD_FAILURE_MAX_PER_TARGET,
+                                "action": "abandon_shape_continue_search"})
+        else:
+            logger.warning(
+                "%s icin Offboard gecisi basarisiz (%d/%d) -- streak sifirlandi, "
+                "%.0fs cooldown, rotaya devam.",
+                shape_type, count, OFFBOARD_FAILURE_MAX_PER_TARGET, CENTERING_RETRY_COOLDOWN_S)
+            self._publish("OFFBOARD_FAILURE_NOTED", shape_type, severity=Severity.WARN,
+                          category=Category.NAVIGATION,
+                          data={"shape_type": shape_type, "offboard_failures": count,
+                                "max_failures": OFFBOARD_FAILURE_MAX_PER_TARGET,
+                                "cooldown_s": CENTERING_RETRY_COOLDOWN_S,
+                                "validator_streak_reset": True,
+                                "debounce_armed": True})
 
     def _note_centering_failure(self, shape_type: str) -> None:
         """ADR-009 D3: record a failed pursuit, hold the target off for

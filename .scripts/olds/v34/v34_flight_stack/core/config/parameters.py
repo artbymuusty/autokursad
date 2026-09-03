@@ -376,6 +376,20 @@ CENTERING_ALTITUDE_CHANGE_ATTEMPTS: int = 200
 # pause_mission() timed out. After this many failed attempts on one shape,
 # the orchestrator logs "target seen but not centered" and carries on
 # searching instead of retrying forever.
+# --- GOREV F (2) 2026-09-04: Offboard-gecis hatasi icin AYRI sinir ---
+# NEDEN AYRI: _centering_attempts/CENTERING_MAX_ATTEMPTS_PER_TARGET
+# MERKEZLEME basarisizligi icin kurulmus (hedefi goruyorum ama ustune
+# oturamiyorum). Offboard gecis hatasi BASKA BIR SINIF: hedefin
+# gorunurluguyle ilgisi yok, muhtemelen gecici bir otopilot durumu. Ikisini
+# ayni sayacta toplamak, bir otopilot aksakligi yuzunden GORUNUR bir hedefi
+# kalici terk etmeye yol acardi.
+#
+# DEGER 3, olculen doz-yanittan: kosum basina Offboard hata dagilimi
+# 0 hata -> 77 kosum, 1 -> 32, >=2 -> 15; ve rota erken bitme orani
+# 0 hata %2, 1 hata %4, >=2 hata %60. 1 hata cok yaygin ve neredeyse zararsiz;
+# zarar >=2'de patliyor. 3'te kesmek tek bir gecici aksakliga tolerans
+# birakirken butce tuketen kuyrugu keser.
+OFFBOARD_FAILURE_MAX_PER_TARGET: int = 3
 CENTERING_MAX_ATTEMPTS_PER_TARGET: int = 3
 # Minimum spacing between two centering attempts on the SAME shape, so even
 # below the cap the route gets uninterrupted flying time between pursuits.
