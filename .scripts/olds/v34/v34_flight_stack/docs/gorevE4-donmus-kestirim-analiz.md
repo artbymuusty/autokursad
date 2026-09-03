@@ -6,6 +6,23 @@ ile ~150 Hz bağımsız yer gerçeği + görev olay kayıtları.
 
 ---
 
+> **DÜZELTME (2026-09-03, FAZ 1.5 ölçümü sonrası).** Bu raporun iki iddiası
+> ölçümle çürüdü ve `docs/gorevE4-faz1.5-ayirt-edici-olcum.md`'de düzeltildi:
+>
+> 1. **Kök neden**: "yatay inancın neden ıraksadığı" burada açık bırakılmıştı.
+>    Cevap bulundu — **optik akış füzyonu** (`EKF2_OF_CTRL 1`, projenin kendi
+>    `4014_gz_x500_mono_cam_down` airframe dosyasında). Sensör 0.4 m'de
+>    quality 255 ile sıfır akış bildiriyor, EKF onu GPS'ten ~5× ağır tartıp
+>    aracın durduğuna karar veriyor.
+> 2. **"VEHICLE_TELEMETRY günlüğü ~3.7 s geride" bulgusu YANLIŞ.** O ölçüm
+>    yalnızca ıraksama pencerelerinde yapılmıştı. Tüm uçuşta gecikme medyanı
+>    +0.03 s, konum hatası 0.089 m. Günlükleme yolunda kusur yok; E5 iş
+>    kalemi iptal.
+>
+> Geri kalan bulgular (kestirim hatası kök neden değil, montaj ofseti temiz,
+> lever-arm gürültü, kontrol yolu gecikmesiz, inanç-gerçek ıraksaması) FAZ
+> 1.5'te bağımsız olarak doğrulandı.
+
 ## 0. Hüküm
 
 > **Kök neden donmuş görüş kestirimi DEĞİL.** Kestirim ölçüldü: şeklin gerçek

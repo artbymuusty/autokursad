@@ -351,7 +351,25 @@ class CenteringController:
             if abs(right_m_s) < CENTERING_MIN_CMD_SPEED_M_S and abs(right_m) > 0.01:
                 right_m_s = math.copysign(CENTERING_MIN_CMD_SPEED_M_S, right_m)
             # down = 0: this phase holds altitude, full stop.
-            await self._send_setpoint(forward_m_s, right_m_s, 0.0)
+            # E4 FAZ 1.5 OLCUM (2026-09-03) -- SALT GOZLEM, kontrol degeri
+            # degismiyor. _send_setpoint zaten limiter'dan GECMIS gercek
+            # komutu donduruyordu ama donus atiliyordu; burada yakalanip
+            # ham girdiyle (lat/lon), turetilmis hatayla (north/east) ve
+            # ISTENEN hizla birlikte kaydediliyor. Amac: kontrolcunun konum
+            # inancinin mi kaydigi (aday a), yoksa komutun mu hedefe
+            # gitmedigi (aday b / limiter) sorusunu OLCEREK ayirmak.
+            sent = await self._send_setpoint(forward_m_s, right_m_s, 0.0)
+            self._publish("MOUNT_TRANSLATE_TICK", shape_type, severity=Severity.DEBUG,
+                          data={"shape_type": shape_type,
+                                "lat": lat, "lon": lon,
+                                "north_m": round(north_m, 4), "east_m": round(east_m, 4),
+                                "residual_m": round(residual, 4),
+                                "yaw_deg": round(self._last_yaw_deg or 0.0, 2),
+                                "req_forward_m_s": round(forward_m_s, 4),
+                                "req_right_m_s": round(right_m_s, 4),
+                                "sent_forward_m_s": round(sent[0], 4),
+                                "sent_right_m_s": round(sent[1], 4),
+                                "sent_down_m_s": round(sent[2], 4)})
             await asyncio.sleep(OFFBOARD_SETPOINT_INTERVAL_S)
 
         await self._send_setpoint(0.0, 0.0, 0.0)
@@ -858,12 +876,23 @@ class CenteringController:
                 down_m_s = 0.0
             elif abs(down_m_s) < LOW_ALT_OPEN_LOOP_MIN_DESCENT_M_S:
                 down_m_s = math.copysign(LOW_ALT_OPEN_LOOP_MIN_DESCENT_M_S, alt_error)
-            await self._send_setpoint(forward_m_s, right_m_s, down_m_s)
+            # E4 FAZ 1.5 OLCUM: _mount_translate ile ayni alanlar -- bkz.
+            # oradaki not. Kontrol degeri degismiyor, yalnizca zaten
+            # hesaplanmis olanlar kaydediliyor.
+            sent = await self._send_setpoint(forward_m_s, right_m_s, down_m_s)
             self._publish("LOW_ALT_OPEN_LOOP_STEP", shape_type, severity=Severity.DEBUG,
                           data={"shape_type": shape_type, "altitude_m": round(alt, 3),
                                 "alt_error_m": round(alt_error, 3),
                                 "hold_error_m": round(hold_error_m, 3),
-                                "hold_tolerance_m": hold_tolerance_m})
+                                "hold_tolerance_m": hold_tolerance_m,
+                                "lat": lat, "lon": lon,
+                                "north_m": round(north_m, 4), "east_m": round(east_m, 4),
+                                "yaw_deg": round(self._last_yaw_deg or 0.0, 2),
+                                "req_forward_m_s": round(forward_m_s, 4),
+                                "req_right_m_s": round(right_m_s, 4),
+                                "sent_forward_m_s": round(sent[0], 4),
+                                "sent_right_m_s": round(sent[1], 4),
+                                "sent_down_m_s": round(sent[2], 4)})
             await asyncio.sleep(OFFBOARD_SETPOINT_INTERVAL_S)
 
         await self._send_setpoint(0.0, 0.0, 0.0)

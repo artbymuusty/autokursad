@@ -35,7 +35,7 @@ def main() -> int:
                             stdout=subprocess.PIPE, stderr=subprocess.DEVNULL,
                             text=True, bufsize=1)
     out = open(args.out, "w", buffering=1)
-    out.write("wall_ts,name,x,y,z\n")
+    out.write("wall_ts,name,x,y,z,qx,qy,qz,qw\n")
     print(f"[OBSERVE] {topic} -> {args.out}", flush=True)
 
     # GzPoseMonitor._read_loop ile AYNI ayristirma: Pose icinde tam iki blok
@@ -65,8 +65,14 @@ def main() -> int:
                 (pos if section == "pos" else ori)[key.strip()] = val
                 if section == "ori" and key.strip() == "w" and name and len(pos) == 3:
                     if name in WATCH:
+                        # E4 FAZ 1.5: yonelim de kaydediliyor -- komut BODY
+                        # cercevesinde uretiliyor; aracin GERCEK yaw'i olmadan
+                        # "komut dogru yone mi bakiyor" sorusu kontrolcunun
+                        # kendi yaw inancina bagimli kalirdi.
                         out.write(f"{time.time():.6f},{name},"
-                                  f"{pos['x']:.4f},{pos['y']:.4f},{pos['z']:.4f}\n")
+                                  f"{pos['x']:.4f},{pos['y']:.4f},{pos['z']:.4f},"
+                                  f"{ori.get('x',0.0):.6f},{ori.get('y',0.0):.6f},"
+                                  f"{ori.get('z',0.0):.6f},{ori['w']:.6f}\n")
                         count += 1
                     name = None
     except KeyboardInterrupt:
