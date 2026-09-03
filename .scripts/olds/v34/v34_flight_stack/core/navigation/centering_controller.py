@@ -187,30 +187,73 @@ class CenteringController:
         must check it and fall back to SEARCHING instead of blindly
         proceeding into go_to_and_center() while still in Mission mode."""
         logger.info("Mission modu durduruluyor, Offboard'a geciliyor...")
+        # GOREV F ADIM 1 -- GOZLENEBILIRLIK (2026-09-04). Bu gecis kulliyat
+        # genelinde 250 denemenin 61'inde (%24.4) basarisiz oluyor ve NEDENI
+        # KANITLANAMADI. Elenenler: resume kumelenmesi, onay butcesi, bayat/
+        # yavas mod onbellegi, yer hizi, irtifa, birakma anindaki mod.
+        # Basarisizliklarin 0/61'inde tek bir OFFBOARD ornegi yok -- hepsi
+        # HOLD; 14'unde offboard.start()'tan 0.6 s icinde zaten HOLD, ki
+        # COM_OF_LOSS_T=1.0 s bu kadar hizli atesleyemez.
+        #
+        # Teshisi mumkun kilan tek sey, HANGI MODUN NE ZAMAN gozlendigiydi ve
+        # o bilgi yalnizca 0.6 s'de bir kisilan VEHICLE_TELEMETRY yan
+        # kanalindan YENIDEN INSA EDILEBILIYORDU. ADR-004 :277 bunu istemis
+        # ama yanlis tarif etmis ("PX4 mode-change REJECTION'i yuzeye cikar"):
+        # 68 olayin HICBIRI reddetme degil, hepsi zaman asimi. Dogru istek,
+        # "onay sirasinda PX4'un GERCEKTE bildirdigi modu ve duraklamadan
+        # gecen sureyi yayinla" -- burada yapilan budur.
+        #
+        # SALT GOZLEM: hicbir kontrol degeri, zamanlama ya da esik degismedi.
+        pause_at = asyncio.get_event_loop().time()
         await self.flight.switch_to_offboard_from_mission()
+        paused_in_s = asyncio.get_event_loop().time() - pause_at
 
         try:
             await self.flight.start_offboard()
         except Exception as e:
             logger.error(f"Offboard baslatma reddedildi: {e}")
-            self._publish("OFFBOARD_SWITCH_FAILED", str(e), severity=Severity.CRITICAL, data={"error": str(e)})
+            self._publish("OFFBOARD_SWITCH_FAILED", str(e), severity=Severity.CRITICAL,
+                          data={"error": str(e), "pause_duration_s": round(paused_in_s, 3),
+                                "stage": "start_offboard_raised"})
             return False
+        started_at = asyncio.get_event_loop().time()
 
         # Verify PX4 actually reports OFFBOARD instead of trusting
         # start_offboard()'s mere absence of an exception -- PX4 can accept
         # the command and still not be in OFFBOARD a moment later for
         # reasons the MAVSDK call itself won't surface.
         deadline = asyncio.get_event_loop().time() + OFFBOARD_MODE_CONFIRM_TIMEOUT_S
+        # GOREV F ADIM 1: her yoklamanin (mod, gecen sure) ciftini biriktir.
+        # Basarida da basarisizlikta da yayinlanir, yoksa ikisi
+        # karsilastirilamaz -- kulliyat analizinde en cok eksigi cekilen sey
+        # buydu.
+        polls = []
         while asyncio.get_event_loop().time() < deadline:
             mode = await self.flight.get_flight_mode()
+            polls.append({"t_s": round(asyncio.get_event_loop().time() - started_at, 3),
+                          "mode": mode})
             if mode == "OFFBOARD":
-                self._publish("OFFBOARD_SWITCH_CONFIRMED", data={"flight_mode": mode})
+                self._publish("OFFBOARD_SWITCH_CONFIRMED",
+                              data={"flight_mode": mode,
+                                    "confirm_s": polls[-1]["t_s"],
+                                    "poll_count": len(polls),
+                                    "pause_duration_s": round(paused_in_s, 3),
+                                    "polls": polls})
                 return True
             await asyncio.sleep(0.2)
 
-        logger.error("PX4 OFFBOARD modunu onaylamadi (timeout).")
+        logger.error("PX4 OFFBOARD modunu onaylamadi (timeout). Gozlenen modlar: %s",
+                     ", ".join(f"{p['t_s']:.2f}s:{p['mode']}" for p in polls[-8:]))
         self._publish("OFFBOARD_SWITCH_FAILED", "PX4 did not report OFFBOARD before timeout",
-                      severity=Severity.CRITICAL, data={"timeout_s": OFFBOARD_MODE_CONFIRM_TIMEOUT_S})
+                      severity=Severity.CRITICAL,
+                      data={"timeout_s": OFFBOARD_MODE_CONFIRM_TIMEOUT_S,
+                            "stage": "confirm_timeout",
+                            "pause_duration_s": round(paused_in_s, 3),
+                            "poll_count": len(polls),
+                            "modes_seen": sorted({p["mode"] for p in polls}),
+                            "first_mode": polls[0]["mode"] if polls else None,
+                            "last_mode": polls[-1]["mode"] if polls else None,
+                            "polls": polls})
         return False
 
     def budget_s(self, start_alt_m: float, altitude_m: float = MISSION_ALTITUDE_M) -> float:

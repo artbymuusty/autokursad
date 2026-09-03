@@ -358,6 +358,20 @@ class Gorev2Orchestrator:
             f"{it.seq}:{self._CMD_NAMES.get(it.command, it.command)}" for it in items)
         logger.info(f"[MISSION_START] Rota dogrulandi ({len(items)} item): {summary}")
         logger.info(f"[MISSION_START] Baslangic indeksi: {start_index}")
+        # GOREV F ADIM 1 -- GOZLENEBILIRLIK (2026-09-04). Ham rota bugune
+        # kadar yalnizca logger.info'ya gidiyordu, olay kaydina DEGIL. Bu
+        # yuzden kulliyat analizinde "resume hangi indekse gitti ve o indeks
+        # rotanin neresi" sorusu ancak CIKARSANABILIYOR, DOGRULANAMIYORDU --
+        # ham seq/command listesi hicbir JSONL'de yoktu. F2'nin kok nedeni
+        # (indeks daima rotanin SON ogesi) tam olarak bu listeyle sinanir.
+        # SALT GOZLEM: rota ne dogrulaniyor ne degistiriliyor, yalnizca
+        # zaten hesaplanmis olan yayinlaniyor.
+        self._publish("MISSION_ROUTE_ITEMS",
+                      f"{len(items)} item, baslangic indeksi {start_index}",
+                      data={"item_count": len(items), "start_index": start_index,
+                            "items": [{"seq": it.seq, "command": it.command,
+                                       "name": self._CMD_NAMES.get(it.command, str(it.command))}
+                                      for it in items]})
 
         # Settle in HOLD before Mission mode engages. The flight heartbeat is
         # published throughout, otherwise HealthMonitor ages MavsdkBackendBase

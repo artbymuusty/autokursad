@@ -405,3 +405,62 @@ n=2, genellenebilirliği **kanıtlanmadı** — ama mekanizma görünür.
    (3b) PX4 tarafını ULog'dan incele.
 
 F2 için bölüm 7'deki sıra geçerli (**F2-a** hâlâ en yüksek etki/en düşük risk).
+
+---
+
+# EK 2 — D7 kısmen KAPANDI: PX4 verisi bu ağaçta zaten var
+
+**Raporda "o log bu ağaçta yok" yazmıştım. YANLIŞ.**
+`vehicle_command` ve `vehicle_command_ack` **her ULog'da zaten kayıtlı**.
+① için hiçbir indirme/config değişikliği gerekmedi.
+
+## Ölçüm
+
+`DO_SET_MODE` (cmd 176) `param2` alanı PX4 ana modudur: **4 = AUTO, 6 = OFFBOARD**.
+
+Referans koşum `20_02_52.ulg`, **başarısız** geçiş penceresi (sim t 62–70):
+
+| sim t | gönderilen | PX4 cevabı |
+|---|---|---|
+| 64.12 | `DO_SET_MODE param2=4` (**AUTO**) | ACCEPTED |
+| 64.14 | `cmd 2003` (pause) | — |
+| 67.13 | `DO_SET_MODE param2=4` (**AUTO**) | ACCEPTED |
+| 68.10 | `DO_SET_MODE param2=4` (**AUTO**) | ACCEPTED |
+
+`nav_state`: 62.10 AUTO.MISSION → **64.14 AUTO.LOITER** → 68.12 AUTO.MISSION.
+
+**Başarılı** geçişte (sim 71.11) ise `DO_SET_MODE param2=6` (**OFFBOARD**) var.
+
+Sekiz ULog'da toplam: **AUTO=53, OFFBOARD=16**. Referans koşumda 2 başarılı
+giriş ↔ tam **2** adet `param2=6`.
+
+## Sonuç
+
+> **Başarısız denemelerde OFFBOARD mod komutu PX4'e HİÇ ULAŞMIYOR.**
+> PX4 hiçbir şeyi reddetmiyor — kendisine sorulmuyor bile.
+
+Bu, "PX4 %24.4'te OFFBOARD'ı reddediyor" çerçevesini **çürütüyor**: sorun
+**PX4'te değil, istemci tarafında** (MAVSDK `offboard.start()` yolu). Ve
+`start_offboard()` istisna da atmıyor (68 olayın hiçbirinde `{"error":...}`
+yok), yani `offboard.start()` **hatasız dönüyor ama komutu göndermiyor**.
+
+**Hâlâ kanıtlanmadı:** `offboard.start()`'ın komutu neden atladığı.
+En olası aday, MAVSDK Offboard eklentisinin iç durum makinesi
+(`set_velocity_body` + `start()` sırasının bir ön koşulu). ① ile eklenen
+`stage` / `polls` alanları bunu bir sonraki koşumda ayırt edecek.
+
+**Bu bulgu ADR listesini de etkiliyor:** ADR-004 `:277`'nin
+*"PX4 mode-change **rejection**'ı yüzeye çıkar"* isteği yalnızca yanlış
+tarif edilmiş değil, **konusu da yok** — ortada reddetme yok, gönderilmemiş
+bir komut var.
+
+## ① kapsamında eklenen gözlenebilirlik (uygulandı)
+
+| olay | eklenen alanlar |
+|---|---|
+| `OFFBOARD_SWITCH_FAILED` | `stage`, `pause_duration_s`, `poll_count`, `modes_seen`, `first_mode`, `last_mode`, `polls[]` (her yoklamanın `t_s`+`mode`'u) |
+| `OFFBOARD_SWITCH_CONFIRMED` | `confirm_s`, `poll_count`, `pause_duration_s`, `polls[]` — **başarı da kaydediliyor**, yoksa ikisi karşılaştırılamaz |
+| `MISSION_ROUTE_ITEMS` (yeni) | ham `seq`/`command`/isim listesi + `start_index` — bugüne kadar yalnızca `logger.info`'daydı, olay kaydında yoktu |
+
+Salt gözlem: hiçbir kontrol değeri, zamanlama ya da eşik değişmedi.
+Testler: **492 geçti, 1 atlandı.**
