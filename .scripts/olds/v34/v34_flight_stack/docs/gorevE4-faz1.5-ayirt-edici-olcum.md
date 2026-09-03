@@ -191,3 +191,86 @@ bağlı. Ama bu bir PX4 parametre değişikliği ve uçuş davranışını doğr
 etkiler — sizin onayınız olmadan dokunmuyorum.
 
 Görev C/D değiştirilmedi, `motion_fsm.py`'a dokunulmadı, push yapılmadı.
+
+
+---
+
+## 8. AMENDMAN — çürütme panelinin sentezi (5. ajan, sonradan geldi)
+
+Dört merceğin üstüne bir sentez ajanı her tartışmalı sayıyı yeniden türetti.
+**Üst düzey hüküm ayakta: kök neden (a)/optik akış, görev kontrol yasası
+değil.** Ama benim raporumdaki üç sayı/ifade düzeltildi. Hepsini kabul
+ediyorum:
+
+### A1 — "komut doğru yöne bakıyor: 14.5°" YANLIŞ
+Doğrusu **ortanca 23.7°, max 39.5°** (run4), 21.0° (run5). Dahası: bu
+dönüşümde yaw birebir sadeleştiği için kalan açı **tamamen taban hızının
+yarattığı yönelme sapmasıdır**. Yani komut "doğru yöne bakıyor" değil,
+"kabaca doğru yöne bakıyor ve sapmanın kaynağı tabanın kendisi".
+
+### A2 — "(b) elendi" FAZLA GÜÇLÜ
+Doğrusu: **(b) 10 m'lik ıskanın kök nedeni değil, ama elenmiş de değil.**
+Yeniden sayım: taban `right` ekseninde 63/76, en az bir eksende **73/76
+(%96)** tick'te devrede; `|istenen|`in sert alt sınırı √2·0.15 = 0.2121 m/s.
+run5'te iki eksen de 6/6 ve P-yasasını **5.1×** aşıyor. Doğru ifade:
+> taban, rutin 2 m sınıfı ıskalara katkıda **çürütülmemiş** bir etken ve
+> aracı 0.4 m'de 0.2–0.3 m/s'e sokan **uyarıcı** — ki akış körlüğü tam
+> orada ısırıyor.
+
+### A3 — "görev kodunda kontrol mantığı hatası DEĞİLDİR" FAZLA GÜÇLÜ
+Kök neden olarak doğru, "burada kusur yok" olarak **savunulamaz**.
+`_mount_translate` yalnızca `get_global_position()`'a bakıyor ve aracın
+gerçekten yaklaşıp yaklaşmadığını **hiçbir şeyle çapraz kontrol etmiyor**;
+zaman aşımında "yine de devret" diyor. Ölçülen: kalan 0.2596 → 0.5502 m
+**büyürken** 8 s koştu, gerçek hız 2 m/s'e çıktı, bir WARN yazdı — ve zincir
+ardından yükü **~3.0 m/s yer hızıyla** 0.418 m'den bıraktı.
+Doğru ifade: *kök neden görev kontrol yasasında değil; ama görev kodundaki
+**eksik ıraksama koruması**, bir kestirim arızasını 10 m'lik ıskaya çeviren
+ayrı ve gerçek bir kusurdur.*
+
+### Sentezin eklediği kanıtlar (kendi raporumu güçlendiren)
+- **Iska nicel olarak kapanıyor:** bırakma anında kestirim hatası 9.52 m +
+  balistik taşıma ~0.9 m (3.0 m/s, 0.418 m, 0.29 s) ≈ **10.4 m**; ölçülen
+  10.19 m.
+- **İrtifa kapısı tek sayıya indi:** EKF hız kazancı (EKF\|v\|/GT\|v\|)
+  **8–30 m'de 0.992**, **0.8 m altında 0.084**. Kestirim seyirde kusursuz,
+  güvertede kör.
+- **Ağırlık oranı ölçüldü:** 0.607 m menzilde akış σ = 0.134 m/s,
+  `gnss_vel` σ = 0.40 m/s → akış GPS'ten **8.9×** ağır (benim ~5× tahminim
+  yerine gerçek `observation_variance`'tan).
+- **Aşırı ivmenin mekanizması:** EKF, IMU ile sahte sıfır-hız kısıtını
+  uzlaştırırken **eğim kestirimini +3.8° yanlıyor** (t=115'te kestirilen
+  pitch −1.57°, **gerçek −5.40°**; accel_bias −0.050 → −0.163 m/s²). Araç
+  fiziksel olarak kimsenin istemediği ~3.8° burun-aşağı duruyor. Bu, benim
+  "PX4 2°'lik eğimi kaldırmıyor" ifademden daha doğru.
+- **t=115–119 arası mission tam olarak `velocity=(0,0)` gönderirken** gerçek
+  hız 5 m/s'i aştı — komut integralinden bile güçlü bir kanıt.
+- Gerçek tepe hız **5.0–6.2 m/s** (raporda 4.5 demiştim; pencereye göre değişiyor).
+
+### Sentezin düzelttiği başka şeyler
+- Zaman hizalaması: ULog sim saati duvar saatinden **%2.2 yavaş**; bu,
+  görev kaydı ↔ ULog eşlemesinde ~2.4 s kayma demek. EKF↔GT karşılaştırması
+  tek ULog içinde tek saatte olduğu için **etkilenmiyor**.
+- Kesin sıra (ULog): GT hız >0.5 m/s **t=106.673**, ilk GNSS reddi
+  **t=110.988**, `vel_test_ratio`>1.0 **t=111.419** → fizik kapıyı
+  **4.75 s** önceliyor. t=100–111 arası GNSS hızı **333/334 füzyona girdi**
+  ve gözlemler gerçeğe **0.025 m/s** RMS doğrulukta.
+- EKF t=118.32'de kendini ele veriyor: `xy_reset_counter` 3→4, konumda
+  **31.8 m**'lik anlık sıçrama.
+- run5 **temiz bir ikili kontrol değil**: onun da düşük irtifa hız kazancı
+  bozuk (0.184) ve %93.5 akış füzyonu var; sadece güvertede 0.28 m/s'i hiç
+  aşmadığı için bir şey birikmemiş. Bu **doz-yanıt**, (a)'yı zayıflatmıyor
+  güçlendiriyor.
+- LENS 4'ün iki sayısı hatalı çıktı (t=105.628 GNSS reddi ve "örneklerin
+  yarısı timestamp=0"); optik akış teşhisi doğru ama o merceğin türetilmiş
+  istatistiklerine dayanmadım — akış bulgusunu **kendim** doğruladım
+  (bölüm 3).
+
+### Önerilere eklenen madde
+
+| # | İş | Gerekçe | Risk |
+|---|---|---|---|
+| **E4e** | **Görev tarafına ıraksama koruması**: `_mount_translate` kalan mesafe **büyüyorsa** durdur; ve yer hızı bir eşiği aşarken **yük bırakma** | PX4 parametresine dokunmadan, bir kestirim arızasının 10 m'lik ıskaya dönüşmesini engeller. Bu koşumda yük 3.0 m/s'le bırakıldı | Orta — kontrol akışına dokunur, **ayrı onay** |
+
+E4e, E4a'dan bağımsız değerdedir: kök neden düzelse bile "araç hedefe
+yaklaşmıyorken bırakma" savunması olmalı.
