@@ -28,7 +28,49 @@ param set-default SIM_GZ_EN_FLOW 1
 param set-default SIM_GZ_EN_LIDAR 1
 
 # --- Optik akis fuzyonu (PAA3905E1) ---
-param set-default EKF2_OF_CTRL 1          # optik akis fuzyonu acik
+#
+# KAPALI (E4a, 2026-09-03) -- ONCEDEN 1 IDI, KASITLI OLARAK 0'A CEKILDI.
+#
+# NEDEN: Gazebo tarafindaki akis sensoru, GERCEKTE OLMAYAN bir "duruyorum"
+# olcumunu AZAMI GUVENLE bildiriyor. Olculdu (run4/run5, 2026-09-03),
+# olculen akis / geometrik olarak gereken akis:
+#     0.0-0.8 m : 0.00x      5-12 m  : 0.04-0.20x
+#     0.8-2.0 m : 0.00x     12-40 m  : 0.63-0.79x
+#     2.0-5.0 m : 0.01-0.02x
+# Olculen deger harekete gore olceklenmiyor; 0.011-0.157 rad/s'lik bir
+# gurultu tabaninda sabit kaliyor. 12-40 m'de "iyi" gorunmesinin sebebi
+# GEREKEN akisin da orada kucuk olmasi (0.199 rad/s), izleme degil.
+# Buna ragmen sensor quality=255 (azami) bildiriyor: OpticalFlowSensor.cpp
+# quality'yi OpticalFlowOpenCV::calcFlow'dan aliyor ve orada 255 "hesap
+# calisti" demek, "sonuc guvenilir" DEMEK DEGIL.
+#
+# SONUCU (olculdu): EKF2_OF_N_MIN(0.15 rad/s) x menzil, akisin hiz
+# gurultusunu 0.607 m'de 0.134 m/s yapiyor; EKF2_GPS_V_NOISE 0.40 m/s.
+# Yani akis, GPS'ten ~8.9x AGIR tartiliyor ve irtifa dustukce agirligi
+# ARTIYOR. EKF, dogru GPS'i (gozlemler gercege 0.025 m/s RMS) birakip sifir
+# akisa inaniyor: hiz kazanci (EKF|v| / gercek|v|) 8-30 m'de 0.992 iken
+# 0.8 m altinda 0.084'e dusuyor. Kestirim seyirde kusursuz, guvertede kor.
+# Zincir: EKF hizi sifira cakiliyor -> IMU ile sahte sifir-hiz kisitini
+# uzlastirmak icin EGIM kestirimi +3.8 deg yanliyor (gercek pitch -5.40,
+# kestirilen -1.57) -> arac kimsenin istemedigi burun-asagi duruyor ve
+# komut edilmeden 5-6 m/s'e hizlaniyor -> yuk hedeften 10.19 m oteye
+# dusuyor. Bes kosumda doz-yanit: EKF hatasi 0.53 m -> iska 0.06 m;
+# EKF hatasi 20.28 m -> iska 10.19 m.
+#
+# BU BIR PARAMETRE HATASI DEGIL, SIMULATOR SENSOR ARIZASIDIR. Ayar 869f8fa1
+# ile BILEREK ve dogru gerekcelerle acilmisti (gercek arac Holybro H-FLOW
+# tasiyor); o dogrulama HOVER'da yapildi ve hover'da gercek akis zaten ~0
+# oldugu icin ariza gorunemezdi.
+#
+# GERI ACMA KOSULU: Gazebo akis sensoru duzeltilip yukaridaki oran tablosu
+# tum irtifa bantlarinda ~1.0x olana kadar 0 kalir. SIM_GZ_EN_FLOW 1
+# BILEREK acik birakildi -- sensor_optical_flow yayini surer, boylece
+# sensor calisilabilir/duzeltilebilir; yalnizca EKF ona INANMAYI birakir.
+#
+# GERCEK DONANIM: bu dosya YALNIZCA SITL icindir. Gercek aracta H-FLOW
+# fiziksel olarak takili ve EKF2_OF_CTRL kararı AYRI bir kapidir --
+# saha kalibrasyonu tamamlanmadan verilmeyecek.
+param set-default EKF2_OF_CTRL 0          # SITL akis sensoru arizali, bkz. yukarisi
 param set-default SENS_FLOW_MINHGT 0.08   # 80 mm  (PAA3905 min calisma mesafesi)
 param set-default SENS_FLOW_MAXHGT 30.0   # 30 m   (PAA3905 max calisma mesafesi)
 param set-default SENS_FLOW_MAXR 7.4      # 7.4 rad/s maksimum acisal akis hizi
