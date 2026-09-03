@@ -94,10 +94,30 @@ class PayloadMissionSequencer:
             "MAVI_ALTIGEN",
             **({"climb_back_alt_m": GOREV2_FINAL_RELEASE_CLIMB_ALTITUDE_M}
                if terminal else {}))
-        self.interlock.mark_released("MAVI_ALTIGEN")
-        self.position_store.mark_payload_released("MAVI_ALTIGEN")
-        self._publish("PAYLOAD_MISSION_1_COMPLETE", data={"verified": result})
-        return result
+        # E4e (2026-09-03): mark_released ARTIK KOSULLU.
+        #
+        # ONCEDEN KOSULSUZDU ve bu, gorev3_precondition'i ETKISIZ KILIYORDU:
+        # o kapi "her iki yuk de birakilmis olmali" diyor ve amaci tam olarak
+        # birakilmamis yukle Gorev 3'e girilmesini onlemek. Yuk birakilmasa
+        # bile "birakildi" isaretlendigi icin kapi her zaman aciliyordu.
+        #
+        # `result` bu is icin KULLANILAMAZ: o marker DOGRULAMASIdir ("gorev
+        # akisini durdurmaz") ve basariyla birakilmis bir yukte bile False
+        # olabilir -- kayitlarda ornegi var. Bu yuzden release service ayri ve
+        # acik bir bayrak tasiyor.
+        retained = bool(getattr(self.release_service, "last_payload_retained", False))
+        if retained:
+            logger.critical("[PAYLOAD_RETAINED] MAVI_ALTIGEN: yuk arac uzerinde kaldi -- "
+                            "interlock 'birakildi' ISARETLENMIYOR, Gorev 3 onkosulu "
+                            "acilmayacak.")
+            self._publish("PAYLOAD_RETAINED_NOT_MARKED",
+                          data={"shape": "MAVI_ALTIGEN", "verified": result})
+        else:
+            self.interlock.mark_released("MAVI_ALTIGEN")
+            self.position_store.mark_payload_released("MAVI_ALTIGEN")
+        self._publish("PAYLOAD_MISSION_1_COMPLETE",
+                      data={"verified": result, "retained": retained})
+        return result and not retained
 
     async def execute_payload_mission_2(self) -> bool:
         """Kırmızı Üçgen'e (BLUE payload) bırakma.
@@ -120,10 +140,30 @@ class PayloadMissionSequencer:
             "KIRMIZI_UCGEN",
             **({"climb_back_alt_m": GOREV2_FINAL_RELEASE_CLIMB_ALTITUDE_M}
                if terminal else {}))
-        self.interlock.mark_released("KIRMIZI_UCGEN")
-        self.position_store.mark_payload_released("KIRMIZI_UCGEN")
-        self._publish("PAYLOAD_MISSION_2_COMPLETE", data={"verified": result})
-        return result
+        # E4e (2026-09-03): mark_released ARTIK KOSULLU.
+        #
+        # ONCEDEN KOSULSUZDU ve bu, gorev3_precondition'i ETKISIZ KILIYORDU:
+        # o kapi "her iki yuk de birakilmis olmali" diyor ve amaci tam olarak
+        # birakilmamis yukle Gorev 3'e girilmesini onlemek. Yuk birakilmasa
+        # bile "birakildi" isaretlendigi icin kapi her zaman aciliyordu.
+        #
+        # `result` bu is icin KULLANILAMAZ: o marker DOGRULAMASIdir ("gorev
+        # akisini durdurmaz") ve basariyla birakilmis bir yukte bile False
+        # olabilir -- kayitlarda ornegi var. Bu yuzden release service ayri ve
+        # acik bir bayrak tasiyor.
+        retained = bool(getattr(self.release_service, "last_payload_retained", False))
+        if retained:
+            logger.critical("[PAYLOAD_RETAINED] KIRMIZI_UCGEN: yuk arac uzerinde kaldi -- "
+                            "interlock 'birakildi' ISARETLENMIYOR, Gorev 3 onkosulu "
+                            "acilmayacak.")
+            self._publish("PAYLOAD_RETAINED_NOT_MARKED",
+                          data={"shape": "KIRMIZI_UCGEN", "verified": result})
+        else:
+            self.interlock.mark_released("KIRMIZI_UCGEN")
+            self.position_store.mark_payload_released("KIRMIZI_UCGEN")
+        self._publish("PAYLOAD_MISSION_2_COMPLETE",
+                      data={"verified": result, "retained": retained})
+        return result and not retained
 
     async def execute_all(self) -> None:
         """Henuz birakilmamis payload gorevlerini calistirir. Yalnizca

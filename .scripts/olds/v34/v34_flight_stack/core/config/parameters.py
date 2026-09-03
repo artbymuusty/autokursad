@@ -635,6 +635,32 @@ PAYLOAD_AIM_HOLD_TOLERANCE_M: float = 0.05
 # whatever altitude it had reached -- measured, releases at 0.385 m and
 # 0.159 m, both out of band. The translation now holds altitude, runs on its
 # own budget, and cannot touch the descent.
+# --- E4e (2026-09-03): IRAKSAMA KORUMASI ---
+# Olculdu (7 pencere, 15 ardisik-artis serisi; MOUNT_TRANSLATE_TICK.residual_m
+# ve ayni niceligi tasiyan LOW_ALT_OPEN_LOOP_STEP.hold_error_m):
+#   seri uzunlugu dagilimi: 1x8, 2x2, 3x3, 9x1, 12x1
+#   YAKINSAYAN pencerelerde gorulen en uzun seri: 1  (>=5 olan: 0/3)
+#   IRAKSAYAN pencerede: 12 ve 9
+# 3 ile 9 arasinda HIC seri yok; 5 bu bosluga dusuyor ve 4-8 arasi her deger
+# bu veride ayni siniflandirmayi yapar. Saglikli en kotunun 5 kati, yakalanmasi
+# gereken en kisa kotu serinin (9) 4 tick oncesinde ateslenir. 10 Hz'de 0.5 s.
+# ORNEKLEM KUCUK (7 pencere, yalnizca 3'u yakinsayan) -- bu yuzden parametre.
+MOUNT_TRANSLATE_DIVERGE_TICKS: int = 5
+# Milimetrik gurultunun sayaci tetiklememesi icin olu bant.
+MOUNT_TRANSLATE_DIVERGE_EPS_M: float = 0.001
+
+# E4e Guard 2 IKINCIL kapisi. BIRINCIL kapi yakinsamadir; bu yalnizca kaba
+# hareketi yakalar ve KESTIRIM ARIZASINA KORDUR: run4'te birakma aninda EKF
+# 0.05 m/s bildiriyordu, gercek 3.00 m/s idi. Deger, saglikli birakmalarin en
+# kotusunun (0.206 m/s) 2.4 kati -- yanlis tetiklemez.
+PAYLOAD_RELEASE_MAX_GROUND_SPEED_M_S: float = 0.5
+
+# Guard tetiklenince tirmanilacak irtifa. LOW_ALT_VISION_LIMIT_M = 2.0'in
+# UZERINDE olmasi sart: tirmanmanin amaci gorusu geri kazanmak ve kestirimin
+# en kotu oldugu guverte bolgesinden cikmak. PAYLOAD_APPROACH_ALTITUDES_M'in
+# ortadaki adimiyla ayni deger secildi (yeni bir rejim icat etmemek icin).
+PAYLOAD_RELEASE_RETRY_ALTITUDE_M: float = 5.0
+
 MOUNT_TRANSLATE_BUDGET_S: float = 8.0
 MOUNT_TRANSLATE_TOLERANCE_M: float = 0.05
 

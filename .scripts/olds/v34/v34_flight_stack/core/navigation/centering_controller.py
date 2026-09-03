@@ -19,6 +19,7 @@ from core.config.parameters import (
     CENTERING_LATERAL_TIMEOUT_ENV, CENTERING_MIN_CMD_SPEED_M_S,
     CENTERING_FLOOR_TOL_FRACTION,
     LOW_ALT_VISION_LIMIT_M, LOW_ALT_BBOX_CENTER, LOW_ALT_OPEN_LOOP_TIMEOUT_S,
+    MOUNT_TRANSLATE_DIVERGE_TICKS, MOUNT_TRANSLATE_DIVERGE_EPS_M,
     low_alt_vision_limit,
     PAYLOAD_RELEASE_ALTITUDE_TOLERANCE_M, LOW_ALT_OPEN_LOOP_MIN_DESCENT_M_S,
     TARGET_LOSS_GRACE_FRAMES,
@@ -138,6 +139,9 @@ class CenteringController:
         # ayarlanacaktır (bkz. real_system.yaml / gz_system.yaml config parametreleri
         # Kp_yatay, Kp_dikey). Bu değerler artık GERÇEKTEN kullanılıyor (bkz.
         # go_to_and_center) -- daha önce tanımlı olup hiçbir yerde okunmuyorlardı.
+        # E4e: _mount_translate her cagrida sifirlar; burada da tanimli
+        # olsun ki hic cagrilmadan okunursa AttributeError olmasin.
+        self.last_translate_diverged = False
         self.kp_horizontal = 0.5
         self.kp_vertical = 0.3
         # Operator-specified precision (2026-08-13 revision): ±0.01 normalized
@@ -331,6 +335,14 @@ class CenteringController:
         Returns the residual distance to the translated hold, in metres."""
         started = time.monotonic()
         residual = float("inf")
+        # E4e: IRAKSAMA KORUMASI. Butce dolana kadar beklemek, kestirim
+        # bozuldugunda araci 8 s boyunca hedeften UZAKLASTIRIYORDU (olculdu:
+        # kalan 0.2596 -> 0.5502 m buyurken gercek hiz 2 m/s'e cikti ve yuk
+        # 10.19 m oteye dustu). Kalan mesafe ust uste buyuyorsa erken cikilir.
+        self.last_translate_diverged = False
+        prev_residual = None
+        growth_streak = 0
+        recent = []
         while time.monotonic() - started < MOUNT_TRANSLATE_BUDGET_S:
             try:
                 lat, lon, _alt = await self.flight.get_global_position()
@@ -340,6 +352,45 @@ class CenteringController:
             north_m, east_m = gps_to_ned_delta(lat, lon, held["lat"], held["lon"])
             residual = math.hypot(north_m, east_m)
             if residual <= MOUNT_TRANSLATE_TOLERANCE_M:
+                break
+
+            # E4e: ardisik buyume sayaci. EPS olu bandi, yakinsama sirasindaki
+            # milimetrik gurultunun sayaci tetiklemesini engeller.
+            recent.append(round(residual, 4))
+            if prev_residual is not None and residual > prev_residual + MOUNT_TRANSLATE_DIVERGE_EPS_M:
+                growth_streak += 1
+            else:
+                growth_streak = 0
+            prev_residual = residual
+            if (growth_streak >= MOUNT_TRANSLATE_DIVERGE_TICKS
+                    and residual > MOUNT_TRANSLATE_TOLERANCE_M):
+                self.last_translate_diverged = True
+                elapsed_s = time.monotonic() - started
+                logger.critical(
+                    "[MOUNT_TRANSLATE_ABORTED_DIVERGING] %s: kalan mesafe %d tick "
+                    "ust uste buyudu (%.3f -> %.3f m, %.2f s) -- oteleme durduruldu.",
+                    shape_type, growth_streak,
+                    recent[-(growth_streak + 1)] if len(recent) > growth_streak else recent[0],
+                    residual, elapsed_s)
+                # KONTROL YOLUNDAN yayinlanir (MOUNT_TRANSLATE_TICK ile ayni
+                # 10 Hz akis). Kanit olayin ICINE gomulur ki post-analiz baska
+                # bir kaynaga -- ozellikle turetilmis/kisilmis loglara --
+                # ihtiyac duymasin.
+                self._publish("MOUNT_TRANSLATE_ABORTED_DIVERGING", shape_type,
+                              severity=Severity.CRITICAL,
+                              data={"shape_type": shape_type,
+                                    "growth_streak": growth_streak,
+                                    "threshold_ticks": MOUNT_TRANSLATE_DIVERGE_TICKS,
+                                    "eps_m": MOUNT_TRANSLATE_DIVERGE_EPS_M,
+                                    "residual_m": round(residual, 4),
+                                    "residual_at_streak_start_m": (
+                                        recent[-(growth_streak + 1)]
+                                        if len(recent) > growth_streak else recent[0]),
+                                    "recent_residual_m": recent[-(growth_streak + 1):],
+                                    "tolerance_m": MOUNT_TRANSLATE_TOLERANCE_M,
+                                    "elapsed_s": round(elapsed_s, 2),
+                                    "held_lat": held["lat"], "held_lon": held["lon"],
+                                    "lat": lat, "lon": lon})
                 break
             yaw_rad = math.radians(self._last_yaw_deg or 0.0)
             forward_m = north_m * math.cos(yaw_rad) + east_m * math.sin(yaw_rad)
@@ -385,7 +436,8 @@ class CenteringController:
                             "elapsed_s": round(elapsed, 2),
                             "tolerance_cm": MOUNT_TRANSLATE_TOLERANCE_M * 100.0,
                             "budget_s": MOUNT_TRANSLATE_BUDGET_S,
-                            "converged": converged})
+                            "converged": converged,
+                            "diverged": self.last_translate_diverged})
         return residual
 
     async def _descend_without_estimate(self, altitude_m: float) -> float:

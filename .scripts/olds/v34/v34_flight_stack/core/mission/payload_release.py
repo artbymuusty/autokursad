@@ -12,6 +12,7 @@ from core.config.parameters import (
     PAYLOAD_FINAL_FORWARD_M, PAYLOAD_RELEASE_ALTITUDE_TOLERANCE_M,
     LOW_ALT_VISION_LIMIT_M, PAYLOAD_FINAL_POSE_DELAY_S,
     PAYLOAD_DETACH_HOLD_MAX_S, PAYLOAD_ON_TARGET_RADIUS_M,
+    PAYLOAD_RELEASE_MAX_GROUND_SPEED_M_S, PAYLOAD_RELEASE_RETRY_ALTITUDE_M,
     PAYLOAD_ON_TARGET_Z_TOLERANCE_M, PAYLOAD_MOUNT_OFFSET_BODY_M,
     PAYLOAD_RELEASE_HOLD_MAX_S,
 )
@@ -43,6 +44,12 @@ class PayloadReleaseService:
         # target is usually no longer detectable (see ADR-010 P1) and the
         # last committed value is then the best knowable answer.
         self._payload_index = 0
+        # E4e: son release_and_verify cagrisinda yuk ARAC UZERINDE mi kaldi.
+        # gorev2_fsm bunu okuyup interlock'u isaretleyip isaretlemeyecegine
+        # karar veriyor -- release_and_verify'in DONUSU bu is icin
+        # kullanilamaz, cunku o marker dogrulamasidir (basarili bir
+        # birakmada bile False olabilir).
+        self.last_payload_retained = False
         self._last_offset_cm = None
         self._last_offset_alt_m = None
 
@@ -65,7 +72,7 @@ class PayloadReleaseService:
         data.update(fields)
         self._publish("PAYLOAD_STATE", shape_type, data=data)
 
-    async def _staged_approach(self, shape_type: str) -> None:
+    async def _staged_approach(self, shape_type: str) -> bool:
         """Görev 2 Rapor (operatör revizyonu, 2026-08-13): '1. yük bırakma
         görevi' / '2. yük bırakma görevi' -- 15m'den (Gorev2Orchestrator
         zaten oradan çağırıyor) PAYLOAD_APPROACH_ALTITUDES_M listesindeki
@@ -73,8 +80,19 @@ class PayloadReleaseService:
         PAYLOAD_FINAL_FORWARD_M kadar ileri kay. Ara adımlardan biri
         yakınsayamazsa akışı durdurmak yerine devam edilir (best-effort --
         alçalmanın ortasında durup hiç bırakmamak, hafif kusurlu bir
-        pozisyondan bırakmaktan daha kötüdür)."""
+        pozisyondan bırakmaktan daha kötüdür).
+
+        E4e İSTİSNASI (2026-09-03) -- BU GENEL FELSEFEYLE BİLEREK ÇELİŞİR:
+        yukarıdaki best-effort kuralı ARA adımlar için aynen geçerlidir, ama
+        SON adım için release_and_verify'daki kapı onu TERSİNE ÇEVİRİR.
+        Gerekçe: kural "hafif kusurlu bir pozisyon" varsayımıyla yazılmıştı
+        ve ölçüm o varsayımı çürüttü -- son adımın yakınsamaması 8 bırakmada
+        2.121-10.185 m'lik ıskalarla eşleşiyor, yakınsaması 0.059-0.885 m ile.
+        "Hafif kusurlu" ile "10 m öteye bırakmak" aynı şey değildir; bu yüzden
+        ve YALNIZCA son adımda, hiç bırakmamak tercih edilir.
+        Ayrıntı: docs/gorevE4e-plan.md."""
         final_step = len(PAYLOAD_APPROACH_ALTITUDES_M)
+        final_converged = False
         for step_index, altitude_m in enumerate(PAYLOAD_APPROACH_ALTITUDES_M, start=1):
             await self._track_offset(shape_type)
             self._publish_state(shape_type, descent_step=f"{step_index}/{final_step}",
@@ -86,28 +104,77 @@ class PayloadReleaseService:
             # close enough to keep the target in frame -- tightening them
             # would spend time converging at 10 m and 5 m for no benefit.
             is_final = step_index == final_step
-            converged = await self.centering.go_to_and_center(
-                shape_type, altitude_m=altitude_m,
-                alt_tolerance_m=PAYLOAD_RELEASE_ALTITUDE_TOLERANCE_M if is_final else None)
-            if is_final:
-                # D3: the vision loop above kept the target CENTRED, so its
-                # last committed fix is the cleanest one available. Only now
-                # is the mount offset applied -- as a translation of the hold
-                # point -- and the descent finished open-loop on it. Doing it
-                # the other way round (biasing the vision error) corrupted the
-                # measurement and bought nothing.
-                mount = PAYLOAD_MOUNT_OFFSET_BODY_M.get(shape_type)
-                if mount:
-                    reached = await self.centering.descend_to_release(
-                        shape_type, altitude_m, mount)
-                    converged = abs(reached - altitude_m) <= PAYLOAD_RELEASE_ALTITUDE_TOLERANCE_M
+            converged = await self._approach_step(shape_type, altitude_m, is_final)
             await self._track_offset(shape_type)
             if not converged:
                 logger.warning(f"Yaklaşma adımı yakınsamadı ({altitude_m}m) -- devam ediliyor.")
                 self._publish("PAYLOAD_APPROACH_STEP_TIMED_OUT", shape_type, severity=Severity.WARN,
                               data={"shape_type": shape_type, "altitude_m": altitude_m})
+            if is_final:
+                final_converged = converged
 
         await self.centering.nudge_forward(PAYLOAD_FINAL_FORWARD_M)
+        return final_converged
+
+    async def _approach_step(self, shape_type: str, altitude_m: float, is_final: bool) -> bool:
+        """Tek bir yaklaşma adımı. E4e'de ayrı metoda çıkarıldı çünkü guard
+        tetiklendiğinde SON adım tek başına tekrar edilebilmeli."""
+        converged = await self.centering.go_to_and_center(
+            shape_type, altitude_m=altitude_m,
+            alt_tolerance_m=PAYLOAD_RELEASE_ALTITUDE_TOLERANCE_M if is_final else None)
+        if is_final:
+            # D3: the vision loop above kept the target CENTRED, so its
+            # last committed fix is the cleanest one available. Only now
+            # is the mount offset applied -- as a translation of the hold
+            # point -- and the descent finished open-loop on it. Doing it
+            # the other way round (biasing the vision error) corrupted the
+            # measurement and bought nothing.
+            mount = PAYLOAD_MOUNT_OFFSET_BODY_M.get(shape_type)
+            if mount:
+                reached = await self.centering.descend_to_release(
+                    shape_type, altitude_m, mount)
+                converged = abs(reached - altitude_m) <= PAYLOAD_RELEASE_ALTITUDE_TOLERANCE_M
+        return converged
+
+    async def _release_gate_ok(self, shape_type: str, final_converged: bool) -> bool:
+        """E4e Guard 2 -- servo ateslenmeden once son kontrol.
+
+        BIRINCIL KAPI: son yaklasma adimi YAKINSADI MI. 8 birakmada kusursuz
+        ayrisiyor -- yakinsayan 0.059-0.885 m, yakinsamayan 2.121-10.185 m.
+        Ayrica _mount_translate'in iraksama korumasi tetiklendiyse (Guard 1)
+        kapi kosulsuz kapalidir.
+
+        IKINCIL KAPI: yer hizi. KESTIRIM ARIZASINA KORDUR ve bu bilincli --
+        hiz EKF'ten okunur ve run4'te birakma aninda EKF 0.05 m/s bildirirken
+        gercek 3.00 m/s idi. Yalnizca kaba hareketi yakalar; birincil kapi
+        yerine gecmez. Hiz okunamazsa kapi ACIK sayilir (telemetri kaybi
+        yuzunden birakma engellenmemeli -- birincil kapi zaten devrede)."""
+        diverged = bool(getattr(self.centering, "last_translate_diverged", False))
+        speed = None
+        try:
+            vn, ve, _vd = await self.flight.get_velocity_ned()
+            speed = (vn ** 2 + ve ** 2) ** 0.5
+        except Exception:  # noqa: BLE001 -- olcum eksikligi birakmayi engellemez
+            speed = None
+        speed_ok = speed is None or speed <= PAYLOAD_RELEASE_MAX_GROUND_SPEED_M_S
+        ok = final_converged and not diverged and speed_ok
+        data = {"shape_type": shape_type, "passed": ok,
+                "final_step_converged": final_converged,
+                "translate_diverged": diverged,
+                "ground_speed_m_s": None if speed is None else round(speed, 3),
+                "max_ground_speed_m_s": PAYLOAD_RELEASE_MAX_GROUND_SPEED_M_S,
+                "ground_speed_ok": speed_ok,
+                "ground_speed_note": "EKF kaynakli -- kestirim arizasina kor"}
+        if ok:
+            self._publish("PAYLOAD_RELEASE_GATE_PASSED", shape_type, data=data)
+        else:
+            logger.warning("[PAYLOAD_RELEASE_GATE_BLOCKED] %s: yakinsadi=%s iraksadi=%s "
+                           "hiz=%s m/s (sinir %.2f)", shape_type, final_converged, diverged,
+                           "?" if speed is None else f"{speed:.3f}",
+                           PAYLOAD_RELEASE_MAX_GROUND_SPEED_M_S)
+            self._publish("PAYLOAD_RELEASE_GATE_BLOCKED", shape_type,
+                          severity=Severity.WARN, data=data)
+        return ok
 
     async def _altitude_m(self):
         try:
@@ -194,7 +261,43 @@ class PayloadReleaseService:
                           data={"shape_type": shape_type})
             return False
 
-        await self._staged_approach(shape_type)
+        self.last_payload_retained = False
+        final_converged = await self._staged_approach(shape_type)
+
+        # E4e Guard 2: SERVO KAPISI. Bkz. _staged_approach docstring'indeki
+        # "E4e ISTISNASI" -- bu kapi, best-effort politikasini YALNIZCA son
+        # adim icin tersine cevirir ve bu bilincli bir istisnadir.
+        if not await self._release_gate_ok(shape_type, final_converged):
+            # (ii) Tirman ve BIR KEZ tekrar dene. Tirmanmak iki isi birden
+            # yapar: LOW_ALT_VISION_LIMIT_M = 2.0 uzerine cikip gorusu geri
+            # kazandirir, ve kestirimin en kotu oldugu guverte bolgesinden
+            # cikar (olculdu: EKF hiz kazanci 8-30 m'de 0.992, 0.8 m altinda
+            # 0.084).
+            logger.warning("[PAYLOAD_RELEASE_RETRY] %s: kapi kapali -- %.1f m'ye "
+                           "tirmanilip son adim BIR KEZ tekrarlanacak.",
+                           shape_type, PAYLOAD_RELEASE_RETRY_ALTITUDE_M)
+            self._publish("PAYLOAD_RELEASE_RETRY", shape_type, severity=Severity.WARN,
+                          data={"shape_type": shape_type,
+                                "retry_altitude_m": PAYLOAD_RELEASE_RETRY_ALTITUDE_M})
+            await self._approach_step(shape_type, PAYLOAD_RELEASE_RETRY_ALTITUDE_M, False)
+            final_converged = await self._approach_step(
+                shape_type, PAYLOAD_APPROACH_ALTITUDES_M[-1], True)
+            await self.centering.nudge_forward(PAYLOAD_FINAL_FORWARD_M)
+
+            if not await self._release_gate_ok(shape_type, final_converged):
+                # (iii) ATLA. Yuk ARAC UZERINDE KALIR ve bu ACIKCA bildirilir:
+                # gorev2_fsm bunu okuyup interlock'u "birakildi" isaretlemez,
+                # boylece Gorev 3'un onkosulu (her iki yuk de birakilmis
+                # olmali) tasarlandigi gibi Gorev 3'e girmeyi engeller.
+                self.last_payload_retained = True
+                logger.critical("[PAYLOAD_RETAINED] %s: tekrar deneme de basarisiz -- "
+                                "SERVO ATESLENMIYOR, yuk aracta kaliyor.", shape_type)
+                self._publish("PAYLOAD_RETAINED", shape_type, severity=Severity.CRITICAL,
+                              data={"shape_type": shape_type,
+                                    "payload_index": self._payload_index,
+                                    "reason": "release_gate_blocked_after_retry"})
+                self._publish_state(shape_type, released=False, retained=True)
+                return False
 
         await self._publish_release_offset(shape_type)
 
