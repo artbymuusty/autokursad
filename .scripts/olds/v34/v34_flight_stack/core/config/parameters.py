@@ -263,7 +263,14 @@ MISSION_RESUME_MIN_INTERVAL_S: float = 6.0
 # orchestrator with Gorev2Orchestrator.__new__() to bypass __init__, so the
 # _rejoin_route_axis() call this flag enables read a self._route_axis that
 # the bypassed __init__ never set -- AttributeError, not a flight bug.
-ENABLE_ROUTE_REJOIN: bool = False
+# ACILDI (F2-a madde 4, 2026-09-04). Onkosullar tamamlandi:
+#   madde 1 -- test fixture'lari _route_axis'i kuruyor (AttributeError gitti)
+#   madde 2 -- rejoin yalnizca Offboard'a GERCEKTEN girildiyse calisiyor
+#              (F1 basarisizlik yolunda 15 s bosa bekleme riski kesildi)
+#   madde 3 -- kod yolunun ilk 12 testi yazildi (once SIFIR kapsam vardi)
+# Asagidaki 'DEFAULT FALSE' gerekcesi TARIHSEL olarak birakildi; ADR-009
+# resume zamanlamasina etkisi bu acilisla ILK KEZ olculuyor.
+ENABLE_ROUTE_REJOIN: bool = True
 # Convergence tolerance for the rejoin manoeuvre is GPS_POSITION_CONVERGENCE_
 # TOLERANCE_M -- goto_global_position_and_wait() is reused UNCHANGED (it is
 # not parameterised for tolerance), so this is that same "close enough" as
