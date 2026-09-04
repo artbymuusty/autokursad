@@ -1040,12 +1040,35 @@ class Gorev3PickupPhase:
                                 "offset_before": [round(_off_before[0], 4), round(_off_before[1], 4)],
                                 "offset_after": [round(_off_after[0], 4), round(_off_after[1], 4)],
                                 "shift_mm": round(_d * 1000, 1)})
+        # O1 (Gorev G, 2026-09-04): SALIM REFERANSI ARTIK TEK KAYNAK.
+        #
+        # Buraya kadar iki ayri cagri extend_winch_for()'a IKI FARKLI irtifa
+        # veriyordu ve ikincisi vinci GERI CEKIYORDU:
+        #   :924  extend_winch_for(GOREV3_DESCENT_ALTITUDE_M=0.30) -> salim 0.330 m
+        #   aktuator, her denemede: extend_winch_for(_pick_alt)    -> salim 0.124-0.191 m
+        # Olculdu (docs/gorevG-FAIL3-vinc-analiz.md, 4 bagimsiz kosum): ikinci
+        # cagri vinci 113-186 mm geri cekiyor ve insertion TAM O KADAR
+        # bozuluyor (r1 ve r3b'de 1.00 oranla, milimetre duzeyinde birebir).
+        #
+        # NEDEN NOMINAL DEGER DOGRU KAYNAK, olculen _pick_alt degil:
+        # alma penceresi boyunca araci tutan sey _start_hold()'dur ve o
+        # -GOREV3_DESCENT_ALTITUDE_M'i komut eder. _pick_alt ise pencereden
+        # ONCE alinmis TEK bir orneklemedir ve pencereyi temsil etmedigi
+        # olculdu: dort kosumda _pick_alt 0.094-0.161 m okurken, kancanin
+        # gercek dunya pozundan geri hesaplanan pencere irtifasi ~0.44 m
+        # cikiyor. Yani _pick_alt gecici bir alcalma dibini yakaliyor,
+        # tutmanin oturdugu irtifayi degil.
+        #
+        # _pick_alt OLCUM OLARAK KALIYOR (asagidaki olayda ve
+        # [KANCA_DENGE] satirinda) -- yalnizca SALIM HESABINDA
+        # kullanilmiyor.
         self._publish("GOREV3_PICKUP_STEP", "pickup_attempt_start",
                       data={"altitude_m": (round(_pick_alt, 3)
-                                           if _pick_alt is not None else None)})
+                                           if _pick_alt is not None else None),
+                            "payout_reference_alt_m": GOREV3_DESCENT_ALTITUDE_M})
         try:
             picked = await self.actuator.activate_pickup_mechanism(
-                altitude_m=_pick_alt, on_retry=_on_retry)
+                altitude_m=GOREV3_DESCENT_ALTITUDE_M, on_retry=_on_retry)
         finally:
             await _stop_hold()
         _trace.cancel()

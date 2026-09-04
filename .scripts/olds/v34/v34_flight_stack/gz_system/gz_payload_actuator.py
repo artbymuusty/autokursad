@@ -1462,6 +1462,42 @@ class GzPayloadActuator(IPayloadActuator):
                 hook_payout_margin_m(), HOOK_WINCH_MAX_EXTENSION_M,
                 HOOK_WINCH_MAX_EXTENSION_M + deck_height_m
                 - HOOK_PAYOUT_CHAIN_OFFSET_M - hook_payout_margin_m())
+        # O1 IKINCI KATMAN (Gorev G, 2026-09-04): BU CAGRI ASLA GERI CEKME
+        # URETMEZ.
+        #
+        # Cagrilarin argumani :937'de tek kaynaga baglandi; bu ise o
+        # sozlesmenin AKTUATOR TARAFINDAKI korumasi. extend_winch_for
+        # adi ustunde bir SALIM cagrisidir: cagiran ne verirse versin,
+        # halihazirda ulasilmis salimin ALTINA inmek bu fonksiyonun isi
+        # degil. Geri cekme icin ayri ve acikca isimlendirilmis yol var --
+        # set_winch(HOOK_WINCH_RETRACT_M) -- ve denemeler arasi geri cekme
+        # onu kullaniyor, yani bu koruma o yolu ETKILEMEZ.
+        #
+        # NEDEN GEREKLI: olculdu (docs/gorevG-FAIL3-vinc-analiz.md), gorev
+        # katmani 0.330 m salim kurduktan sonra aktuator her denemede
+        # 0.124-0.191 m hesaplayip vinci 113-186 mm GERI CEKIYORDU -- tam da
+        # kancanin en asagida olmasi gereken anda. insertion tam o kadar
+        # bozuluyordu.
+        current = None
+        try:
+            ws = self.winch_state()
+            if ws is not None:
+                current = ws.get("achieved_m")
+        except Exception:  # noqa: BLE001 -- olcum yoksa koruma da yok, davranis eski
+            current = None
+        if current is not None and current > payout + 1e-6:
+            logger.warning(
+                "[HOOK] GERI CEKME ENGELLENDI: hesaplanan salim %.3f m, halihazirda "
+                "ulasilan %.3f m -- %.1f mm geri cekilecekti. Salim %.3f m'de "
+                "BIRAKILIYOR. (extend_winch_for bir SALIM cagrisidir; geri cekme "
+                "icin set_winch(HOOK_WINCH_RETRACT_M) kullanilir.)",
+                payout, current, (current - payout) * 1000.0, current)
+            self._last_payout_m = current
+            self._last_payout_wanted_m = wanted
+            self._last_payout_blocked_retract_m = current - payout
+            return True
+
+        self._last_payout_blocked_retract_m = None
         self._last_payout_m = payout
         self._last_payout_wanted_m = wanted
         return await self.set_winch(payout)
