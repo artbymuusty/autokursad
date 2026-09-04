@@ -12,11 +12,15 @@ class Gorev3TransportPhase:
         self.position_store = position_store
         self.centering = centering
 
-    async def run(self) -> None:
-        logger.info("Görev 3 Faz 2 (Düşük Hızlı Taşıma) Başlatıldı.")
-        kirmizi_ucgen_point = self.position_store.get('KIRMIZI_UCGEN')
+    async def run(self, target_shape: str = None) -> None:
+        """`target_shape`: IKINCI birakilan sekil (GOREV I / A). Tasima
+        hedefi "her zaman Kirmizi Ucgen" DEGIL -- ilk yuk ucgense, tasima
+        hedefi altigendir. Verilmezse eski davranisa dusulur."""
+        shape = target_shape or "KIRMIZI_UCGEN"
+        logger.info("Görev 3 Faz 2 (Düşük Hızlı Taşıma) Başlatıldı -- hedef: %s", shape)
+        kirmizi_ucgen_point = self.position_store.get(shape)
         if kirmizi_ucgen_point is None:
-            raise RuntimeError("Kırmızı Üçgen konumu bulunamadı!")
+            raise RuntimeError(f"{shape} konumu bulunamadı!")
 
         if GOREV3_TRANSIT_SPEED_M_S is None:
             raise RuntimeError(

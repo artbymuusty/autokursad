@@ -103,6 +103,32 @@ class PayloadInterlock:
     def release_order(self) -> list:
         return list(self._order)
 
+    # -- KIMLIK: "ilk/ikinci birakilan" (Gorev I / A, 2026-09-04) ---------
+    #
+    # KUSUR: sistem "first payload" = MAVI_ALTIGEN diye SABIT varsayiyordu.
+    # Gercekte ilk yuk, hangi sekil ONCE birakildiysa odur -- ucgen de
+    # olabilir. Bu iki ozellik kimligi SIRADAN turetiyor, sekilden degil.
+    #
+    # `_order` zaten tamamlanma sirasini tutuyordu (2026-09-01, V33 spec
+    # madde 11); eksik olan tek sey onu "ilk/ikinci" diye disari vermekti.
+    # Gorev 3'un "ilk biraktigim yukun konumuna don" mantigi buna dayanir.
+    #
+    # Henuz birakma olmadiysa None doner -- cagiran taraf bir sekil
+    # UYDURMAMALIDIR.
+    @property
+    def first_released(self):
+        """ILK birakilan seklin adi, yoksa None."""
+        return self._order[0] if len(self._order) >= 1 else None
+
+    @property
+    def second_released(self):
+        """IKINCI birakilan seklin adi, yoksa None."""
+        return self._order[1] if len(self._order) >= 2 else None
+
+    def release_index(self, shape: str):
+        """`shape` kacinci birakildi (1 tabanli), birakilmadiysa None."""
+        return self._order.index(shape) + 1 if shape in self._order else None
+
     def both_released(self) -> bool:
         return len(self._order) == 2
 

@@ -115,8 +115,14 @@ class PayloadMissionSequencer:
         else:
             self.interlock.mark_released("MAVI_ALTIGEN")
             self.position_store.mark_payload_released("MAVI_ALTIGEN")
+        # GOREV I / A: olay ADI sekle bagli (geriye donuk uyum), ama
+        # icindeki `order_index` TAMAMLANMA SIRASINI tasiyor. Dashboard ve
+        # Gorev 3 sirayi buradan okur -- olay adindan degil, cunku ucgen
+        # once birakilirsa ONCE "..._2_COMPLETE" yayinlanir.
         self._publish("PAYLOAD_MISSION_1_COMPLETE",
-                      data={"verified": result, "retained": retained})
+                      data={"verified": result, "retained": retained,
+                            "shape": "MAVI_ALTIGEN",
+                            "order_index": self.interlock.release_index("MAVI_ALTIGEN")})
         return result and not retained
 
     async def execute_payload_mission_2(self) -> bool:
@@ -161,8 +167,14 @@ class PayloadMissionSequencer:
         else:
             self.interlock.mark_released("KIRMIZI_UCGEN")
             self.position_store.mark_payload_released("KIRMIZI_UCGEN")
+        # GOREV I / A: olay ADI sekle bagli (geriye donuk uyum), ama
+        # icindeki `order_index` TAMAMLANMA SIRASINI tasiyor. Dashboard ve
+        # Gorev 3 sirayi buradan okur -- olay adindan degil, cunku ucgen
+        # once birakilirsa ONCE "..._2_COMPLETE" yayinlanir.
         self._publish("PAYLOAD_MISSION_2_COMPLETE",
-                      data={"verified": result, "retained": retained})
+                      data={"verified": result, "retained": retained,
+                            "shape": "KIRMIZI_UCGEN",
+                            "order_index": self.interlock.release_index("KIRMIZI_UCGEN")})
         return result and not retained
 
     async def execute_all(self) -> None:

@@ -51,9 +51,19 @@ class Gorev3Orchestrator:
         self.context.transition_to(MissionPhase.GOREV3_START)
         self._publish("GOREV3_HOOK_INVOKED")
 
+        # GOREV I / A: hedefler SEKILDEN degil, TAMAMLANMA SIRASINDAN.
+        # "ilk biraktigim yuku al, ikincinin yanina goturur" -- hangi sekil
+        # once birakildiysa alma hedefi odur, digeri tasima hedefidir.
+        first = self.interlock.first_released
+        second = self.interlock.second_released
+        self._publish("GOREV3_TARGETS_RESOLVED",
+                      f"alma={first} tasima={second}",
+                      data={"pickup_shape": first, "transport_shape": second,
+                            "release_order": self.interlock.release_order})
+
         self.context.transition_to(MissionPhase.GOREV3_RUNNING, reason="pickup")
         self._publish("GOREV3_PHASE_STARTED", "pickup", data={"phase": "pickup"})
-        pickup_ok = await self.pickup_phase.run()
+        pickup_ok = await self.pickup_phase.run(first)
         if not pickup_ok:
             logger.error("GOREV 3 FAZ 1 (ALMA) BASARISIZ")
             self.context.transition_to(MissionPhase.MISSION_FAILED, reason="gorev3_pickup_failed")
@@ -62,7 +72,7 @@ class Gorev3Orchestrator:
 
         self.context.transition_to(MissionPhase.GOREV3_RUNNING, reason="transport")
         self._publish("GOREV3_PHASE_STARTED", "transport", data={"phase": "transport"})
-        await self.transport_phase.run()
+        await self.transport_phase.run(second)
 
         self.context.transition_to(MissionPhase.GOREV3_RUNNING, reason="redrop")
         self._publish("GOREV3_PHASE_STARTED", "redrop", data={"phase": "redrop"})

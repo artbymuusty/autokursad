@@ -154,9 +154,20 @@ HOOK_ALIGN_SETTLE_S = 1.7
 # Tirmanis adimlari 1/2/3 m oldugu icin bu esik cok gevsek
 # secildi -- amac 'gercekten kalkti mi', 'ne kadar' degil.
 PICKUP_LIFT_CONFIRM_M = 0.30
-# Gorev 3 kirmizi payload'i alir (mavi altigene birakilan).
+# GOREV I / A (2026-09-04): HEDEF ARTIK SABIT DEGIL.
+#
+# Buradaki iki sabit "Gorev 3 kirmizi payload'i alir (mavi altigene
+# birakilan)" varsayimini tasiyordu. O varsayim YANLIS: ilk yuk, hangi
+# sekil ONCE birakildiysa odur ve ucgen de olabilir (V33 spec madde 11;
+# interlock 2026-09-01'den beri sirayi zaten tutuyor).
+#
+# Fazin hedefi artik run(target_shape=...) ile disaridan geliyor ve rengi
+# SHAPE_TO_COLOR'dan turetiliyor. Asagidaki sabitler yalnizca GERI DUSUS:
+# cagiran bir sekil vermezse eski davranis korunur, boylece mevcut
+# testler ve alternatif giris noktalari kirilmaz.
 SEARCH_CENTER_RED = "red"
 SHAPE_TO_COLOR_RED = SEARCH_CENTER_RED
+DEFAULT_PICKUP_SHAPE = "MAVI_ALTIGEN"
 
 logger = logging.getLogger(__name__)
 
@@ -188,6 +199,11 @@ class Gorev3PickupPhase:
         self.position_store = position_store
         self.visibility_strategy = visibility_strategy
         self.centering = centering
+        # GOREV I / A: run() bunlari hedefe gore ayarlar. Yardimci metotlar
+        # (_settle_hook_onto, _align_hook_on_receiver) run()'dan cagriliyor
+        # ama testler onlari dogrudan da cagirabiliyor -- varsayilan burada.
+        self._shape = DEFAULT_PICKUP_SHAPE
+        self._color = SHAPE_TO_COLOR_RED
 
     def _publish(self, code: str, message: str = "", data: dict = None,
                  severity=None):
@@ -414,7 +430,7 @@ class Gorev3PickupPhase:
             _settle_polls = 0
             for _ in range(10):
                 g = getattr(self.actuator, "seating_geometry", lambda _c: None)(
-                    SHAPE_TO_COLOR_RED)
+                    self._color)
                 if g is None or g.rel_speed_mps <= HOOK_SETTLE_MAX_SPEED_MPS:
                     break
                 _settle_polls += 1
@@ -503,7 +519,7 @@ class Gorev3PickupPhase:
         for i in range(1, HOOK_ALIGN_MAX_CORRECTIONS + 1):
             off = None
             try:
-                off = self.actuator.hook_to_receiver_offset_world(SHAPE_TO_COLOR_RED)
+                off = self.actuator.hook_to_receiver_offset_world(self._color)
             except Exception:  # noqa: BLE001
                 off = None
             if off is None:
@@ -523,7 +539,7 @@ class Gorev3PickupPhase:
             await self.flight.goto_position_ned_and_hold(
                 n0 + d_north, e0 + d_east, -alt_m, aligned_yaw, HOOK_ALIGN_SETTLE_S)
         try:
-            off = self.actuator.hook_to_receiver_offset_world(SHAPE_TO_COLOR_RED)
+            off = self.actuator.hook_to_receiver_offset_world(self._color)
             if off is not None:
                 last = math.hypot(off[0], off[1])
         except Exception:  # noqa: BLE001
@@ -532,12 +548,26 @@ class Gorev3PickupPhase:
                        f"{last * 1000:.1f} mm" if last is not None else "olculemedi")
         return last
 
-    async def run(self) -> bool:
-        logger.info("Görev 3 Faz 1 (Alma) Başlatıldı.")
+    async def run(self, target_shape: str = None) -> bool:
+        """`target_shape`: ILK birakilan seklin adi (GOREV I / A).
+        Verilmezse eski davranisa dusulur (DEFAULT_PICKUP_SHAPE)."""
+        from gz_system.gz_payload_actuator import SHAPE_TO_COLOR as _S2C
+        shape = target_shape or DEFAULT_PICKUP_SHAPE
+        # Yukun RENGI de sekle bagli: altigene KIRMIZI, ucgene MAVI yuk
+        # birakiliyor. Sabit "red" varsayimi, ucgen once birakildiginda
+        # aktuatoru YANLIS yuke baktiriyordu.
+        self._color = _S2C.get(shape, SHAPE_TO_COLOR_RED)
+        self._shape = shape
+        logger.info("Görev 3 Faz 1 (Alma) Başlatıldı -- hedef: %s (yuk rengi: %s)",
+                    shape, self._color)
+        self._publish("GOREV3_PICKUP_TARGET", shape,
+                      data={"shape": shape, "payload_color": self._color,
+                            "source": "interlock.first_released" if target_shape
+                                      else "varsayilan (geri dusus)"})
 
-        mavi_altigen_point = self.position_store.get('MAVI_ALTIGEN')
+        mavi_altigen_point = self.position_store.get(shape)
         if mavi_altigen_point is None:
-            raise RuntimeError("Mavi Altıgen konumu bulunamadı! Görev 3 başlatılamaz.")
+            raise RuntimeError(f"{shape} konumu bulunamadı! Görev 3 başlatılamaz.")
 
         logger.info(f"Mavi Altıgen konumuna {GOREV3_TRANSIT_ALTITUDE_M}m irtifada gidiliyor: "
                     f"{mavi_altigen_point.gps_lat}, {mavi_altigen_point.gps_lon}")
@@ -755,7 +785,7 @@ class Gorev3PickupPhase:
         try:
             # Gercek kanca pozundan olculen yanal hata (magnet DEGIL: bu
             # yapida manyetik kuvvet simule edilmiyor).
-            truth_gap = self.actuator.hook_lateral_error_m(SHAPE_TO_COLOR_RED)
+            truth_gap = self.actuator.hook_lateral_error_m(self._color)
         except Exception:  # noqa: BLE001
             pass
         try:
@@ -836,11 +866,11 @@ class Gorev3PickupPhase:
                                         lambda: None),
             goto_ned_and_hold=lambda n, e, alt, yaw: self.flight.goto_position_ned_and_hold(
                 n, e, -alt, yaw, 1.2),
-            color=SHAPE_TO_COLOR_RED,
+            color=self._color,
             # SALT OLCUM (mekanizma 2c): gorus tahmininin yaninda gercek
             # yanal hatayi da kaydeder, karar akisina girmez.
             get_truth_lateral_m=lambda: getattr(
-                self.actuator, "hook_lateral_error_m", lambda _c: None)(SHAPE_TO_COLOR_RED))
+                self.actuator, "hook_lateral_error_m", lambda _c: None)(self._color))
         vis = await aligner.align(HOOK_VISUAL_ALIGN_ALTITUDE_M, aligned_yaw,
                                   tolerance_m=HOOK_VISUAL_ALIGN_TOLERANCE_M)
         logger.info("[GORSEL_HIZA] %s: son hata=%s, %d iterasyon, %d tespit, "
@@ -1100,7 +1130,7 @@ class Gorev3PickupPhase:
 
         # Tirmanistan ONCEKI yuk irtifasi -- asagidaki dogrulama "yuk aracla
         # birlikte yukseldi mi" sorusunu buna gore cevapliyor.
-        payload_z_before = self.actuator.payload_altitude_m(SHAPE_TO_COLOR_RED)
+        payload_z_before = self.actuator.payload_altitude_m(self._color)
 
         for alt in GOREV3_PICKUP_VERIFY_CLIMB_STEPS_M:
             logger.info(f"Yükseliniyor: {alt}m")
@@ -1146,7 +1176,7 @@ class Gorev3PickupPhase:
         attached = self.actuator.is_hook_attached()
         lifted_m = None
         if payload_z_before is not None:
-            z_now = self.actuator.payload_altitude_m(SHAPE_TO_COLOR_RED)
+            z_now = self.actuator.payload_altitude_m(self._color)
             if z_now is not None:
                 lifted_m = z_now - payload_z_before
 

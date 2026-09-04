@@ -577,10 +577,27 @@ class MissionState:
         elif code == "GPS_SAVE_CONFIRMED":
             self.gps_save_count += 1
 
-        elif code == "PAYLOAD_MISSION_1_COMPLETE":
-            self.payload1_complete = True
-        elif code == "PAYLOAD_MISSION_2_COMPLETE":
-            self.payload2_complete = True
+        elif code in ("PAYLOAD_MISSION_1_COMPLETE", "PAYLOAD_MISSION_2_COMPLETE"):
+            # GOREV I / A: gosterge artik SIRAYA bagli, sekle degil.
+            #
+            # KUSUR: olay ADLARI sekle sabit -- "..._1_COMPLETE" her zaman
+            # MAVI_ALTIGEN'i, "..._2_COMPLETE" her zaman KIRMIZI_UCGEN'i
+            # anlatiyor (gorev2_fsm.py'de iki ayri metot). Dashboard bunlari
+            # SIRA sanip payload1/payload2 gostergelerine bagliyordu; ucgen
+            # once birakildiginda ONCE "..._2_COMPLETE" geldigi icin
+            # "1. yuk" gostergesi karanlik kaliyordu.
+            #
+            # Artik `order_index` okunuyor (gorev2_fsm doldurur). Alan yoksa
+            # (eski log dosyalari) eski davranisa dusulur -- gecmis
+            # kayitlarin okunabilirligi korunur.
+            idx = (data or {}).get("order_index")
+            if idx is None:
+                idx = 1 if code == "PAYLOAD_MISSION_1_COMPLETE" else 2
+            if idx == 1:
+                self.payload1_complete = True
+            elif idx == 2:
+                self.payload1_complete = True
+                self.payload2_complete = True
 
         elif code == "GOREV3_PHASE_STARTED":
             ph = data.get("phase") or e.get("message") or ""
