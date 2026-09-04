@@ -395,3 +395,54 @@ anlamlı (K6 sonrası kalan artık vakalar için).
 projeye dokunmadan çağırıyor.
 
 Hiçbiri uygulanmadı.
+
+---
+
+# K6 ÖLÇÜMÜ — çakışma penceresi kapatıldı (2026-09-04)
+
+**Yöntem:** `k3_repro.py`'ın birebir kopyası, tek fark `pause_mission()` ile
+`offboard.start()` arasına **200 ms** bekleme. **Projeye hiç dokunulmadı.**
+Aynı SITL, aynı derleme, aynı 12 denemelik protokol.
+
+| | K3 (bekleme yok) | **K6 (bekleme 200 ms)** |
+|---|---|---|
+| başarısız | **5 / 12 (%41.7)** | **0 / 12 (%0)** |
+| `start()` süresi ortanca | FAIL 3.4 ms · OK 11.5 ms | **14.0 ms** (min 6.6, max 19.7) |
+| 3.4 ms'lik "sahte başarı" imzası | 5 kez | **hiç yok** |
+| sunucu ACK uyarısı | 25 | 39 |
+
+## Neden bu bir doğrulama
+
+1. **Başarısızlık tamamen kayboldu** — %41.7'den %0'a.
+2. **Zamanlama imzası da değişti:** K3'te başarısızlıkların ayırt edici işareti
+   3.4 ms'lik dönüştü (pause ACK'inin kalan yolu). K6'da **12 denemenin
+   hiçbirinde** o imza yok; hepsi gerçek MAVLink round-trip bandında
+   (ortanca 14.0 ms). Yani artık **her denemede komut fiilen gönderiliyor**.
+3. **ACK uyarısı arttı (25 → 39):** beklenen yön. Artık her deneme kendi 176
+   komutunu gerçekten gönderiyor, dolayısıyla her denemede geç gelen kendi
+   ACK'i "not-existing command" uyarısı üretiyor. Uyarının **kusurun kendisi
+   değil, komutun gönderildiğinin işareti** olduğu bir kez daha doğrulanıyor.
+
+Üçü birlikte, kök neden teşhisini (aynı `CommandIdentification`'lı iki 176
+komutunun çakışması) **bağımsız olarak doğruluyor**: pencereyi kapatınca
+belirti tamamen gidiyor.
+
+## Sınırlar (dürüstçe)
+
+- **n=12, tek oturum.** %0, "asla olmaz" demek değil; K3 tabanı da aynı
+  büyüklükteydi (5/12).
+- **200 ms ölçülerek seçilmedi**, ilk denemede tuttu. Gerçek alt sınır daha
+  küçük olabilir (round-trip ~11–14 ms). Uygulamadan önce 50/100/200 ms
+  taraması yapılmalı — görev bütçesine eklenen süre takip başına ödenir.
+- Bu ölçüm **tanı betiğinde**; projede `switch_to_offboard()` yolunda aynı
+  etkiyi göstermek ayrı bir koşum ister.
+
+## Durum
+
+Öneri sırası netleşti ve **değişmedi**: **K6 birincil** (mekanizmayı doğrudan
+kapatıyor, ölçümle doğrulandı), **K1 ikincil savunma**, **K5 elendi**
+(`stop()` de 176 gönderdiği için çakışmayı artırır).
+
+**İmplementasyona geçilmedi.** Sıradaki adım, onay verilirse, projenin
+`start_offboard()` yoluna ölçülmüş bir bekleme eklemek ve canlı görev
+koşumunda `OFFBOARD_SWITCH_FAILED` oranını yeniden ölçmek olur.
