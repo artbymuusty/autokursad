@@ -1609,6 +1609,28 @@ class GzPayloadActuator(IPayloadActuator):
             return None
         return achieved - deepest_mm / 1000.0
 
+    #: ALINACAK YUKUN RENGI (GOREV I / O-A, 2026-09-04).
+    #
+    # KUSUR, canli olculdu (B2): asagidaki iki yol
+    # SHAPE_TO_COLOR["MAVI_ALTIGEN"] sabitini kullaniyordu, yani HER ZAMAN
+    # KIRMIZI yuku olcuyordu. Ucgen once birakildiginda alinacak yuk MAVI
+    # olur; arac dogru yukun uzerinde dururken kapi 35.5 m otedeki kirmizi
+    # yuku olcuyor ve lateral 35497 mm okuyordu (kapi 17.5 mm).
+    #
+    # Varsayilan KIRMIZI kaliyor -- eski cagiranlar ve gercek/dual
+    # aktuatorler kirilmasin diye. Gorev 3 alma fazi run() icinde
+    # set_pickup_color() ile dogru rengi bildirir.
+    _pickup_color: str = SHAPE_TO_COLOR["MAVI_ALTIGEN"]
+
+    def set_pickup_color(self, color: str) -> None:
+        """Alinacak yukun rengini bildir ("red" / "blue")."""
+        if color:
+            self._pickup_color = color
+
+    @property
+    def pickup_color(self) -> str:
+        return self._pickup_color
+
     async def activate_pickup_mechanism(self, altitude_m=None,
                                         deck_height_m: float = HOOK_RECEIVER_DECK_HEIGHT_M,
                                         on_retry=None) -> bool:
@@ -1627,7 +1649,7 @@ class GzPayloadActuator(IPayloadActuator):
             await self.extend_winch_for(altitude_m, deck_height_m)
             payout = getattr(self, "_last_payout_m", None)
 
-            color = SHAPE_TO_COLOR["MAVI_ALTIGEN"]
+            color = self._pickup_color
             seated = await self._await_seating(color, HOOK_CONTACT_TIMEOUT_S)
             if self.last_seating_report is not None:
                 attempts_report.append(dict(self.last_seating_report, attempt=attempt))
@@ -1736,7 +1758,9 @@ class GzPayloadActuator(IPayloadActuator):
     async def activate_drop_mechanism(self) -> bool:
         """Görev 3 Faz 3, Adım 5: kancadaki yükü bırak (servo geri doner)."""
         # GRAB SERVO
-        color = SHAPE_TO_COLOR["MAVI_ALTIGEN"]        # payload_red
+        # GOREV I / O-A: birakilacak yuk, ALINAN yuktur -- rengi alma
+        # hedefinden gelir, sabit kirmizi DEGIL.
+        color = self._pickup_color
         logger.info("[HOOK] servo aciliyor -- yuk birakiliyor")
 
         # SONUCU DOGRULA, KOMUTU DEGIL (olculdu, 2026-08-23 kosusu).

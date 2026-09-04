@@ -584,6 +584,12 @@ class Gorev3PickupPhase:
         _set = getattr(self.visibility_strategy, "set_rect_class", None)
         if _set is not None:
             _set(self._rect_class)
+        # GOREV I / O-A: AKTUATOR de dogru yuku olcmeli. Oturma kapisi
+        # sabit "red" kullaniyordu; ucgen once birakildiginda 35.5 m
+        # otedeki yanlis yuke bakiyor ve yakalama HIC mumkun olmuyordu.
+        _setc = getattr(self.actuator, "set_pickup_color", None)
+        if _setc is not None:
+            _setc(self._color)
         logger.info("Görev 3 Faz 1 (Alma) Başlatıldı -- hedef: %s (yuk rengi: %s)",
                     shape, self._color)
         self._publish("GOREV3_PICKUP_TARGET", shape,

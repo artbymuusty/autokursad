@@ -54,6 +54,13 @@ class MockPayloadActuator(IPayloadActuator):
         return True
 
     # ---------------------------------------------------------- Görev 3 --
+    #: GOREV I / O-A: alinacak yukun rengi. Gorev 3 alma fazi bildirir.
+    _pickup_color: str = "red"
+
+    def set_pickup_color(self, color: str) -> None:
+        if color:
+            self._pickup_color = color
+
     async def activate_pickup_mechanism(self, altitude_m=None,
                                         deck_height_m=None, on_retry=None) -> bool:
         self.calls.append(('activate_pickup_mechanism', {}))

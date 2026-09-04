@@ -72,6 +72,13 @@ class RealPayloadActuator(IPayloadActuator):
         logger.warning("SIMULE edildi - gercek servo BAGLI DEGIL")
         return True
 
+    #: GOREV I / O-A: alinacak yukun rengi. Gorev 3 alma fazi bildirir.
+    _pickup_color: str = "red"
+
+    def set_pickup_color(self, color: str) -> None:
+        if color:
+            self._pickup_color = color
+
     async def activate_pickup_mechanism(self, altitude_m=None,
                                         deck_height_m=None, on_retry=None) -> bool:
         """Görev 3 Rapor Bölüm 5, Adım 6: Yük alma mekanizmasını aktifleştirir.

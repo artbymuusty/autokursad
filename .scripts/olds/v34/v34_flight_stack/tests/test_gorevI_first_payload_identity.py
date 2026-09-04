@@ -141,3 +141,55 @@ async def test_aranan_dikdortgen_sinifi_YUKUN_rengine_gore(shape, beklenen, tmp_
     assert faz._rect_class == beklenen
     assert strateji._rect_class == beklenen, \
         "strateji hala eski sinifi ariyor -- B1 kusuru geri geldi"
+
+
+# --------------------------------------------------------------------
+# O-A -- AKTUATOR de dogru yuku olcmeli (B2 kosumunda olculen kusur)
+# --------------------------------------------------------------------
+@pytest.mark.asyncio
+@pytest.mark.parametrize("shape,beklenen_renk,beklenen_sinif", [
+    ("MAVI_ALTIGEN", "red", "KIRMIZI_DIKDORTGEN"),
+    ("KIRMIZI_UCGEN", "blue", "MAVI_DIKDORTGEN"),
+])
+async def test_aktuator_ALMA_hedefinin_rengini_olcer(shape, beklenen_renk,
+                                                     beklenen_sinif, tmp_path):
+    """B2 kosumu (2026-09-04): aktuatorun oturma kapisi
+    SHAPE_TO_COLOR['MAVI_ALTIGEN'] sabitiyle HER ZAMAN kirmizi yuku
+    olcuyordu. Ucgen once birakildiginda arac DOGRU yukun uzerindeyken
+    kapi 35.5 m otedeki yanlis yuku olcuyor, lateral 35497 mm okuyor
+    (kapi 17.5 mm) ve yakalama HIC mumkun olmuyordu."""
+    from core.mission.gorev3_pickup import Gorev3PickupPhase
+    from core.mission.rectangle_alignment_strategy import RectangleAlignmentStrategy
+    from core.position_log.position_store import PositionStore
+    from mocks.mock_flight_backend import MockFlightBackend
+    from mocks.mock_camera_source import MockCameraSource
+    from mocks.mock_payload_actuator import MockPayloadActuator
+
+    akt = MockPayloadActuator()
+    faz = Gorev3PickupPhase(MockFlightBackend(), MockCameraSource(), None, akt,
+                            PositionStore(str(tmp_path / "p.json")),
+                            RectangleAlignmentStrategy(), centering=None)
+    try:
+        await faz.run(shape)          # konum kayitli degil -> erken cikis
+    except Exception:
+        pass
+    assert faz._color == beklenen_renk
+    assert faz._rect_class == beklenen_sinif
+    assert akt._pickup_color == beklenen_renk, (
+        "aktuator hala sabit rengi olcuyor -- B2 kusuru geri geldi")
+
+
+@pytest.mark.parametrize("metot", ["activate_pickup_mechanism",
+                                  "activate_drop_mechanism"])
+def test_gz_aktuator_metotlarinda_SABIT_renk_kalmadi(metot):
+    """Iki OLCUM YOLU da rengi self._pickup_color'dan almali.
+
+    Sinif govdesindeki varsayilan atama ve aciklama yorumu mesru --
+    bu test yalnizca metot GOVDELERINE bakar."""
+    import inspect
+    from gz_system.gz_payload_actuator import GzPayloadActuator
+    src = inspect.getsource(getattr(GzPayloadActuator, metot))
+    assert 'SHAPE_TO_COLOR["MAVI_ALTIGEN"]' not in src, \
+        f"{metot} hala sabit rengi olcuyor -- B2 kusuru geri geldi"
+    assert "self._pickup_color" in src, \
+        f"{metot} alma renginden okumuyor"
