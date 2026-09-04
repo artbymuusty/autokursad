@@ -12,6 +12,7 @@ from core.detection.camera_intrinsics import default_camera_intrinsics
 from gz_system.gz_payload_actuator import HOOK_WINCH_EXTEND_M
 from core.mission.visual_alignment import VisualHookAligner
 from core.config.parameters import (
+    HSV_MIN_AREA_RECT_BASE,
     GOREV3_CRUISE_ALTITUDE_M,
     GOREV3_TRANSIT_ALTITUDE_M,
     GOREV3_DESCENT_ALTITUDE_M,
@@ -41,6 +42,35 @@ HOOK_ALIGN_ALTITUDE_M = 1.2
 # ve kac kez denenecek (operator, 2026-08-23).
 HOOK_REACQUIRE_CLIMB_M = 1.0
 HOOK_REACQUIRE_MAX_CLIMBS = 3
+# TESPIT TAVANI (Gorev G / H1, 2026-09-04).
+#
+# Yukaridaki tirmanis KOSULSUZ YUKARI gidiyordu ve tetiklendiginde kendi
+# amacini imkansiz kiliyordu. Olculdu (docs/gorevG-H1-dogrulama.md):
+# yuk 0.14 x 0.05 m, dedektorun alan kapisi HSV_MIN_AREA_RECT_BASE = 400 px2
+# ve gorunen alan irtifanin KARESIYLE kuculuyor --
+#     alan_px = (L*f/alt) * (S*f/alt) = L*S*f^2 / alt^2
+# f = 539.9 px'te:
+#     1.50 m -> 907 px2 (2.3x)      2.26 m ->  400 px2 (TAM SINIR)
+#     1.90 m -> 566 px2 (1.4x)      2.90 m ->  242 px2 (GECEMEZ)
+#     3.90 m -> 134 px2 (GECEMEZ)
+# Yani ikinci tirmanistan sonra yuk MATEMATIKSEL OLARAK bulunamaz; altigen
+# ayni tirmanista hayatta kalir ve "altigen var / yuk yok" imzasi cikar.
+#
+# TAVAN yukaridaki esitlikten TURETILIYOR, elle secilmiyor:
+#     tavan = f * sqrt(L*S / min_area_px) / PAY
+# PAY 1.30: tam sinirda durmak, dedektorun kapiyi ancak teget gecmesi
+# demek. 1.30 ile tavan ~1.74 m'ye iner ve orada yuk hala kapinin 1.7
+# katinda kalir -- olculen calisan bantla (0.9-1.5 m) tutarli.
+#
+# TIRMANISIN MESRU AMACI KORUNUYOR: hedef kadrajin DISINA ciktiginda
+# yukselmek kadraji genisletir ve gercekten yardim eder. Kusur, o faydanin
+# bittigi noktadan sonra da yukselmeye devam etmekti. Tavana kadar
+# yukseliyor, tavanda pay kalmayinca ASAGI -- yani yukun buyudugu tek yone
+# -- doniyor ve HOOK_VISUAL_ALIGN_ALTITUDE_M'in altina inmiyor (bu dosyanin
+# kendi notlari 0.30 m'nin tuzak oldugunu zaten kaydediyor).
+PAYLOAD_RECT_LONG_EDGE_M = 0.140   # default.sdf:357 bore_base <box><size>
+PAYLOAD_RECT_SHORT_EDGE_M = 0.050  # ayni satir
+HOOK_REACQUIRE_CEILING_MARGIN = 1.30
 # Kancanin yukun ORTASINA denk geldigini goruntuden dogrulama
 # esigi. Magnet zaten en fazla 5 cm'den yakaliyor; goruntu
 # kontrolu ayni buyuklukte olmali ki tutarsiz olmasin.
@@ -224,23 +254,103 @@ class Gorev3PickupPhase:
         dy_px = rect.center_px[1] - want_y
         return (math.hypot(dx_px, dy_px) * alt / focal, True)
 
+    def _detection_ceiling_m(self):
+        """Yukun dedektorun alan kapisini hala gecebildigi EN YUKSEK irtifa.
+
+        Elle secilmis bir sayi DEGIL: kamera ic parametrelerinden ve
+        HSV_MIN_AREA_RECT_BASE'ten turetiliyor (bkz. dosya basindaki
+        TESPIT TAVANI notu). Kaynaklardan biri okunamazsa None doner ve
+        cagiran taraf eski davranisa duser -- tavan bilinmiyorsa onu
+        uydurmak, olculmemis bir sinir koymak olurdu.
+        """
+        intr = default_camera_intrinsics()
+        if intr is None:
+            return None
+        try:
+            res_w, res_h = self.camera.get_resolution()
+        except Exception:  # noqa: BLE001
+            return None
+        if not res_w or not res_h:
+            return None
+        focal = intr.scaled_to(res_w, res_h).focal_px
+        if not focal:
+            return None
+        area_scale = (res_w * res_h) / float(1280 * 960)
+        min_area_px = HSV_MIN_AREA_RECT_BASE * area_scale
+        if min_area_px <= 0:
+            return None
+        payload_area_m2 = PAYLOAD_RECT_LONG_EDGE_M * PAYLOAD_RECT_SHORT_EDGE_M
+        return (focal * math.sqrt(payload_area_m2 / min_area_px)
+                / HOOK_REACQUIRE_CEILING_MARGIN)
+
     async def _reacquire_by_climbing(self, aligned_yaw: float) -> bool:
-        """Yuk kamerada yoksa 1 m yukselip yeniden bul ve kancaya gore ortala.
+        """Yuk kamerada yoksa irtifayi degistirip yeniden bul ve ortala.
 
         Operator istegi (2026-08-23). Alma irtifasinda kadraj 0.71 x 0.53 m;
         kucuk bir konum hatasi yuku kadraj disina atmaya yetiyor ve o
-        noktadan korlemesine devam etmek anlamsiz."""
+        noktadan korlemesine devam etmek anlamsiz.
+
+        GOREV G / H1 (2026-09-04): yon artik KOSULSUZ YUKARI degil. Tavana
+        kadar yukselir (kadraji genisletmek mesru), tavanda pay kalmayinca
+        ASAGI doner -- yukun gorunen alaninin buyudugu tek yon. Alt sinir
+        HOOK_VISUAL_ALIGN_ALTITUDE_M; altina inilmez.
+        """
+        ceiling = self._detection_ceiling_m()
         for step in range(1, HOOK_REACQUIRE_MAX_CLIMBS + 1):
             n0, e0, _d = await self.flight.get_position_ned()
             _lat, _lon, alt = await self.flight.get_global_position()
-            higher = alt + HOOK_REACQUIRE_CLIMB_M
-            logger.warning("Kirmizi Dikdortgen kamerada yok -- %d/%d: %.1f m'ye yukseliniyor.",
-                           step, HOOK_REACQUIRE_MAX_CLIMBS, higher)
-            await self.flight.goto_position_ned_and_hold(n0, e0, -higher, aligned_yaw, 3.0)
+
+            if ceiling is None:
+                # Tavan olculemedi: eski davranis (yukari), cunku alternatifi
+                # uydurulmus bir sinirla asagi inmek olurdu.
+                target = alt + HOOK_REACQUIRE_CLIMB_M
+                direction = "yukari"
+                reason = "tavan_bilinmiyor"
+            elif alt + HOOK_REACQUIRE_CLIMB_M <= ceiling:
+                target = alt + HOOK_REACQUIRE_CLIMB_M
+                direction = "yukari"
+                reason = "tavan_altinda"
+            elif alt < ceiling:
+                # Tam bir adim sigmiyor ama pay var: tavana kadar cik.
+                target = ceiling
+                direction = "yukari"
+                reason = "tavana_kirpildi"
+            else:
+                # Pay bitti. Yukselmek yuku KUCULTUR; tek anlamli yon asagi.
+                target = max(HOOK_VISUAL_ALIGN_ALTITUDE_M,
+                             alt - HOOK_REACQUIRE_CLIMB_M)
+                direction = "asagi"
+                reason = "tavan_asildi"
+
+            if abs(target - alt) < 0.05:
+                logger.warning("Kirmizi Dikdortgen kamerada yok -- %d/%d: irtifa "
+                               "%.2f m, hareket edilebilecek yer yok (%s, tavan=%s) "
+                               "-- tirmanis birakiliyor.",
+                               step, HOOK_REACQUIRE_MAX_CLIMBS, alt, reason,
+                               f"{ceiling:.2f} m" if ceiling is not None else "yok")
+                self._publish("HOOK_REACQUIRE_STEP", reason,
+                              data={"step": step, "alt_m": round(alt, 3),
+                                    "target_m": round(target, 3),
+                                    "direction": "yok", "reason": reason,
+                                    "ceiling_m": (round(ceiling, 3)
+                                                  if ceiling is not None else None)})
+                return False
+
+            logger.warning("Kirmizi Dikdortgen kamerada yok -- %d/%d: %.2f m -> %.2f m "
+                           "(%s, %s, tavan=%s).",
+                           step, HOOK_REACQUIRE_MAX_CLIMBS, alt, target, direction, reason,
+                           f"{ceiling:.2f} m" if ceiling is not None else "yok")
+            self._publish("HOOK_REACQUIRE_STEP", reason,
+                          data={"step": step, "alt_m": round(alt, 3),
+                                "target_m": round(target, 3),
+                                "direction": direction, "reason": reason,
+                                "ceiling_m": (round(ceiling, 3)
+                                              if ceiling is not None else None)})
+            await self.flight.goto_position_ned_and_hold(n0, e0, -target, aligned_yaw, 3.0)
             if await self._locate_target_with_retries() is None:
                 continue
-            logger.info("Hedef yeniden bulundu -- %.1f m'de kancaya gore ortalanıyor.", higher)
-            await self.centering.go_to_and_center("KIRMIZI_DIKDORTGEN", altitude_m=higher)
+            logger.info("Hedef yeniden bulundu -- %.2f m'de kancaya gore ortalanıyor.", target)
+            await self.centering.go_to_and_center("KIRMIZI_DIKDORTGEN", altitude_m=target)
             return True
         return False
 
