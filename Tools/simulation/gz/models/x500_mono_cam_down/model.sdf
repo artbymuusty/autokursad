@@ -214,7 +214,7 @@
   simulated - see the collision note below.
 -->
 <link name="hook_body_link">
-  <pose relative_to="hook_rope_seg_4">0 0 -0.02287 0 0 0</pose>
+  <pose relative_to="hook_rope_seg_4">0 0 -0.02942 0 0 0</pose>
   <inertial>
     <pose>0 0 -0.032 0 0 0</pose>
     <!--
@@ -300,10 +300,14 @@
 
 
   <!--
-    MIKNATIS (hook_magnet, O10 x 2 mm). PCBV1_PARAMETERS.txt bunu KANCANIN
-    parcasi olarak tanimliyor: hook_magnet_diameter 10.00,
-    hook_magnet_thickness 2.00. Kanca indiginde yukun O13.00 miknatis
-    yuvasina girer ve celik hedef diskin 0.20 mm ustunde durur.
+    MIKNATIS (hook_magnet, O35 x 2 mm). GOREV I / B-S1, 2026-09-04.
+    DONANIM REVIZYONU: onceki CAD O10.00 diyordu (PCBV1_PARAMETERS.txt,
+    hook_magnet_diameter 10.00). Gercek sistemde O35 mm miknatis
+    kullanilacak; SDF, hook_seating.py ve CAD birlikte guncellendi.
+    Kalinlik (2.00 mm) spec'te verilmedigi icin DEGISTIRILMEDI.
+    Yuk tarafindaki hedef disk de ayni capa buyutuldu (payload_red /
+    payload_blue target_disk_visual), yoksa O35 miknatis O12 bir diske
+    bakiyor olurdu.
 
     SADECE GORSEL: manyetik cekim simule EDILMIYOR. Yakalama kurali
     mesafeye dayali ve gorev tarafinda duruyor
@@ -313,7 +317,7 @@
   -->
   <visual name="hook_magnet_visual">
     <pose>0 0 -0.06565 0 0 0</pose>
-    <geometry><cylinder><radius>0.005</radius><length>0.002</length></cylinder></geometry>
+    <geometry><cylinder><radius>0.0175</radius><length>0.002</length></cylinder></geometry>
     <material>
       <ambient>0.30 0.30 0.32 1</ambient>
       <diffuse>0.62 0.62 0.66 1</diffuse>
@@ -436,7 +440,7 @@
   hook mass changes - zeta scales with the pendulum, not with this number.
 -->
 <link name="hook_rope_seg_1">
-  <pose relative_to="hook_rope_link">0 0 -0.02287 0 0 0</pose>
+  <pose relative_to="hook_rope_link">0 0 -0.02942 0 0 0</pose>
   <inertial>
     <mass>0.0025</mass>
     <!--
@@ -466,7 +470,7 @@
     </inertia>
   </inertial>
   <visual name="rope_seg_1_visual">
-    <geometry><cylinder><radius>0.004</radius><length>0.04575</length></cylinder></geometry>
+    <geometry><cylinder><radius>0.004</radius><length>0.05884</length></cylinder></geometry>
     <material>
       <ambient>0.12 0.12 0.12 1</ambient>
       <diffuse>0.18 0.18 0.18 1</diffuse>
@@ -505,7 +509,7 @@
 </joint>
 
 <link name="hook_rope_seg_2">
-  <pose relative_to="hook_rope_seg_1">0 0 -0.04575 0 0 0</pose>
+  <pose relative_to="hook_rope_seg_1">0 0 -0.05884 0 0 0</pose>
   <inertial>
     <mass>0.0025</mass>
     <!--
@@ -535,7 +539,7 @@
     </inertia>
   </inertial>
   <visual name="rope_seg_2_visual">
-    <geometry><cylinder><radius>0.004</radius><length>0.04575</length></cylinder></geometry>
+    <geometry><cylinder><radius>0.004</radius><length>0.05884</length></cylinder></geometry>
     <material>
       <ambient>0.12 0.12 0.12 1</ambient>
       <diffuse>0.18 0.18 0.18 1</diffuse>
@@ -574,7 +578,7 @@
 </joint>
 
 <link name="hook_rope_seg_3">
-  <pose relative_to="hook_rope_seg_2">0 0 -0.04575 0 0 0</pose>
+  <pose relative_to="hook_rope_seg_2">0 0 -0.05884 0 0 0</pose>
   <inertial>
     <mass>0.0025</mass>
     <!--
@@ -604,7 +608,7 @@
     </inertia>
   </inertial>
   <visual name="rope_seg_3_visual">
-    <geometry><cylinder><radius>0.004</radius><length>0.04575</length></cylinder></geometry>
+    <geometry><cylinder><radius>0.004</radius><length>0.05884</length></cylinder></geometry>
     <material>
       <ambient>0.12 0.12 0.12 1</ambient>
       <diffuse>0.18 0.18 0.18 1</diffuse>
@@ -643,7 +647,7 @@
 </joint>
 
 <link name="hook_rope_seg_4">
-  <pose relative_to="hook_rope_seg_3">0 0 -0.04575 0 0 0</pose>
+  <pose relative_to="hook_rope_seg_3">0 0 -0.05884 0 0 0</pose>
   <inertial>
     <mass>0.0025</mass>
     <!--
@@ -673,7 +677,7 @@
     </inertia>
   </inertial>
   <visual name="rope_seg_4_visual">
-    <geometry><cylinder><radius>0.004</radius><length>0.04575</length></cylinder></geometry>
+    <geometry><cylinder><radius>0.004</radius><length>0.05884</length></cylinder></geometry>
     <material>
       <ambient>0.12 0.12 0.12 1</ambient>
       <diffuse>0.18 0.18 0.18 1</diffuse>

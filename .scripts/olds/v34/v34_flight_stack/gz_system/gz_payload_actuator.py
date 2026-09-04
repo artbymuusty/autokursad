@@ -987,7 +987,9 @@ class GzPayloadActuator(IPayloadActuator):
                         olmadigi (fizik 0.35'te kirpiyordu) bu yuzden onemli.
           fold_deg    : dort universal eklemin katlanma acisi (derece).
           span_m      : rope_link'ten hook_body_link'e DUZ mesafe. Kord tam
-                        gergin ise 0.183 m'ye yakin; katlandikca kisalir.
+                        gergin ise 0.235 m'ye yakin; katlandikca kisalir.
+                        (GOREV I / B-S1: 0.183 -> 0.235 m, kanca 25 cm'e
+                        uzatildi.)
           base_z_m    : base_link'in DUNYA Z'si. SALT OLCUM, 2026-09-01.
                         NEDEN: CHAIN_OFFSET'in dogru degeri iki adaydan
                         (SDF geometrisi 0.04236, kayitli kalibrasyon 0.060)
