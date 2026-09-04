@@ -155,6 +155,9 @@ class Gorev2Orchestrator:
         # pre-pursuit lat/lon are the vehicle's position on that fixed axis
         # just before switch_to_offboard() left the route, captured fresh
         # for every pursuit.
+        # F2-a madde 2: Offboard'a GERCEKTEN girildi mi. _rejoin_route_axis
+        # yalnizca bu True iken calisir -- bkz. oradaki gerekce.
+        self._offboard_engaged: bool = False
         self._route_axis: str = None
         self._pre_pursuit_lat: float = None
         self._pre_pursuit_lon: float = None
@@ -481,6 +484,30 @@ class Gorev2Orchestrator:
         that times out all fall through to the normal resume unchanged --
         ADR-009's carefully-measured resume spacing/confirmation is the
         real safety net either way, exactly as before this feature existed."""
+        # F2-a madde 2 (2026-09-04) -- OFFBOARD'A GIRILMEDIYSE CALISMA.
+        #
+        # Bu metodun docstring'i "vehicle is still under Offboard authority
+        # while it moves" VARSAYIYOR. F1 basarisizlik yolunda (:759) bu
+        # YANLIS: switch_to_offboard() basarisiz oldugu icin arac HOLD/
+        # AUTO.LOITER'da. O halde:
+        #   - goto_global_position_and_wait Offboard setpoint'leri akitir,
+        #     PX4 onlari YOK SAYAR, arac hareket etmez
+        #   - tam ROUTE_REJOIN_TIMEOUT_S (15 s) beklenir ve hicbir sey olmaz
+        #   - ustelik DUZELTILECEK SAPMA DA YOKTUR: gecis basarisiz oldugu
+        #     icin arac rotadan hic ayrilmadi
+        # F1 guard'i sekil basina 3 hataya izin verdigi icin en kotu halde
+        # 3 x 2 sekil x 15 s = 90 s, 600 s'lik gorev butcesine karsi.
+        #
+        # _pre_pursuit_lat gecis DENEMESINDEN ONCE yakalandigi (:727-730) icin
+        # asagidaki eski guard bu hali YAKALAMAZ -- ikisi de dolu olur.
+        #
+        # getattr: test fixture'lari __init__'i atliyor (bkz. madde 1).
+        if not getattr(self, "_offboard_engaged", False):
+            logger.info("[ROUTE_REJOIN] Offboard'a girilmemisti -- rejoin atlaniyor "
+                        "(arac rotadan ayrilmadi, duzeltilecek sapma yok).")
+            self._publish("ROUTE_REJOIN_SKIPPED", severity=Severity.INFO,
+                          data={"reason": "offboard_never_engaged"})
+            return
         if self._route_axis is None or self._pre_pursuit_lat is None:
             return
         try:
@@ -546,6 +573,9 @@ class Gorev2Orchestrator:
             await self.flight.stop_offboard()
         except Exception as e:  # noqa: BLE001 -- PX4 may reject this if Offboard was never actually confirmed active; not fatal
             logger.warning(f"stop_offboard sirasinda hata (yoksayiliyor): {e}")
+        # F2-a madde 2: Offboard birakildi; bir sonraki takip basariyla
+        # girene kadar rejoin tekrar gecerli degil.
+        self._offboard_engaged = False
         # ADR-009 PX4-STABILITY (measured, 2026-08-17). Two things were
         # wrong here, and together they are the best explanation for PX4
         # dying three times in one day:
@@ -759,6 +789,9 @@ class Gorev2Orchestrator:
                     await self._resume_mission_route()
                     continue
 
+                # F2-a madde 2: buradan itibaren arac GERCEKTEN Offboard'da ve
+                # rotadan ayrilmis olabilir -- rejoin'in tek gecerli oldugu hal.
+                self._offboard_engaged = True
                 self._publish("OFFBOARD_AUTHORITY_ACQUIRED", data={"reason": "target_pause"})
                 self.context.transition_to(MissionPhase.GOTO_TARGET_CENTERING, reason=selected.shape_type)
                 # ADR-008 B1: the REAL budget, asked of the controller that
