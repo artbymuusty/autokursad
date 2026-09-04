@@ -63,7 +63,8 @@ PLACE_DEADBAND_M: float = 0.02
 PLACE_MIN_STREAK: int = 3
 PLACE_MAX_CORRECTIONS: int = 6
 PLACE_SETTLE_S: float = 2.0
-# The load swings on the same 0.831 s pendulum the hook does. Measuring while
+# The load swings on the same pendulum the hook does (measured 1.078 s,
+# GOREV J / 31 cm hook; 0.831 s at 25 cm). Measuring while
 # it is moving is measuring the motion, not the error.
 PLACE_MAX_SPEED_MPS: float = 0.05
 PLACE_TIMEOUT_S: float = 25.0

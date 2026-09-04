@@ -178,7 +178,7 @@ async def test_low_confidence_detections_are_ignored_entirely():
 
 @pytest.mark.asyncio
 async def test_single_step_is_clamped_so_it_cannot_outrun_the_rope():
-    """The hook is a pendulum with a measured 0.831 s period. A large jump
+    """The hook is a pendulum with a measured 1.078 s period (GOREV J, 31 cm). A large jump
     converts position error into swing instead of removing it."""
     rig = Rig(start_err=(1.0, 0.0))
     await rig.aligner().align(0.45, 0.0, timeout_s=3)

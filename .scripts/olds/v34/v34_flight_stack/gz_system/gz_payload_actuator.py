@@ -283,11 +283,11 @@ HOOK_WINCH_RETRACT_M = 0.0
 #                                                    --------
 #                    GOREV3_PICKUP_ATTEMPT_TIMEOUT_S    60 s
 #
-# NEDEN PENCERE 30 s: yeni dwell (MAGNET_DWELL_S = 0.50 s) saf bir sarkac
-# gecisini bilerek disliyor -- kancanin gercekten OTURMASI gerekiyor.
-# Olculen sarkac periyodu 0.831 s ve her duzeltmeden sonra ~3 periyot
-# (2.5 s) sonumleme bekleniyor. 12 s'lik pencere ~14 periyot, yani
-# yalnizca birkac sonumleme denemesi birakiyordu; 30 s ~36 periyot verir.
+# NEDEN PENCERE 30 s: dwell (MAGNET_DWELL_S = 0.60 s, GOREV J) saf bir
+# sarkac gecisini bilerek disliyor -- kancanin gercekten OTURMASI gerekiyor.
+# Olculen sarkac periyodu 1.078 s (GOREV J / 31 cm kanca; 25 cm'de 0.831 s)
+# ve her duzeltmeden sonra ~2.3 periyot (2.5 s) sonumleme bekleniyor.
+# 30 s'lik pencere ~28 periyot verir (31 cm oncesi ~36 periyottu).
 # Eskiden toplam yakalama suresi 3 x 12 = 36 s idi, simdi 3 x 30 = 90 s.
 HOOK_CONTACT_TIMEOUT_S = 30.0
 HOOK_STATE_TIMEOUT_S = 5.0
@@ -1011,9 +1011,9 @@ class GzPayloadActuator(IPayloadActuator):
                         olmadigi (fizik 0.35'te kirpiyordu) bu yuzden onemli.
           fold_deg    : dort universal eklemin katlanma acisi (derece).
           span_m      : rope_link'ten hook_body_link'e DUZ mesafe. Kord tam
-                        gergin ise 0.235 m'ye yakin; katlandikca kisalir.
-                        (GOREV I / B-S1: 0.183 -> 0.235 m, kanca 25 cm'e
-                        uzatildi.)
+                        gergin ise 0.295 m'ye yakin; katlandikca kisalir.
+                        (GOREV I / B-S1: 0.183 -> 0.235 m, kanca 25 cm.
+                        GOREV J: 0.235 -> 0.295 m, kanca 31 cm'e uzatildi.)
           base_z_m    : base_link'in DUNYA Z'si. SALT OLCUM, 2026-09-01.
                         NEDEN: CHAIN_OFFSET'in dogru degeri iki adaydan
                         (SDF geometrisi 0.04236, kayitli kalibrasyon 0.060)

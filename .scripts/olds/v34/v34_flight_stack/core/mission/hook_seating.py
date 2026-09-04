@@ -184,12 +184,28 @@ MAGNET_MAX_TILT_RAD: float = math.radians(8.0)
 #: DWELL -- miknatis baglaminda YENIDEN TANIMLANDI: "yakalama yaricapi
 #  ICINDE kesintisiz gecirilen sure". Pim-yuvada bu "yuvada oturdu"
 #  demekti; miknatista "yuzeyler temas halinde kaldi" demek.
-#  TURETME (olculen sarkac): periyot 0.831 s, yanal genlik ~60 mm. Salinan
-#  bir kanca yakalama yaricapi (17.5 mm) icinde periyot basina yalnizca
-#  0.157 s gecirir. 0.50 s istemek, SAF BIR SALINIM GECISINI DISLAR ve
-#  kancanin gercekten oturmasini zorunlu kilar. Eski 0.30 s pim-yuva icindi
-#  ve yuva mekanik olarak tuttugu icin bu ayrimi yapmasi gerekmiyordu.
-MAGNET_DWELL_S: float = 0.50
+#
+#  TURETME (GOREV J, 2026-09-04 -- kanca 31 cm ile YENIDEN OLCULDU).
+#  Olcum: tools/pendulum_step_flight.py (3 m'de 6 m yanal adim) +
+#  tools/measure_hook_pendulum.py (dynamic_pose/info, 4745 ornek).
+#    periyot  = 1.078 s  (medyan; adim sonrasi 12 s penceresi, 10 gecis,
+#               min 0.942 / maks 1.098 s; dik eksen 1.094 s ile teyit)
+#    genlik   = 107 mm tepe
+#  Eski 25 cm geometrisinde bu degerler 0.831 s / ~60 mm idi; kanca
+#  uzayinca periyot %30 buyudu, dolayisiyla ESKI 0.50 s KOPYALANAMAZ.
+#
+#  Kural degismedi: dwell, SAF BIR SALINIM GECISINI DISLAMALI. Salinan bir
+#  kanca 17.5 mm'lik pencerede yarim periyottan uzun kesintisiz kalamaz
+#  (pencere ici sure = (T/pi)*asin(w/A), A -> w iken ust siniri T/2).
+#    T/2 = 0.539 s  (olculen en uzun periyot 1.098 s icin 0.549 s)
+#  Secim 0.60 s: en uzun yarim periyodun 1.11 kati. Olculen 107 mm'lik
+#  salinim pencerede periyot basina yalnizca 0.113 s gecirir, yani secilen
+#  esik onun 5.3 kati. Eski deger de ayni kuralla secilmisti (0.50 s =
+#  0.415 s'in 1.20 kati); pay orani korundu.
+#
+#  CAPRAZ KONTROL: salinim tepe hizi A*2pi/T = 0.62 m/s, 0.05 m/s'lik
+#  bagil hiz kapisinin 12 kati -- salinan kanca zaten hiz kapisinda eleniyor.
+MAGNET_DWELL_S: float = 0.60
 
 # DWELL. Derived from the MEASURED rope dynamics, not chosen: the pendulum
 # period is 0.831 s (acceptance test, 6 m lateral step). A hook swinging

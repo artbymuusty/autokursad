@@ -95,3 +95,40 @@ def payload_mount_offset_m(color):
     body_forward = dx * c + dy * s          # R_z(-yaw) . (dx, dy)
     body_left = -dx * s + dy * c
     return (body_forward, -body_left)
+
+
+def hook_chain_m():
+    """Kanca zinciri: (ip_acikligi, base_link -> burun alt yuzeyi) metre.
+
+    NEDEN (GOREV J, 2026-09-04): kanca uzunlugu STL mesh'ler duzenlenemedigi
+    icin IP SEGMENTLERINE dagitilarak ayarlaniyor (25 cm'de S1, 31 cm'de J).
+    Zincir bes ayri sayidan olusuyor (mount yuksekligi, iki yarim ofset, uc
+    tam ofset, burun ofseti); biri elle degistirilip otekiler unutulursa
+    kanca "biraz" yanlis uzunlukta olur ve bunu hicbir sey yakalamaz.
+    Bu yardimci, uzunlugu SDF'in kendisinden yeniden hesaplar.
+    """
+    sdf = _read(VEHICLE_SDF)
+    mount = re.search(r'<frame name="hook_mount"[^>]*>\s*'
+                      r'<pose relative_to="base_link">([^<]+)</pose>', sdf)
+    assert mount, "hook_mount pose not found"
+    mount_z = float(mount.group(1).split()[2])
+
+    def _z(pattern):
+        m = re.search(pattern, sdf)
+        assert m, "pose not found: %s" % pattern
+        return float(m.group(1).split()[2])
+
+    seg1 = _z(r'<link name="hook_rope_seg_1">\s*'
+              r'<pose relative_to="hook_rope_link">([^<]+)</pose>')
+    seg234 = [_z(r'<link name="hook_rope_seg_%d">\s*'
+                 r'<pose relative_to="hook_rope_seg_%d">([^<]+)</pose>' % (n, n - 1))
+              for n in (2, 3, 4)]
+    body = _z(r'<link name="hook_body_link">\s*'
+              r'<pose relative_to="hook_rope_seg_4">([^<]+)</pose>')
+
+    # Burun ofseti kodun kendi sabiti (core/mission/hook_seating.py).
+    nose = 0.06465
+    asagi = -(seg1 + sum(seg234) + body) + nose      # mount -> burun
+    acik = -(seg1 + sum(seg234) + body)              # mount -> hook_body origini
+    return (acik, asagi - mount_z)
+

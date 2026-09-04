@@ -93,7 +93,9 @@ HOOK_VISION_ALIGN_TOLERANCE_M = 0.05
 # Vinci hizalamadan ONCE salmak icin beklenen sure. Vinc 0.40 m komutu
 # aliyor ve SDF'deki eklem hiz siniri 0.5 m/s, yani hareketin kendisi ~0.8 s;
 # geri kalani kancanin guverteye oturup ipteki salinimin (olculen periyot
-# 0.831 s) sonmesi icin. 4 s, ~4.8 periyot.
+# GOREV J / 31 cm kanca: 1.078 s; 25 cm'de 0.831 s idi) sonmesi icin.
+# 4 s artik ~3.7 periyot (eskiden ~4.8). Sabit DEGISTIRILMEDI -- kanca
+# uzamasinin sonumleme butcesine etkisi J'de olculur.
 HOOK_PAYOUT_SETTLE_S = 4.0
 # GORSEL HIZALAMA IRTIFASI. Hizalama alma irtifasinda (0.30 m) YAPILAMAZ, ve
 # bu bir ayar meselesi degil, kadraj geometrisi:
@@ -145,14 +147,15 @@ HOOK_VISUAL_ALIGN_MAX_USABLE_M = 0.12
 # Tam hatayi tek adimda uygulamak (dead-beat) bu yuzden asiyor: olculdu,
 # 93 -> 131 -> 68 -> 68 -> 48 -> 78 mm, yakinsamiyor. Kazanc 0.5 ile her adim
 # kalan hatanin yarisini kapatir, ve her adimdan sonra kancanin gercekten
-# durmasi beklenir (olculen sarkac periyodu 0.831 s; 2.5 s ~3 periyot).
+# durmasi beklenir (olculen sarkac periyodu GOREV J / 31 cm: 1.078 s;
+# 2.5 s artik ~2.3 periyot -- 25 cm'de 0.831 s ile ~3 periyottu).
 HOOK_SETTLE_GAIN = 0.5
 HOOK_SETTLE_WAIT_S = 2.5
 # Kanca hala hareket ediyorken olcmek, hareketin kendisini hata sanmak demek.
 HOOK_SETTLE_MAX_SPEED_MPS = 0.03
 # Her duzeltmeden sonra ipin sonmesi icin beklenen sure. Olculen sarkac
-# periyodu 0.831 s; iki periyot, kucuk bir otelemenin uyandirdigi salinimi
-# oturma kapisinin hiz sinirinin altina indirmeye yeter.
+# periyodu GOREV J / 31 cm: 1.078 s (25 cm'de 0.831 s); 1.7 s artik ~1.6
+# periyot, eskiden ~2 periyottu. Sabit DEGISTIRILMEDI.
 HOOK_ALIGN_SETTLE_S = 1.7
 # Alma dogrulamasi: yuk en az bu kadar yukselmis olmali.
 # Tirmanis adimlari 1/2/3 m oldugu icin bu esik cok gevsek
@@ -435,7 +438,7 @@ class Gorev3PickupPhase:
             # hareketi hata sanmaktir.
             #
             # BEKLEME YETERLILIGI OLCULUYOR (2026-08-31): 10 x 0.25 s = 2.5 s
-            # tavani, olculen 0.831 s'lik sarkac periyodunun ~3 kati olarak
+            # tavani, o zamanki 0.831 s'lik sarkac periyodunun ~3 kati olarak
             # secilmisti -- ama o periyot VINC CEKILIYKEN olculdu. Tam
             # salimda ip daha uzun, periyot daha buyuk olabilir. Tavana
             # dayanip dayanmadigimiz artik loglaniyor; dayaniyorsa sabit

@@ -105,7 +105,8 @@ DECK_HEIGHT_M: float = 0.070
 # 1.0 would be a dead-beat step onto a noisy measurement.
 ALIGN_KP: float = 0.6
 # Never ask for more than this in one step. A larger jump would out-run the
-# rope: the hook is a pendulum with a measured 0.831 s period, and yanking the
+# rope: the hook is a pendulum with a measured 1.078 s period (GOREV J, 31 cm
+# hook; 0.831 s at 25 cm), and yanking the
 # airframe simply converts position error into swing.
 ALIGN_MAX_STEP_M: float = 0.08
 # Below this the measurement noise exceeds the correction, so stop nudging.

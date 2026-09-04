@@ -49,13 +49,14 @@ GOREV3_CRUISE_ALTITUDE_M: float = 3.0
 #
 # 1.5 m'de emniyet payi (vinc Gorev 2 boyunca TOPLANMIS -- set_winch(EXTEND)
 # yalnizca Gorev 3'un activate_pickup_mechanism'inda cagrilir):
-#   halat 0.235 m; toplu haldeki kanca ucu base_link'in 0.250 m altinda;
+#   halat 0.295 m; toplu haldeki kanca ucu base_link'in 0.310 m altinda;
 #   birakilan yukun guverte ustu z = 0.070 m
-#   -> base_link 1.5 m iken kanca ucu 1.250 m, yani yukun 1.18 m ustunde.
-#   -> vinc tamamen disarida takili kalsa bile (0.35 m) 0.83 m bosluk kalir.
-#   (GOREV I / B-S1, 2026-09-04: kanca 0.198 -> 0.250 m'ye uzatildi;
-#    halat 4 x 0.04575 = 0.183 iken 4 x 0.05884 = 0.235 m oldu. Pay
-#    0.88 -> 0.83 m'ye indi, hala genis.)
+#   -> base_link 1.5 m iken kanca ucu 1.190 m, yani yukun 1.12 m ustunde.
+#   -> vinc tamamen disarida takili kalsa bile (0.35 m) 0.77 m bosluk kalir.
+#   (GOREV I / B-S1, 2026-09-04: kanca 0.198 -> 0.250 m'ye uzatildi.
+#    GOREV J, 2026-09-04: kanca 0.250 -> 0.310 m; halat 4 x 0.05884 = 0.235
+#    iken 4 x 0.07384 = 0.295 m oldu. Pay 0.83 -> 0.77 m'ye indi, hala
+#    genis.)
 #
 # ILK birakma bilerek MISSION_ALTITUDE_M'de kaliyor: oradaki tirmanis bosa
 # gitmiyor, rota devami (route resume) ve IKINCI hedefin aranmasi tarafindan

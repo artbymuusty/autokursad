@@ -412,7 +412,7 @@ async def test_horizontal_alignment_alone_never_seats_the_hook():
 @pytest.mark.asyncio
 async def test_momentary_valid_geometry_does_not_satisfy_the_dwell():
     """Ipte sallanan kanca yakalama zarfindan GECERKEN bir an gecerli
-    gorunur. Olculen sarkac periyodu 0.831 s; 5 cm genlikli bir salinim
+    gorunur. Olculen sarkac periyodu 1.078 s (GOREV J / 31 cm); 5 cm genlikli bir salinim
     zarfin icinde yalnizca ~0.128 s kalir. Tek bir iyi ornek kilit
     uretmemeli."""
     actuator = _actuator(_FakeMonitor())
