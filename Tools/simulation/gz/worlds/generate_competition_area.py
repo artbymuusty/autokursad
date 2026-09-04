@@ -6,8 +6,13 @@ NEDEN VAR
 Yarışma TEK bir parkurda geçiyor: 30 m (X) x 100 m (Y), siyah/nötr bir
 çerçeveyle sınırlı, içinde DÖRT hedefin tamamı aynı anda:
 
-    Mavi Altıgen (2 m köşe-köşe)   Kırmızı Üçgen (1 m)
-    Kırmızı Kare (1 m)             Mavi Kare (2 m)
+    Mavi Altıgen (kenar 2 m)       Kırmızı Üçgen (kenar 1 m)
+    Kırmızı Kare (kenar 1 m)       Mavi Kare (kenar 2 m)
+
+    GOREV K / A (2026-09-04): olculer KENAR uzunlugu cinsinden verildi.
+    Altigende kenar 2 m => kose-kose 4 m, duz-duz 3.464 m (onceki metin
+    "2 m kose-kose" diyordu, yani kenar 1 m'lik bir altigendi).
+    Ucgen/kareler zaten kenar olcusunde dogruydu, degistirilmedi.
 
 Bu script, SITL her açılışında `safe_sitl_launcher.sh` tarafından
 OTOMATİK çalıştırılır ve dört şekli her seferinde yeniden, rastgele

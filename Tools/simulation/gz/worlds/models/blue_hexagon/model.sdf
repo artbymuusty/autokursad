@@ -8,7 +8,7 @@
         <geometry>
           <mesh>
             <uri>../../materials/meshes/hexagon_blue_1m_2cm.stl</uri>
-            <scale>2 2 1</scale>
+            <scale>4 4 1</scale>
           </mesh>
         </geometry>
         <material>
@@ -51,10 +51,18 @@
            (2 x 1.732, same 0.866 flat-to-flat ratio); the tunnelling
            measurement and thickness reasoning above are unaffected by the
            footprint's size and remain accurate. -->
+      <!-- GOREV K / A (2026-09-04), OPERATOR SPEC: olcu KENAR uzunlugu.
+           "Mavi Altigen: her kenar 2 m". Duzgun altigende kenar = cevrel
+           yaricap, yani kenar 2 m -> kose-kose 4 m, duz-duz 3.464 m.
+           Mesh (hexagon_blue_1m_2cm.stl) 1 m kose-kose olcusunde, yani
+           kenari 0.5 m; scale 2 iken kenar 1 m idi -> scale 4 ile kenar
+           2 m. Collision ayni oranda buyudu (4 x 3.464, 0.866 orani ayni).
+           2026-08-29'daki "2 m hexagon" ifadesi kose-koseyi kastediyordu;
+           operator spec'i kenar cinsinden verdi ve bu satir onu izliyor. -->
       <collision name="collision">
         <pose>0 0 -0.047 0 0 0</pose>
         <geometry>
-          <box><size>2 1.732 0.1</size></box>
+          <box><size>4 3.464 0.1</size></box>
         </geometry>
       </collision>
     </link>

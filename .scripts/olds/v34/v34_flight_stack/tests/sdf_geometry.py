@@ -18,6 +18,7 @@ import re
 REPO_ROOT = os.path.abspath(
     os.path.join(os.path.dirname(os.path.abspath(__file__)), *([os.pardir] * 5)))
 GZ = os.path.join(REPO_ROOT, "Tools", "simulation", "gz")
+WORLD_MODELS = os.path.join(GZ, "worlds", "models")
 VEHICLE_SDF = os.path.join(GZ, "models", "x500_mono_cam_down", "model.sdf")
 WORLD_SDF = os.path.join(GZ, "worlds", "default.sdf")
 LAUNCHER_SH = os.path.join(REPO_ROOT, "safe_sitl_launcher.sh")
@@ -132,3 +133,43 @@ def hook_chain_m():
     acik = -(seg1 + sum(seg234) + body)              # mount -> hook_body origini
     return (acik, asagi - mount_z)
 
+
+# --- Yarisma alanindaki dort hedef sekil (GOREV K / A) --------------------
+
+#: Mesh dosyalarinin kendi olculeri (STL bbox'larindan olculdu, metre).
+#: hexagon: 1.0 kose-kose  -> kenar 0.5     triangle: taban 1.0 -> kenar 1.0
+#: square : 1.0 x 1.0      -> kenar 1.0
+_MESH_KENAR_M = {
+    "hexagon_blue_1m_2cm.stl": 0.5,
+    "triangle_red_1m_2cm.stl": 1.0,
+    "square_red_1m_2cm.stl": 1.0,
+    "square_blue_1m_2cm.stl": 1.0,
+}
+
+
+def shape_model(name):
+    """Alan seklinin (kenar_m, renk_dict, collision_box) uclusu.
+
+    NEDEN (GOREV K / A): sekil boyutu iki yerde yaziyor -- visual mesh
+    scale'i ve collision box'i. Biri elle degistirilip oteki unutulursa
+    gorunen sekil ile carpisan sekil ayrisir; 2026-08-17'de olculen
+    "yuk hedefin icinden gecip gidiyor" arizasi tam olarak buydu.
+    """
+    path = os.path.join(WORLD_MODELS, name, "model.sdf")
+    sdf = _read(path)
+    mesh = re.search(r"<uri>[^<]*/([^/<]+\.stl)</uri>", sdf)
+    assert mesh, "mesh uri yok: %s" % path
+    mesh_name = mesh.group(1)
+    sc = re.search(r"<scale>([^<]+)</scale>", sdf)
+    scale = float(sc.group(1).split()[0]) if sc else 1.0
+    kenar = _MESH_KENAR_M[mesh_name] * scale
+
+    renk = {}
+    for alan in ("ambient", "diffuse", "specular", "emissive"):
+        m = re.search(r"<%s>([^<]+)</%s>" % (alan, alan), sdf)
+        renk[alan] = tuple(round(float(v), 6) for v in m.group(1).split()) if m else None
+
+    box = re.search(r"<box><size>([^<]+)</size></box>", sdf)
+    assert box, "collision box yok: %s" % path
+    kutu = tuple(float(v) for v in box.group(1).split())
+    return kenar, renk, kutu

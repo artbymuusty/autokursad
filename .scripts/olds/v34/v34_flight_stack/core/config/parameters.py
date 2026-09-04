@@ -854,6 +854,22 @@ HSV_RED_HI_2: tuple[int, int, int] = (180, 255, 255)
 HSV_BLUE_LO: tuple[int, int, int] = (90, 80, 40)
 HSV_BLUE_HI: tuple[int, int, int] = (140, 255, 255)
 HSV_MIN_AREA_TRI_BASE: float = 390
+# GOREV K / A (2026-09-04) -- SEKIL BUYUDU, ESIK DEGISMEDI. Gerekce:
+#   Mavi Altigen kenari 1 -> 2 m oldu, alan (3*sqrt(3)/2)*a^2 ile
+#   2.598 -> 10.392 m2, yani DORT KAT. Bu esik bir ALT SINIR; sekil
+#   buyudukce piksel alani da buyur, dolayisiyla esik daha rahat gecilir.
+#   Tespit tavani h_max = f*sqrt(A/min_area), f = 539.94 px:
+#     altigen kenar 1 m -> 30.8 m ;  kenar 2 m -> 61.5 m
+#   Gorev irtifasi 15 m; ikisinde de gecerli, yeni deger iki kat pay birakir.
+#   Ucgen (390) ve dikdortgen (400) esikleri: ucgen/kare olculeri
+#   DEGISMEDI (kenar 1 m / 1 m / 2 m zaten spec'e uygundu), dikdortgen
+#   esigi ise YUKUN kendi olcusune (0.14 x 0.05 m) bagli, alan sekillerinden
+#   bagimsiz -- ikisi de yeniden turetilmedi cunku girdileri degismedi.
+#   KADRAJ NOTU: 2 m irtifada kadraj 4.7 x 3.6 m; buyuyen altigen duz-duz
+#   3.46 m, yani kisa kenarda yalnizca 14 cm (%4) pay kaliyor -- tam
+#   merkezde sigar ama kucuk bir kayma kirpilma demek. Gorev 2 merkezlemesi 15/10/5 m'de
+#   yapiliyor ve 2 m altinda gorus zaten acik cevrim (low_alt_vision_limit
+#   = 2.0 m), bu yuzden calisan bir yol etkilenmiyor.
 HSV_MIN_AREA_HEX_BASE: float = 800
 HSV_EPS_TRI_MIN: float = 0.03
 HSV_EPS_TRI_MAX: float = 0.09
