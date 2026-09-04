@@ -1540,6 +1540,48 @@ class GzPayloadActuator(IPayloadActuator):
             logger.warning("[HOOK] denemeler arasi yeniden hizalama basarisiz -- "
                            "eski konumdan devam ediliyor", exc_info=True)
 
+    @staticmethod
+    def _reach_shortfall_m(seating_report):
+        """Bu denemede kancanin yuvaya ERISEBILMESI icin gereken salim (m).
+
+        O3 / doyum korumasi (Gorev G, 2026-09-04). Olcut FORMULU DEGIL
+        OLCUMU kullanir:
+
+            gereken_salim = ulasilan_salim + (-en_derin_insertion)
+
+        Ikisi de dogrudan olculur: `winch_at_window_start.achieved_m` ve
+        `seat_trace`in ins_mm sutunundaki EN DERIN (en buyuk) deger.
+        Formul, HOOK_PAYOUT_CHAIN_OFFSET_M, irtifa ya da datum varsayimi
+        GIRMEZ -- bu yuzden koruma, O5'in (tutma irtifasi hatasinin) kok
+        nedeninden ve O2'nin (zincir sabiti) sonucundan BAGIMSIZDIR.
+
+        NEDEN MEVCUT DOYUM KONTROLU YETMIYOR: extend_winch_for'daki
+        "wanted > HOOK_WINCH_MAX_EXTENSION_M" testi `wanted`i FORMULDEN
+        aliyor ve olculen kosumlarda 0.330 m uretiyordu -- sinirin altinda,
+        yani hic tetiklenmiyordu; oysa GERCEKTE gereken salim 0.42-0.45 m
+        idi (docs/gorevG-O5-tutma-irtifasi.md §3).
+
+        NEDEN EN DERIN INSERTION: "burun bu denemede en fazla ne kadar
+        yaklasti" sorusunun cevabi odur. Ortalama ya da ortanca, sarkac
+        salinimini hataya karistirir.
+
+        Olculemezse None doner -- olcum yoksa koruma da yok.
+        """
+        if not seating_report:
+            return None
+        ws = seating_report.get("winch_at_window_start") or {}
+        achieved = ws.get("achieved_m")
+        cols = seating_report.get("seat_trace_cols") or []
+        trace = seating_report.get("seat_trace") or []
+        if achieved is None or "ins_mm" not in cols or not trace:
+            return None
+        i = cols.index("ins_mm")
+        try:
+            deepest_mm = max(row[i] for row in trace if row[i] is not None)
+        except (ValueError, TypeError, IndexError):
+            return None
+        return achieved - deepest_mm / 1000.0
+
     async def activate_pickup_mechanism(self, altitude_m=None,
                                         deck_height_m: float = HOOK_RECEIVER_DECK_HEIGHT_M,
                                         on_retry=None) -> bool:
@@ -1572,6 +1614,42 @@ class GzPayloadActuator(IPayloadActuator):
                                "YAYINLANMADI, vinc cekiliyor, tekrar denenecek",
                                HOOK_CONTACT_TIMEOUT_S)
                 await self.set_winch(HOOK_WINCH_RETRACT_M)
+
+                # O3 DOYUM KORUMASI (Gorev G, 2026-09-04). Bu denemede
+                # olculen erisim ihtiyaci vincin FIZIKSEL sinirinin
+                # ustundeyse, kalan denemeler ayni imkansiz isi tekrarlar.
+                #
+                # ILK DENEME HER ZAMAN YAPILIR: karar yalnizca bir denemenin
+                # OLCUMUNDEN SONRA verilir, yani halihazirda calisan hicbir
+                # senaryo kaybedilmez (olculdu: 9 denemenin tek "devam"
+                # karari, kapiya giren tek denemeye denk geliyor -- yanlis
+                # pozitif/negatif yok, docs/gorevG-O5-tutma-irtifasi.md §3.3).
+                #
+                # BU KORUMA HICBIR ALMAYI BASARILI KILMAZ; imkansiz olani
+                # erken ve ACIKCA bitirir. Kazanc kosum basina ~2 bosa
+                # deneme x (12 s pencere + yeniden hizalama).
+                need = self._reach_shortfall_m(self.last_seating_report)
+                if need is not None and need > HOOK_WINCH_MAX_EXTENSION_M:
+                    _ws = (self.last_seating_report or {}).get("winch_at_window_start") or {}
+                    _ach = _ws.get("achieved_m")
+                    logger.error(
+                        "[HOOK] YAPISAL ERISIM DISI: ulasilan salim %.4f m, burun "
+                        "yuvaya en fazla %.1f mm kaldi; erismek icin %.3f m salim "
+                        "gerekiyordu, vincin fiziksel siniri %.3f m. Kalan %d deneme "
+                        "ayni imkansiz isi tekrarlardi -- alma birakiliyor.",
+                        _ach if _ach is not None else float("nan"),
+                        (need - (_ach if _ach is not None else 0.0)) * 1000.0,
+                        need, HOOK_WINCH_MAX_EXTENSION_M,
+                        HOOK_PICKUP_ATTEMPTS - attempt)
+                    self.last_pickup_report["aborted"] = {
+                        "reason": "reach_beyond_winch_limit",
+                        "needed_payout_m": round(need, 4),
+                        "winch_limit_m": HOOK_WINCH_MAX_EXTENSION_M,
+                        "attempts_made": attempt,
+                        "attempts_skipped": HOOK_PICKUP_ATTEMPTS - attempt,
+                    }
+                    return False
+
                 await asyncio.sleep(1.0)
                 await self._retry_realign(on_retry, attempt)
                 continue
