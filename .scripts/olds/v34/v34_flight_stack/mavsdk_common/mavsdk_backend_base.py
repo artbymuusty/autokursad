@@ -516,9 +516,54 @@ class MavsdkBackendBase(IFlightBackend):
         `telemetry.position()` subscription per call. The heartbeat publish
         moved to the watcher (see _publish_heartbeat_from_position) -- it
         was never really "the orchestrator's tick", it was "the position
-        stream's tick", and tying it to the caller is what let it starve."""
+        stream's tick", and tying it to the caller is what let it starve.
+
+        IRTIFA BILESENI ARTIK relative_altitude_m DEGIL (Gorev G / O5,
+        2026-09-04). Olculdu (docs/gorevG-O5-datum-mekanizma.md, 2 kosum,
+        ULog + groundtruth + jsonl hizali):
+
+            relative_altitude_m = global.alt - home.alt
+            -local.z            = global.alt - ref_alt
+            => fark = ref_alt - home.alt
+               q1: 0.2757 - 0.4525 = -0.1768   olculen -0.177
+               q4: 0.2655 - 0.4440 = -0.1786   olculen -0.179
+        1 mm'nin altinda uyum. Kayma 0.16 m'den 16 m'ye kadar SABIT, yani
+        carpan degil referans hatasi.
+
+        NEDEN DOGUYOR: vehicle_local_position.ref_alt (EKF yerel orijini)
+        BIR KEZ yaziliyor; home_position.alt ise arac yerde dururken
+        commander tarafindan 43-45 kez guncellenip 0.240 -> 0.452'ye
+        surukleniyor. Ikisi arasindaki fark relative_altitude_m'e biniyor.
+        Bu PX4'un KENDI mantigidir -- PX4_GZ_MODEL_POSE ya da baska bir
+        Gazebo degiskeni bu iki alana girmiyor -- yani gercek donanimda da
+        AYNI SINIF hata beklenir.
+
+        NEDEN BURADA DUZELTILIYOR: sistem kendi icinde tutarsizdi.
+        SETPOINT'ler goto_position_ned_and_hold(n, e, -alt, ...) ile
+        NED / EKF-ORIJINI cercevesinde veriliyor; OKUMALAR ise buradan
+        home-referansli geliyordu. Olculdu: kontrolcu EKF -z'yi 0.301'de
+        tutuyor (komut 0.300, yani komutu TAM tutturuyor) ama gorev 0.123
+        goruyordu. Hata kontrolde degil, IKI CERCEVENIN KARISTIRILMASINDAYDI.
+        Burasi, 8 dosyadaki 36 cagrinin TAMAMINI ayni anda dogru cerceveye
+        alan tek nokta.
+
+        KAYNAK YENI DEGIL: _position_velocity_ned zaten abone, zaten
+        onbellekli, yatay bilesenleri get_position_ned() ile her yerde
+        kullaniliyordu -- yalnizca dikey bileseni atiliyordu.
+        position_velocity_ned, vehicle_local_position'in MAVLink
+        karsiligidir, yani -down_m == -local.z.
+
+        DAVRANIS DEGISIKLIGI, ACIKCA: irtifaya KAPALI CEVRIM olan her bacak
+        (motion_fsm CLIMB/CRUISE/DESCEND, descend_to_release, alcak-irtifa
+        inisleri) artik 0.178 m DAHA ALCAKTA ucar; NED setpoint'iyle surulen
+        bacaklar DEGISMEZ. En alcak komut (GOREV3_REDROP_REST_HEIGHT_M=0.12)
+        gercekte 0.42 -> 0.24 m'ye iner, hala pozitif.
+
+        lat/lon aynen _position onbellegiden gelir; yalnizca ucuncu bilesen
+        degisti. Ikisi de _fresh() ile tazelik kontrolunden gecer."""
         pos = self._fresh(self._position)
-        return (pos.latitude_deg, pos.longitude_deg, pos.relative_altitude_m)
+        ned = self._fresh(self._position_velocity_ned)
+        return (pos.latitude_deg, pos.longitude_deg, -ned.position.down_m)
 
     async def get_yaw_deg(self) -> float:
         """ADR-008 B0: served from _attitude_watcher's cache -- read every
