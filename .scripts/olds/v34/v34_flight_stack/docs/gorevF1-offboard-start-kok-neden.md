@@ -165,3 +165,120 @@ K1'i ADR-004 gerilimi nedeniyle **tek başına** önermiyorum.
 
 Kod değişikliği yapılmadı. F1 guard'ına, F2-a rejoin'ine, Görev C/D/E4e'ye ve
 `motion_fsm.py`'a dokunulmadı.
+
+---
+
+# K3 SONUCU — kısa devre KANITLANDI (2026-09-04)
+
+**Yöntem:** projeye **hiç dokunmadan**, projenin `start_offboard()` dizisini
+birebir tekrarlayan bağımsız bir tanı betiği
+(`scratchpad/e2/k3_repro.py`) + `mavsdk` Python logger'ı **DEBUG**'a alındı.
+`system.py:83-100` sunucunun `[ts|Seviye] ...` satırlarını bu logger'a
+yönlendiriyor — **CLI'da `--verbose` yok, yol bu.**
+
+Tekrar üretim: SITL + arm/takeoff/mission, ardından 12 kez
+`pause_mission → set_velocity_body → start() → 3 s mod yoklaması → stop → resume`.
+
+**Sonuç: 12 denemenin 5'i başarısız (%41.7)** — proje kodu tamamen devre
+dışıyken. Hepsinde `err=None`, hepsi HOLD'da kaldı.
+
+## Kusursuz ayrışma
+
+| deneme | sonuç | `start()` süresi | sunucu log satırı |
+|---|---|---|---|
+| 1, 3, 6, 9, 12 | **FAIL** | 0.6 – 6.8 ms · **ortanca 3.4 ms** | **0** |
+| 2, 4, 5, 7, 8, 10, 11 | **OK** | 6.7 – 19.5 ms · **ortanca 11.5 ms** | **1–2** |
+
+**7/7 başarıda sunucu satırı var, 5/5 başarısızlıkta hiç yok. Örtüşme sıfır.**
+
+Başarılardaki satır:
+```
+[WARNING] mavsdk_server: Received ack for not-existing command: 176!
+          Ignoring... (mavlink_command_sender.cpp:304)
+```
+
+## Üç soruya cevap
+
+### 1. "Zaten offboard'da" kısa devresi — **KANITLANDI**
+
+FAZ 1'de "zayıf ihtimal, tamamen elenmedi" diye işaretlenmişti. Artık kanıtlı:
+
+- **Başarısızlıklarda sunucudan HİÇ MAVLink trafiği çıkmıyor.** 3.4 ms saf
+  gRPC gidiş-dönüşü; MAVLink round-trip'i için çok kısa.
+- **Başarılarda çıkıyor** — `mavlink_command_sender.cpp` komut 176'nın
+  ACK'ini görüyor ve logluyor. 11.5 ms = gerçek MAVLink round-trip.
+
+Yani `Offboard::start()` başarısız hâlde **komutu hiç üretmeden `SUCCESS`
+dönüyor**. Kısa devre `mavsdk_server`'ın Offboard eklentisinde, komut
+gönderici katmanına **ulaşmadan önce**.
+
+### 2. Komutun yutulduğu TAM nokta
+
+`mavlink_command_sender.cpp:304` her başarılı gönderimde konuşuyor,
+başarısızlıklarda **hiç konuşmuyor** → komut **komut göndericiye hiç
+ulaşmıyor**. Yutulma noktası bundan **yukarıda**, Offboard eklentisinin
+kendi ön koşul kontrolünde.
+
+### 3. Python'un göremediği seviyede fark — **VAR ve iki yönlü**
+
+Fark yalnızca "başarıda satır var" değil. Satırın **içeriği** ikinci bir
+kusuru ele veriyor:
+
+> **`Received ack for not-existing command`** — yani ACK geldiğinde MAVSDK o
+> komutu bekleyenler listesinden **çoktan silmiş**. `start()` ACK'i beklemeden,
+> **iyimser** biçimde `SUCCESS` dönüyor.
+
+Bu, `SUCCESS`'in neden hiçbir şey kanıtlamadığını açıklıyor: dönüş değeri
+komutun gönderildiğini de, PX4'ün kabul ettiğini de temsil etmiyor.
+25 böyle uyarı sayıldı.
+
+## Yan gözlem: başarısızlıklar periyodik
+
+Başarısız denemeler: **1, 3, 6, 9, 12** → aralar **2, 3, 3, 3**.
+Neredeyse düzenli. Rastgele bir yarıştan çok bir **durum/sayaç döngüsüne**
+benziyor. Mekanizmasını kaynak olmadan söyleyemem; **yorum yapmıyorum**,
+gözlem olarak bırakıyorum.
+
+## Sürüm bilgisi
+
+```
+MAVSDK version: v3.17.2 (mavsdk_impl.cpp:35)
+Python paketi : mavsdk 3.17.2
+```
+
+## Hâlâ gereken
+
+Kısa devrenin **hangi koşulu** kontrol ettiği yalnızca kaynaktan okunur:
+`src/mavsdk/plugins/offboard/offboard_impl.cpp`, **v3.17.2** etiketinde.
+
+Sunucu DEBUG seviyesinde satır yaymıyor (12 denemede 0 adet) — yani
+`mavsdk_server` bu bilgiyi log üzerinden **vermiyor**. K3'ün verebileceğinin
+sonuna gelindi.
+
+### ⛔ İNTERNET ONAYI TEKRAR İSTENİYOR
+
+| | |
+|---|---|
+| **İşlem** | `github.com/mavlink/MAVSDK`, tag **`v3.17.2`**, tek dosya: `src/mavsdk/plugins/offboard/offboard_impl.cpp` (+ varsa aynı davranışa dair issue/PR) |
+| **İndirilecek** | Tek kaynak dosyanın metni (~30 KB) + birkaç sayfa. **Klonlama yok, kurulum yok** |
+| **Boyut / tüketim** | < 1 MB · önemsiz |
+| **Neden** | K3 kısa devrenin **varlığını** kanıtladı; **koşulunu** yalnızca kaynak verir |
+| **Zorunlu mu** | Hayır. Alternatif: koşulu bilmeden **K1/K2** ile yaşamak (aşağı bkz.) |
+
+## K3 sonrası öneri güncellemesi
+
+K3'ün bulgusu öneri sırasını **değiştiriyor**:
+
+- **K2 (onay boyunca setpoint akıtmak) artık daha zayıf bir aday.** Başarısız
+  denemede komut hiç gönderilmediğine göre, PX4'ün setpoint görüp görmemesi
+  sonucu değiştirmez — PX4'e zaten sorulmuyor.
+- **K1 (retry) daha güçlü hâle geldi.** Kısa devre durumsalsa ve periyodikse,
+  ikinci bir `start()` çağrısı farklı bir iç durumda yakalanabilir. Ölçüm de
+  bunu destekliyor: başarısızlığı hemen bir başarı izliyor (1→2, 3→4, 6→7,
+  9→10, 12→son). **Ama ADR-004 `:499` gerilimi aynen duruyor** — operatör
+  kararı.
+- Yeni aday **K5: `start()` sonrası mod onayı gelmezse `stop()` + yeniden
+  `start()`.** MAVSDK'nin iç durumunu sıfırlamayı hedefler; retry'den farkı,
+  körlemesine tekrar değil **durum temizleme** olması.
+
+Hiçbiri uygulanmadı.
