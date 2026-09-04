@@ -138,6 +138,13 @@ GOREV3_PICKUP_ALIGN_MAX_ATTEMPTS: int = 80
 # 215 + 180 = 395 s ve geriye tasima + birakma + finish icin ~205 s kalir.
 # DAR AMA SIGAR; alma 3 denemeyi de tuketirse zaten pickup birakiliyor
 # (B maddesi 12) ve tasima/birakma calismiyor.
+# YAKLASMA / ORTALAMA IRTIFASI (GOREV I / B, 2026-09-04).
+# Operator spec'i: "yaklasma/ortalama irtifasi 30 cm". Onceden bu bant
+# karisikti -- 1.2 m'de ortala, 0.90 m'de gorsel hizala, 0.30 m'ye in.
+# Artik tek sayi: gorsel isin TAMAMI bu irtifada biter, kanca ofseti
+# ondan SONRA uygulanir (bkz. gorev3_pickup.py, GOREV I / B-S3 notu).
+GOREV3_APPROACH_ALTITUDE_M: float = 0.30
+
 GOREV3_PICKUP_ATTEMPT_TIMEOUT_S: float = 60.0
 
 GOREV3_PICKUP_VISIBILITY_CONFIRM_FRAMES: int = 3

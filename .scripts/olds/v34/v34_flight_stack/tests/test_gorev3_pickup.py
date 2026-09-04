@@ -11,6 +11,7 @@ from core.mission.gorev3_pickup import Gorev3PickupPhase
 from core.mission.rectangle_alignment_strategy import RectangleAlignmentStrategy
 from core.position_log.position_store import PositionStore
 from core.config.parameters import (
+    GOREV3_APPROACH_ALTITUDE_M,
     GOREV3_CRUISE_ALTITUDE_M,
     GOREV3_TRANSIT_ALTITUDE_M,
 )
@@ -208,10 +209,27 @@ async def test_pickup_full_sequence_succeeds_and_confirms_shape_gone(tmp_path):
     ], centering.calls
     assert GOREV3_CRUISE_ALTITUDE_M > GOREV3_TRANSIT_ALTITUDE_M, \
         "seyir irtifasi calisma irtifasindan YUKSEK olmali"
-    # Alignment happens at the vision-friendly altitude, not at the pickup
-    # altitude: at 0.30 m the frame is only 0.71 x 0.53 m and the target
-    # falls out of it (measured, mission17).
-    assert centering.center_calls == [("KIRMIZI_DIKDORTGEN", HOOK_ALIGN_ALTITUDE_M)]
+    # GOREV I / B-S3 (2026-09-04): IKI ORTALAMA GECISI, ve ikincisi ALMA
+    # IRTIFASINDA.
+    #
+    # BU TEST ESKIDEN TERSINI IDDIA EDIYORDU: "hizalama gorus dostu
+    # irtifada olur, alma irtifasinda DEGIL: 0.30 m'de kadraj yalnizca
+    # 0.71 x 0.53 m ve hedef disari dusuyor (olculdu, mission17)."
+    #
+    # O OLCUM DOGRUYDU AMA SEBEBI YANLIS OKUNMUSTU. mission17'de hedefin
+    # kadrajdan dusmesinin sebebi irtifa DEGIL, o noktada KANCA OFSETININ
+    # ZATEN UYGULANMIS olmasiydi: ofsetten sonra kamera yuvadan 0.260 m
+    # ileride kalir ve 0.30 m'de bu 501 px eder (yari-kadraj 480 px).
+    # Dosyanin kendi notu bunu zaten yaziyordu: "dy=+374px zaten 0.208 m
+    # demek -- kamera-kanca ofsetiyle ayni mertebe".
+    #
+    # Ofset artik TUM GORSEL ISTEN SONRA uygulaniyor, yani 0.30 m'de
+    # ortalama yaparken kadrajda 0.71 x 0.53 m'lik temiz bir goruntu var
+    # ve 0.14 x 0.05 m'lik yuk rahatca icinde.
+    assert centering.center_calls == [
+        ("KIRMIZI_DIKDORTGEN", HOOK_ALIGN_ALTITUDE_M),      # adim 2: gorus dostu
+        ("KIRMIZI_DIKDORTGEN", GOREV3_APPROACH_ALTITUDE_M), # adim 4: hassas
+    ], centering.center_calls
     hold_calls = [c for c in flight.calls if c[0] == 'goto_position_ned_and_hold']
     assert len(hold_calls) >= 3  # align, translate, descend (+ climb steps)
 

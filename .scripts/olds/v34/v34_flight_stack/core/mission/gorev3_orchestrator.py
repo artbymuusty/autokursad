@@ -65,9 +65,34 @@ class Gorev3Orchestrator:
         self._publish("GOREV3_PHASE_STARTED", "pickup", data={"phase": "pickup"})
         pickup_ok = await self.pickup_phase.run(first)
         if not pickup_ok:
-            logger.error("GOREV 3 FAZ 1 (ALMA) BASARISIZ")
-            self.context.transition_to(MissionPhase.MISSION_FAILED, reason="gorev3_pickup_failed")
-            self._publish("GOREV3_PHASE_FAILED", "pickup", severity=Severity.CRITICAL, data={"phase": "pickup"})
+            # GOREV I / B madde 12: ALMA BASARISIZLIGI ARTIK FATAL DEGIL.
+            #
+            # ESKI DAVRANIS: MISSION_FAILED'a gecilip return False. Bu, iki
+            # yuku de basariyla birakmis (Gorev 1+2 tamam) bir gorevi
+            # "basarisiz" olarak isaretliyordu -- yalnizca opsiyonel ucuncu
+            # is tutmadi diye. master_fsm de bunu mission_already_failed
+            # olarak _safe_land'e tasiyordu.
+            #
+            # YENI DAVRANIS, E4e'nin "yuku terk et, goreve devam et"
+            # felsefesinin aynisi: alma birakilir, arac finish/start
+            # cizgisine doner, gorev "2 is tamamlandi" diye biter.
+            # Donus degeri False KALIYOR (Gorev 3 tamamlanmadi) ama
+            # MISSION_FAILED'a GECILMIYOR.
+            logger.warning("GOREV 3 FAZ 1 (ALMA) BASARISIZ -- alma birakiliyor, "
+                           "finish/start cizgisine donuluyor. Gorev 1+2 gecerli.")
+            self._publish("GOREV3_PICKUP_ABANDONED",
+                          "alma 3 denemede de tutmadi -- gorev 2 is ile bitiyor",
+                          severity=Severity.WARN,
+                          data={"phase": "pickup", "pickup_shape": first,
+                                "fatal": False, "tasks_completed": 2})
+            self.context.transition_to(MissionPhase.RETURN_TO_CHECKPOINT,
+                                       reason="gorev3_pickup_abandoned")
+            try:
+                await self.finish_phase.run()
+            except Exception:  # noqa: BLE001 -- donus denemesi gorevi dusuremez
+                logger.warning("Finish fazi basarisiz -- yine de temiz cikiliyor.",
+                               exc_info=True)
+            self._publish("GOREV3_SKIPPED", "pickup basarisiz", data={"tasks_completed": 2})
             return False
 
         self.context.transition_to(MissionPhase.GOREV3_RUNNING, reason="transport")

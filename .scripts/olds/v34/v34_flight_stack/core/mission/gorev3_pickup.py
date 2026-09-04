@@ -13,6 +13,8 @@ from gz_system.gz_payload_actuator import HOOK_WINCH_EXTEND_M
 from core.mission.visual_alignment import VisualHookAligner
 from core.config.parameters import (
     HSV_MIN_AREA_RECT_BASE,
+    GOREV3_APPROACH_ALTITUDE_M,
+    GOREV3_PICKUP_ATTEMPT_TIMEOUT_S,
     GOREV3_CRUISE_ALTITUDE_M,
     GOREV3_TRANSIT_ALTITUDE_M,
     GOREV3_DESCENT_ALTITUDE_M,
@@ -204,6 +206,7 @@ class Gorev3PickupPhase:
         # ama testler onlari dogrudan da cagirabiliyor -- varsayilan burada.
         self._shape = DEFAULT_PICKUP_SHAPE
         self._color = SHAPE_TO_COLOR_RED
+        self._rect_class = "KIRMIZI_DIKDORTGEN"
 
     def _publish(self, code: str, message: str = "", data: dict = None,
                  severity=None):
@@ -250,7 +253,8 @@ class Gorev3PickupPhase:
             detections = await self.detector.detect(None)
         except Exception:  # noqa: BLE001
             return (None, False)
-        rect = next((d for d in detections if d.shape_type == "KIRMIZI_DIKDORTGEN"), None)
+        rect = next((d for d in detections
+                     if d.shape_type == self._rect_class), None)
         if rect is None:
             return (None, False)
         try:
@@ -366,7 +370,7 @@ class Gorev3PickupPhase:
             if await self._locate_target_with_retries() is None:
                 continue
             logger.info("Hedef yeniden bulundu -- %.2f m'de kancaya gore ortalanıyor.", target)
-            await self.centering.go_to_and_center("KIRMIZI_DIKDORTGEN", altitude_m=target)
+            await self.centering.go_to_and_center(self._rect_class, altitude_m=target)
             return True
         return False
 
@@ -558,6 +562,13 @@ class Gorev3PickupPhase:
         # aktuatoru YANLIS yuke baktiriyordu.
         self._color = _S2C.get(shape, SHAPE_TO_COLOR_RED)
         self._shape = shape
+        # GOREV I / A+B: ARANAN SINIF, arena sekli DEGIL YUKUN DIKDORTGENI.
+        # Altigene KIRMIZI yuk birakilir -> KIRMIZI_DIKDORTGEN aranir;
+        # ucgene MAVI yuk birakilir -> MAVI_DIKDORTGEN aranir. Sabit
+        # "KIRMIZI_DIKDORTGEN" varsayimi, ucgen once birakildiginda
+        # YANLIS SINIFI aratiyordu.
+        self._rect_class = ("KIRMIZI_DIKDORTGEN" if self._color == "red"
+                            else "MAVI_DIKDORTGEN")
         logger.info("Görev 3 Faz 1 (Alma) Başlatıldı -- hedef: %s (yuk rengi: %s)",
                     shape, self._color)
         self._publish("GOREV3_PICKUP_TARGET", shape,
@@ -671,7 +682,7 @@ class Gorev3PickupPhase:
                       data={"aligned_yaw_deg": round(aligned_yaw, 2)})
         logger.info(f"{HOOK_ALIGN_ALTITUDE_M}m irtifada (gorus dostu) hedefe ortalanıyor...")
         centered = await self.centering.go_to_and_center(
-            "KIRMIZI_DIKDORTGEN", altitude_m=HOOK_ALIGN_ALTITUDE_M)
+            self._rect_class, altitude_m=HOOK_ALIGN_ALTITUDE_M)
         if not centered:
             logger.warning("Hizalama irtifasinda ortalama yakinsamadi -- devam ediliyor (best-effort).")
 
@@ -725,11 +736,31 @@ class Gorev3PickupPhase:
         _c = math.cos(math.radians(aligned_yaw))
         _s = math.sin(math.radians(aligned_yaw))
 
-        logger.info(f"Kanca hedefin uzerine getiriliyor (govde +{HOOK_BODY_OFFSET_FORWARD_M}m ileri)...")
-        _hn, _he = _body_to_ned(HOOK_BODY_OFFSET_FORWARD_M, 0.0)
-        # Once YALNIZCA yatay: hizalama irtifasinda otele.
-        await self.flight.goto_position_ned_and_hold(
-            _hn, _he, -HOOK_ALIGN_ALTITUDE_M, aligned_yaw, 4.0)
+        # GOREV I / B-S3 (2026-09-04): KANCA OFSETI BURADAN KALDIRILDI.
+        #
+        # OLCULEN KUSUR: ofset burada, yani GORSEL ISLERDEN ONCE
+        # uygulaniyordu. Ofsetten sonra kamera yuvadan 0.175 + 0.085 =
+        # 0.260 m ileride kaliyor ve 0.30 m'de bu, hedefi kadrajin
+        #     0.260 * 539.9 / 0.28 = 501 px
+        # asagisina atiyor -- yari-kadraj yalnizca 480 px. Yani hedef
+        # KADRAJ DISINA cikiyordu ve ardindan gelen her gorsel adim
+        # (gorunurluk onayi, _rect_pixel_offset, VisualHookAligner)
+        # bakabilecegi bir yuk bulamiyordu. Olculdu: 0.30 m'de 30
+        # yinelemede yalnizca 7 tespit.
+        #
+        # ONCEKI CARE 0.90 m'de hizalamakti -- kadraji genisleterek
+        # semptomu bastiriyordu, sebebi degil.
+        #
+        # YENI SIRA (operator karari, S3): MERKEZLEME ile
+        # KANCA-KONUMLANDIRMA iki AYRI adim.
+        #   - Merkezleme (bu satirdan onceki go_to_and_center ve asagidaki
+        #     0.30 m tekrar-ortalamasi) KAMERA OPTIK EKSENINE gore yapilir;
+        #     kanca ofseti hesaba HIC girmez.
+        #   - Ofset yalnizca SON konumlandirmada, tum gorsel is BITTIKTEN
+        #     sonra uygulanir (asagida "hover-kilit" adiminda).
+        # Ofsetten sonra hedefin kadrajdan cikmasi artik ONEMSIZ, cunku
+        # ondan sonra bakan kimse yok.
+        _hn, _he = n0, e0
         # Sonra YALNIZCA dikey: ayni yatay noktada alma irtifasina in.
         # HIZALAMA IRTIFASINA in, ALMA irtifasina degil.
         #
@@ -745,9 +776,44 @@ class Gorev3PickupPhase:
         # irtifada calisir; alma irtifasina inis hizalama bittikten SONRA.
         self._publish("GOREV3_PICKUP_STEP", "hook_offset_applied",
                       data={"forward_m": HOOK_BODY_OFFSET_FORWARD_M})
-        logger.info(f"{HOOK_VISUAL_ALIGN_ALTITUDE_M}m hizalama irtifasina dikey iniliyor...")
+        # ADIM 3 -- YAKLASMA IRTIFASINA DIKEY IN (kanca ofseti YOK).
+        logger.info("%.2f m yaklasma irtifasina dikey iniliyor (ofsetsiz)...",
+                    GOREV3_APPROACH_ALTITUDE_M)
         await self.flight.goto_position_ned_and_hold(
-            _hn, _he, -HOOK_VISUAL_ALIGN_ALTITUDE_M, aligned_yaw, 5.0)
+            _hn, _he, -GOREV3_APPROACH_ALTITUDE_M, aligned_yaw, 5.0)
+
+        # ADIM 4 -- YAKLASMA IRTIFASINDA IKINCI, HASSAS ORTALAMA.
+        # Hala KAMERA eksenine gore; kadraj burada 0.71 x 0.53 m oldugu
+        # icin ayni piksel hatasi cok daha kucuk bir metre hatasi demek --
+        # hassas gecis tam da bu yuzden burada yapiliyor.
+        self._publish("GOREV3_PICKUP_STEP", "approach_altitude_reached",
+                      data={"altitude_m": GOREV3_APPROACH_ALTITUDE_M})
+        recentered = await self.centering.go_to_and_center(
+            self._rect_class, altitude_m=GOREV3_APPROACH_ALTITUDE_M)
+        if not recentered:
+            logger.warning("%.2f m'de ikinci ortalama yakinsamadi -- devam "
+                           "ediliyor (best-effort).", GOREV3_APPROACH_ALTITUDE_M)
+        self._publish("GOREV3_PICKUP_STEP", "approach_recentered",
+                      data={"converged": bool(recentered)})
+
+        # ADIM 5 -- HOVER-KILIT + KANCA KONUMLANDIRMA.
+        # Gorsel is BITTI. Ofset SIMDI uygulaniyor: arac govde-ileri
+        # HOOK_BODY_OFFSET_FORWARD_M kadar kayar, boylece kameranin
+        # baktigi nokta kancanin altina gecer. Bu oteleme KOR ve tek
+        # seferliktir; dogrulugu, basladigi ortalamanin dogrulugu kadardir
+        # -- ve o ortalama az once 0.30 m'de tazelendi.
+        n0, e0, _d0 = await self.flight.get_position_ned()
+        _c = math.cos(math.radians(aligned_yaw))
+        _s = math.sin(math.radians(aligned_yaw))
+        _hn, _he = _body_to_ned(HOOK_BODY_OFFSET_FORWARD_M, 0.0)
+        logger.info("Kanca hedefin uzerine getiriliyor (govde +%.3f m ileri, "
+                    "gorsel is bitti)...", HOOK_BODY_OFFSET_FORWARD_M)
+        await self.flight.goto_position_ned_and_hold(
+            _hn, _he, -GOREV3_APPROACH_ALTITUDE_M, aligned_yaw, 4.0)
+        self._publish("GOREV3_PICKUP_STEP", "hook_offset_applied",
+                      data={"forward_m": HOOK_BODY_OFFSET_FORWARD_M,
+                            "altitude_m": GOREV3_APPROACH_ALTITUDE_M,
+                            "after_visual_work": True})
 
         # GORUNTU ILE HIZA DOGRULAMASI (operator, 2026-08-23): "kancanin
         # yukun ortasina temas ettigini goruntu isleme ile algila".
@@ -1148,13 +1214,13 @@ class Gorev3PickupPhase:
             # make that explicit: the frame this phase could grab is NOT the
             # frame the streak logic was advanced on.
             detections = await self.detector.detect(None)
-            still_visible = any(d.shape_type == "KIRMIZI_DIKDORTGEN" for d in detections)
+            still_visible = any(d.shape_type == self._rect_class for d in detections)
             if still_visible:
                 logger.warning(f"{alt}m irtifada Kırmızı Dikdörtgen hâlâ görüntüde.")
 
         logger.info("Doğrulama kontrolü yapılıyor (son irtifa)...")
         detections = await self.detector.detect(None)
-        still_visible = any(d.shape_type == "KIRMIZI_DIKDORTGEN" for d in detections)
+        still_visible = any(d.shape_type == self._rect_class for d in detections)
 
         # HUKUM TERSINE CEVRILDI (olculdu, 2026-08-23 kosusu).
         #
