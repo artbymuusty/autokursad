@@ -143,6 +143,22 @@ GOREV3_PICKUP_ALIGN_MAX_ATTEMPTS: int = 80
 # karisikti -- 1.2 m'de ortala, 0.90 m'de gorsel hizala, 0.30 m'ye in.
 # Artik tek sayi: gorsel isin TAMAMI bu irtifada biter, kanca ofseti
 # ondan SONRA uygulanir (bkz. gorev3_pickup.py, GOREV I / B-S3 notu).
+# ALMA DENEME SAYISI (GOREV I / B madde 11, 2026-09-04).
+# Sahiplik FAZDA, aktuatorde degil: aktuatorun ic dongusu
+# (HOOK_PICKUP_ATTEMPTS) 1'e cekildi. Ikisi birden 3 olsaydi toplam 9
+# yakalama penceresi olurdu. Aktuatorun ic dongusu vinci cekip yeniden
+# hizaliyordu ama 2 m'ye TIRMANIP GORSEL DOGRULAMA yapmiyordu -- spec'in
+# tarif ettigi "deneme" tam olarak odur.
+GOREV3_PICKUP_MAX_ATTEMPTS: int = 3
+
+# ALMA SONRASI DOGRULAMA IRTIFASI (GOREV I / B madde 9).
+# Spec: "2 metreye yüksel, yük hala seklin ustunde mi bak". Eskiden
+# GOREV3_PICKUP_VERIFY_CLIMB_STEPS_M = [1, 2, 3] ile uc kademeye
+# cikiliyordu; her deneme icin ~3x sure demekti ve 60 s'lik ust butceye
+# sigmiyordu. 2 m'de kadraj 4.7 x 3.6 m ve yuk 38 x 13 px = 494 px2,
+# yani HSV_MIN_AREA_RECT_BASE (400 px2) uzerinde -- dogrulama calisir.
+GOREV3_VERIFY_CLIMB_ALTITUDE_M: float = 2.0
+
 GOREV3_APPROACH_ALTITUDE_M: float = 0.30
 
 GOREV3_PICKUP_ATTEMPT_TIMEOUT_S: float = 60.0

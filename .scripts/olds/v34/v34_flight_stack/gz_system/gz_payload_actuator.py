@@ -291,7 +291,13 @@ HOOK_WINCH_RETRACT_M = 0.0
 # Eskiden toplam yakalama suresi 3 x 12 = 36 s idi, simdi 3 x 30 = 90 s.
 HOOK_CONTACT_TIMEOUT_S = 30.0
 HOOK_STATE_TIMEOUT_S = 5.0
-HOOK_PICKUP_ATTEMPTS = 3
+# GOREV I / B madde 11 (2026-09-04): 3 -> 1.
+# Deneme sahipligi FAZA gecti (GOREV3_PICKUP_MAX_ATTEMPTS = 3). Ikisi
+# birden 3 kalsaydi toplam 9 yakalama penceresi olurdu. Buradaki ic
+# dongu vinci cekip yeniden hizaliyordu ama 2 m'ye tirmanip GORSEL
+# DOGRULAMA yapmiyordu; spec'in "deneme"si tam olarak odur, o yuzden
+# faz tarafinda.
+HOOK_PICKUP_ATTEMPTS = 1
 # Kilitten sonra ipteki salinimin sonmesi icin beklenen sure.
 HOOK_SETTLE_S = 3.0
 # Birakma sonrasi ayrilmayi dogrulama penceresi ve deneme sayisi.

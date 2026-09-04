@@ -15,6 +15,8 @@ from core.config.parameters import (
     HSV_MIN_AREA_RECT_BASE,
     GOREV3_APPROACH_ALTITUDE_M,
     GOREV3_PICKUP_ATTEMPT_TIMEOUT_S,
+    GOREV3_PICKUP_MAX_ATTEMPTS,
+    GOREV3_VERIFY_CLIMB_ALTITUDE_M,
     GOREV3_CRUISE_ALTITUDE_M,
     GOREV3_TRANSIT_ALTITUDE_M,
     GOREV3_DESCENT_ALTITUDE_M,
@@ -170,6 +172,13 @@ PICKUP_LIFT_CONFIRM_M = 0.30
 SEARCH_CENTER_RED = "red"
 SHAPE_TO_COLOR_RED = SEARCH_CENTER_RED
 DEFAULT_PICKUP_SHAPE = "MAVI_ALTIGEN"
+
+def _WARN():
+    """Severity.WARN'i tembel al -- modul yuklenirken telemetri paketini
+    zorunlu kilmamak icin (bu dosyanin _publish'i de ayni deseni kullaniyor)."""
+    from core.telemetry.events import Severity
+    return Severity.WARN
+
 
 logger = logging.getLogger(__name__)
 
@@ -774,492 +783,570 @@ class Gorev3PickupPhase:
         # 0.90 m'de yuva 160 px'te, yari-kadrajin %33'u. Hem asagidaki
         # goruntu dogrulamasi hem de onu izleyen gorsel hizalama ayni
         # irtifada calisir; alma irtifasina inis hizalama bittikten SONRA.
-        self._publish("GOREV3_PICKUP_STEP", "hook_offset_applied",
-                      data={"forward_m": HOOK_BODY_OFFSET_FORWARD_M})
-        # ADIM 3 -- YAKLASMA IRTIFASINA DIKEY IN (kanca ofseti YOK).
-        logger.info("%.2f m yaklasma irtifasina dikey iniliyor (ofsetsiz)...",
-                    GOREV3_APPROACH_ALTITUDE_M)
-        await self.flight.goto_position_ned_and_hold(
-            _hn, _he, -GOREV3_APPROACH_ALTITUDE_M, aligned_yaw, 5.0)
-
-        # ADIM 4 -- YAKLASMA IRTIFASINDA IKINCI, HASSAS ORTALAMA.
-        # Hala KAMERA eksenine gore; kadraj burada 0.71 x 0.53 m oldugu
-        # icin ayni piksel hatasi cok daha kucuk bir metre hatasi demek --
-        # hassas gecis tam da bu yuzden burada yapiliyor.
-        self._publish("GOREV3_PICKUP_STEP", "approach_altitude_reached",
-                      data={"altitude_m": GOREV3_APPROACH_ALTITUDE_M})
-        recentered = await self.centering.go_to_and_center(
-            self._rect_class, altitude_m=GOREV3_APPROACH_ALTITUDE_M)
-        if not recentered:
-            logger.warning("%.2f m'de ikinci ortalama yakinsamadi -- devam "
-                           "ediliyor (best-effort).", GOREV3_APPROACH_ALTITUDE_M)
-        self._publish("GOREV3_PICKUP_STEP", "approach_recentered",
-                      data={"converged": bool(recentered)})
-
-        # ADIM 5 -- HOVER-KILIT + KANCA KONUMLANDIRMA.
-        # Gorsel is BITTI. Ofset SIMDI uygulaniyor: arac govde-ileri
-        # HOOK_BODY_OFFSET_FORWARD_M kadar kayar, boylece kameranin
-        # baktigi nokta kancanin altina gecer. Bu oteleme KOR ve tek
-        # seferliktir; dogrulugu, basladigi ortalamanin dogrulugu kadardir
-        # -- ve o ortalama az once 0.30 m'de tazelendi.
-        n0, e0, _d0 = await self.flight.get_position_ned()
-        _c = math.cos(math.radians(aligned_yaw))
-        _s = math.sin(math.radians(aligned_yaw))
-        _hn, _he = _body_to_ned(HOOK_BODY_OFFSET_FORWARD_M, 0.0)
-        logger.info("Kanca hedefin uzerine getiriliyor (govde +%.3f m ileri, "
-                    "gorsel is bitti)...", HOOK_BODY_OFFSET_FORWARD_M)
-        await self.flight.goto_position_ned_and_hold(
-            _hn, _he, -GOREV3_APPROACH_ALTITUDE_M, aligned_yaw, 4.0)
-        self._publish("GOREV3_PICKUP_STEP", "hook_offset_applied",
-                      data={"forward_m": HOOK_BODY_OFFSET_FORWARD_M,
-                            "altitude_m": GOREV3_APPROACH_ALTITUDE_M,
-                            "after_visual_work": True})
-
-        # GORUNTU ILE HIZA DOGRULAMASI (operator, 2026-08-23): "kancanin
-        # yukun ortasina temas ettigini goruntu isleme ile algila".
-        # Kanca yukun ortasindayken yuk, kare merkezinin
-        # HOOK_BODY_OFFSET_FORWARD_M * f / irtifa kadar gerisinde gorunmeli.
-        # Sapma buradan metre cinsinden okunuyor.
+        # ==============================================================
+        # DIS DENEME DONGUSU (GOREV I / B, maddeler 3-11)
+        # ==============================================================
+        # Spec: 3 deneme hakki, her deneme adim 3'ten (yaklasma irtifasina
+        # inis) yeniden basliyor ve 60 s'lik UST BUTCESI var.
         #
-        # Yuk kamerada HIC yoksa korlemesine devam etmek anlamsiz: 0.30 m'de
-        # kadraj yalnizca 0.71 x 0.53 m, kucuk bir hata yuku disari atiyor.
-        # O durumda 1 m yukselip yeniden bulunur ve kancaya gore ortalanir.
-        offset_m, visible = await self._rect_pixel_offset()
-        if not visible:
-            if await self._reacquire_by_climbing(aligned_yaw):
-                n0, e0, _d0 = await self.flight.get_position_ned()
-                _c = math.cos(math.radians(aligned_yaw))
-                _s = math.sin(math.radians(aligned_yaw))
-                _hn, _he = _body_to_ned(HOOK_BODY_OFFSET_FORWARD_M, 0.0)
-                await self.flight.goto_position_ned_and_hold(
-                    _hn, _he, -HOOK_VISUAL_ALIGN_ALTITUDE_M, aligned_yaw, 5.0)
-                offset_m, visible = await self._rect_pixel_offset()
+        # NEDEN IC ICE FONKSIYON: asagidaki govde run()'in yerel
+        # degiskenlerini (aligned_yaw, _body_to_ned, n0/e0, self._rect_class)
+        # kapanisla kullaniyor. Parametre olarak gecirmek 15+ arguman
+        # demekti; kapanis hem daha az koddur hem de yanlis arguman
+        # gecirme sinifini tamamen ortadan kaldirir.
+        #
+        # DENEME SAYISI FAZDA, AKTUATORDE DEGIL: aktuatorun kendi ic
+        # dongusu (HOOK_PICKUP_ATTEMPTS) 1'e cekildi. Ikisi birden 3
+        # olsaydi toplam 9 yakalama penceresi olurdu; spec 3 diyor.
+        # Aktuatorun ic dongusu vinci cekip yeniden hizaliyordu ama
+        # 2 m'ye TIRMANIP GORSEL DOGRULAMA yapmiyordu -- spec'in istedigi
+        # deneme tam olarak odur, bu yuzden sahiplik faza gecti.
+        async def _attempt(attempt: int) -> bool:
+            # KAPANIS BAGI: bu govde n0/e0/_c/_s'i YENIDEN ATIYOR ve
+            # _body_to_ned() onlari DIS kapsamdan okuyor. nonlocal olmadan
+            # atamalar yerel kalir, _body_to_ned eski (deneme oncesi)
+            # konumu kullanir ve kanca ofseti yanlis noktadan hesaplanir.
+            # _hn/_he ayrica atanmadan ONCE okunuyor (adim 3'teki dikey
+            # inis), yani onlarsiz UnboundLocalError olur.
+            nonlocal n0, e0, _c, _s, _hn, _he
+            # ADIM 3 -- YAKLASMA IRTIFASINA DIKEY IN (kanca ofseti YOK).
+            logger.info("%.2f m yaklasma irtifasina dikey iniliyor (ofsetsiz)...",
+                        GOREV3_APPROACH_ALTITUDE_M)
+            await self.flight.goto_position_ned_and_hold(
+                _hn, _he, -GOREV3_APPROACH_ALTITUDE_M, aligned_yaw, 5.0)
+
+            # ADIM 4 -- YAKLASMA IRTIFASINDA IKINCI, HASSAS ORTALAMA.
+            # Hala KAMERA eksenine gore; kadraj burada 0.71 x 0.53 m oldugu
+            # icin ayni piksel hatasi cok daha kucuk bir metre hatasi demek --
+            # hassas gecis tam da bu yuzden burada yapiliyor.
+            self._publish("GOREV3_PICKUP_STEP", "approach_altitude_reached",
+                          data={"altitude_m": GOREV3_APPROACH_ALTITUDE_M})
+            recentered = await self.centering.go_to_and_center(
+                self._rect_class, altitude_m=GOREV3_APPROACH_ALTITUDE_M)
+            if not recentered:
+                logger.warning("%.2f m'de ikinci ortalama yakinsamadi -- devam "
+                               "ediliyor (best-effort).", GOREV3_APPROACH_ALTITUDE_M)
+            self._publish("GOREV3_PICKUP_STEP", "approach_recentered",
+                          data={"converged": bool(recentered)})
+
+            # GOREV I / B-S3: BU BLOK OFSETTEN ONCEYE TASINDI ve
+            # yaklasma irtifasinda (0.30 m) kosuyor. Onceden ofsetten
+            # SONRA, 0.90 m'de kosuyordu -- yani tam da 501 px kusurunun
+            # icinde. Artik tum gorsel is bittikten SONRA otelenildigi
+            # icin 0.90 m'lik telafi irtifasina gerek kalmadi.
+            # GORUNTU ILE HIZA DOGRULAMASI (operator, 2026-08-23): "kancanin
+            # yukun ortasina temas ettigini goruntu isleme ile algila".
+            # Kanca yukun ortasindayken yuk, kare merkezinin
+            # HOOK_BODY_OFFSET_FORWARD_M * f / irtifa kadar gerisinde gorunmeli.
+            # Sapma buradan metre cinsinden okunuyor.
+            #
+            # Yuk kamerada HIC yoksa korlemesine devam etmek anlamsiz: 0.30 m'de
+            # kadraj yalnizca 0.71 x 0.53 m, kucuk bir hata yuku disari atiyor.
+            # O durumda 1 m yukselip yeniden bulunur ve kancaya gore ortalanir.
+            offset_m, visible = await self._rect_pixel_offset()
             if not visible:
-                logger.error("Kirmizi Dikdortgen yeniden bulunamadi -- Görev 3 Faz 1 başarısız.")
-                return False
-        # KALIBRASYON: goruntu tahmini ile simulator gercegini YAN YANA yaz.
-        # 2026-08-23 kosusunda ikisi ayristi -- goruntu 5.7 cm, gercek 0.7 cm.
-        # Sebebi henuz bilinmiyor (irtifa kaynagi dogru cikti:
-        # get_global_position()[2] zaten relative_altitude_m; kamera da
-        # gercekten govde +0.085'te). Tahminle duzeltmek yerine olcuyoruz:
-        # birkac kosunun verisi sistematik bir sapma gosterirse duzeltilir.
-        # KARAR MERCII ARTIK IKISI DE DEGIL: alma, kancanin GERCEK Gazebo
-        # pozundan hesaplanan OTURMA GEOMETRISIYLE karara baglaniyor
-        # (core/mission/hook_seating.py). Buradaki iki sayi yalnizca
-        # goruntunun guvenilirligini olcmek icin yan yana yaziliyor.
-        truth_gap = None
-        try:
-            # Gercek kanca pozundan olculen yanal hata (magnet DEGIL: bu
-            # yapida manyetik kuvvet simule edilmiyor).
-            truth_gap = self.actuator.hook_lateral_error_m(self._color)
-        except Exception:  # noqa: BLE001
-            pass
-        try:
-            _la, _lo, _alt_now = await self.flight.get_global_position()
-        except Exception:  # noqa: BLE001
-            _alt_now = None
-        logger.info("[HIZA_KALIBRASYON] goruntu=%s  gercek=%s  irtifa=%s",
-                    f"{offset_m * 100:.1f} cm" if offset_m is not None else "yok",
-                    f"{truth_gap * 100:.1f} cm" if truth_gap is not None else "yok",
-                    f"{_alt_now:.2f} m" if _alt_now is not None else "yok")
-
-        if offset_m is not None:
-            if offset_m <= HOOK_VISION_ALIGN_TOLERANCE_M:
-                logger.info("[GORUNTU] kanca yukun ortasinda: sapma %.1f cm (tol %.0f cm).",
-                            offset_m * 100, HOOK_VISION_ALIGN_TOLERANCE_M * 100)
-            else:
-                logger.warning("[GORUNTU] kanca yukun ortasinda DEGIL: sapma %.1f cm "
-                               "(tol %.0f cm) -- alma yine de denenecek; oturma kapisi "
-                               "gercek kanca pozundan kendi kararini veriyor.",
-                               offset_m * 100, HOOK_VISION_ALIGN_TOLERANCE_M * 100)
-
-        # KAPALI CEVRIM KANCA HIZALAMASI (Blocker 1, 2026-08-26).
-        # Buraya kadar her sey acik cevrimdi: kamera hedefi ortalar, arac
-        # govde ofseti kadar oteler, iner. Kanca ipin ucunda oldugu icin o
-        # zincirin sonunda nerede oldugu OLCULMEDEN bilinemez. Simdi
-        # olculuyor ve duzeltiliyor; oturma kapisi da ayni pozu kullaniyor.
-        # VINCI ONCE SAL, SONRA HIZALA (2026-08-26 canli kosusu).
-        #
-        # Ilk surumde sira tersti: once hizala, sonra alma mekanizmasini
-        # cagir -- ve alma mekanizmasi ilk isi olarak vinci 0.40 m saliyordu.
-        # Yani hizalama kanca HAVADAYKEN (vinc cekili, base_link-0.133)
-        # olculuyor, sonra kanca 30 cm asagi iniyor, o inis sirasinda
-        # salliniyor ve yukun YANINA konuyordu. Olculdu: hizalama 9.0 mm'ye
-        # yakinsadi, ardindan oturma kapisi 12 s boyunca 38-103 mm gordu ve
-        # ucunde de hakli olarak reddetti.
-        #
-        # Ip sarkan bir kancada olcumun BIRAKILACAGI yerde yapilmasi gerekir.
-        # Vinc simdi once saliniyor, kanca guverteye/zemine oturuyor, ve
-        # duzeltmeler kancanin gercek calisma pozisyonunu suruyor.
-        # VINC HIZALAMA BOYUNCA TOPLU KALIR -- olculdu, 2026-08-27.
-        #
-        # Onceki sira (once sal, sonra hizala) gorsel hizalamayi 5.1 mm'ye
-        # yakinsatiyordu ve ardindan oturma kapisi 222 mm olcuyordu. Sebep
-        # gorus degil, ip: vinc acikken alma irtifasina inilince kanca
-        # guverteye/zemine dayanir ve inisin geri kalani ipte GEVSEKLIK olur.
-        # Bu dosyanin ve arac SDF'sinin kendi notlari gevsekligin kancayi
-        # devirdigini zaten kaydediyor (olculen 49 derece). Devrilen kanca
-        # hizalandigi yerde durmaz.
-        #
-        # Toplu vincle kanca govdenin (-0.090, 0) altinda dik sarkar ve
-        # nerede oldugu bellidir. Hizalama orada bitirilir, dikey inilir
-        # (dikey inis yatay hizayi bozmaz), ve vinc EN SON salinir; boylece
-        # payout saf dikey bir harekettir.
-        # Zaten hizalama irtifasindayiz (yukaridaki inis oraya yapildi); bu
-        # yalnizca savunmaci bir teyit tutusu.
-        await self.flight.goto_position_ned_and_hold(
-            _hn, _he, -HOOK_VISUAL_ALIGN_ALTITUDE_M, aligned_yaw, 2.0)
-
-        # GORSEL HIZALAMA (2026-08-27). Alici artik KAMERADAN olculuyor.
-        #
-        # Onceki surum yuvanin konumunu dogrudan Gazebo'dan (ground truth)
-        # aliyordu. O, gercek bir dronede var olmayan bir bilgi: gorev artik
-        # yuvayi goruntuden buluyor (core/detection/receiver_detector.py,
-        # 66 etiketli karede alma irtifasinda 0.68 mm ortalama merkez hatasi),
-        # ve hatayi kancanin GERCEK pozuna karsi kapatiyor.
-        #
-        # Neden piksel farki degil de metre farki: kanca kameranin ALTINDA,
-        # yuva ise YERDE; iki farkli derinlik. Goruntude ust uste getirmek
-        # 1.2 m'lik bir suzulmede ~0.2 m yanilir ve kancanin O45 govdesi
-        # 0.65 m'nin altinda yuvanin agzini zaten kapatir. Ayrinti:
-        # core/mission/visual_alignment.py.
-        aligner = VisualHookAligner(
-            get_frame=self.camera.get_frame,
-            get_alt_m=lambda: self._current_alt_m(),
-            get_yaw_deg=self.flight.get_yaw_deg,
-            get_position_ned=self.flight.get_position_ned,
-            get_hook_ned_offset=getattr(self.actuator, "hook_nose_ned_offset_m",
-                                        lambda: None),
-            goto_ned_and_hold=lambda n, e, alt, yaw: self.flight.goto_position_ned_and_hold(
-                n, e, -alt, yaw, 1.2),
-            color=self._color,
-            # SALT OLCUM (mekanizma 2c): gorus tahmininin yaninda gercek
-            # yanal hatayi da kaydeder, karar akisina girmez.
-            get_truth_lateral_m=lambda: getattr(
-                self.actuator, "hook_lateral_error_m", lambda _c: None)(self._color))
-        vis = await aligner.align(HOOK_VISUAL_ALIGN_ALTITUDE_M, aligned_yaw,
-                                  tolerance_m=HOOK_VISUAL_ALIGN_TOLERANCE_M)
-        logger.info("[GORSEL_HIZA] %s: son hata=%s, %d iterasyon, %d tespit, "
-                    "%.3f m hareket", vis.reason,
-                    f"{vis.final_error_m * 1000:.1f} mm" if vis.final_error_m is not None else "yok",
-                    vis.iterations, vis.detections, vis.travel_m)
-        # GORUS KAYBOLURSA KOR DEVAM ETME. Ama "yakinsamadi" ile "goremedim"
-        # ayni sey degil: elde saglam bir yuva olcumu varsa ve artik hata
-        # asagidaki duzeltmenin kapatabilecegi buyuklukteyse devam etmek
-        # dogru -- son sozu zaten oturma kapisi soyluyor.
-        usable = vis.converged or (
-            vis.receiver_ned is not None
-            and vis.final_error_m is not None
-            and vis.final_error_m <= HOOK_VISUAL_ALIGN_MAX_USABLE_M)
-        if not usable:
-            logger.error("Görsel hizalama kullanilabilir bir olcum vermedi (%s, "
-                         "hata=%s) -- Görev 3 Faz 1 GUVENLI SEKILDE durduruluyor.",
-                         vis.reason,
-                         f"{vis.final_error_m * 1000:.1f} mm" if vis.final_error_m else "yok")
-            return False
-        if not vis.converged:
-            logger.warning("Görsel hizalama yakinsamadi (%s) ama yuva olcumu "
-                           "saglam (artik %.1f mm) -- alma irtifasindaki "
-                           "duzeltmeyle devam ediliyor.",
-                           vis.reason, vis.final_error_m * 1000)
-        final_lateral = vis.final_error_m
-        recv_ned = vis.receiver_ned
-        logger.info("[GORSEL_HIZA] yuva GORUNTUDEN olculdu: NED=(%.3f, %.3f)",
-                    recv_ned[0], recv_ned[1]) if recv_ned else None
-
-        # DIKEY IN, sonra VINCI SAL, sonra GORUS OLCUMUNE GORE SON DUZELTME.
-        #
-        # Kamera, kancanin yuvaya ULASTIGI irtifada yuvayi GOREMEZ: kanca
-        # yuvanin ustundeyken kamera 0.26 m ileridedir ve 0.30 m'de bu 501 px
-        # asagi duser, yari-kadraj ise 480 px. Olculdu: gorev orada 30
-        # yinelemede 7 tespit yapabildi ve hakli olarak reddetti.
-        #
-        # Bu yuzden gorus YUKARIDA olcer, asagida UYGULANIR. Yuva hareket
-        # etmez, dolayisiyla iyi olculmus bir konum sonradan kullanilabilir.
-        # Son duzeltme, saklanan GORUS konumuna karsi kancanin GERCEK pozuyla
-        # kapatilir -- ve sonucu her halukarda oturma kapisi dogrular.
-        # SIRALAMA (2026-08-31): SAL -> HAVADA DUZELT -> DIKEY IN.
-        #
-        # Onceki sira "dikey in -> sal -> duzelt" idi ve iki olcum onu
-        # reddediyor:
-        #
-        #   a) Salim hatayi aciyor. Kayitli olcum (bu dosyanin 100-113
-        #      satirlari): payout ONCESI yanal 14.3 mm / egim 0.2 derece,
-        #      payout SONRASI 64.6 mm / 33.3 derece.
-        #   b) Salimdan SONRA kanca guverte/zemin uzerinde DINLENIYOR ve
-        #      duzeltme onu takip ettiremiyor. Olculdu (2026-08-31, uc temiz
-        #      kosu): arac komut yonunde kumulatif ~70 mm oteledi, kanca ise
-        #      BAGIMSIZ olarak 28 / 49 / 189 mm kaydi. Ayni kontrol yasasi
-        #      kanca HAVADAYKEN (gorsel hizalama fazi, vinc cekili) 18.6 /
-        #      27.3 / 13.3 mm'ye yakinsiyor.
-        #
-        # Yani sorun kontrol yasasinda ya da olcumde degil (ikisi de dogru,
-        # hook_nose_ned_offset_m gercek Gazebo pozunu okuyor); YANLIS
-        # REJIMDE calistirilmasinda. Cozum rejimi degistirmek:
-        #
-        #   1. Vinci burada, HALA YUKARIDAYKEN sal. Kanca ~0.5 m'de serbest
-        #      asili kalir, yani salimin acdigi hata duzeltilebilir bir anda
-        #      olusur.
-        #   2. Duzeltmeyi kanca SERBESTKEN kos -- calistigi kanitlanmis rejim.
-        #   3. Sonra SAF DIKEY in. Yanal surukleme hic olmaz; dikey inis
-        #      sarkaci yatay otelemeye kiyasla cok daha az uyarir.
-        #
-        # hook_payout_m() DEGISMEDI: salim yine SON irtifaya gore hesaplanir,
-        # kanca yalnizca inis tamamlanana kadar daha yuksekte asili kalir.
-        # SALIM HESABI TEK KAYNAKTAN: actuator.extend_winch_for(). Gorev
-        # katmani artik hook_payout_m'i kendisi cagirmiyor; hedef irtifayi
-        # verir, hesabi aktuator yapar -- alma anindaki yeniden hesapla ayni
-        # kod yolundan gecer.
-        _extend = getattr(self.actuator, "extend_winch_for", None)
-        if _extend is not None:
-            _payout_alt = await self._current_alt_m()
-            logger.info("Vinc salinacak (hedef irtifa %.2f m icin) -- ARAC HALA "
-                        "%.2f m'de, kanca serbest asili kalacak.",
-                        GOREV3_DESCENT_ALTITUDE_M,
-                        _payout_alt if _payout_alt is not None else float("nan"))
-            await _extend(GOREV3_DESCENT_ALTITUDE_M)
-            await asyncio.sleep(HOOK_PAYOUT_SETTLE_S)
-
-        if recv_ned is not None:
-            self._publish("GOREV3_PICKUP_STEP", "correction_airborne_start")
-            corrected = await self._settle_hook_onto(recv_ned, aligned_yaw,
-                                                     HOOK_VISUAL_ALIGN_ALTITUDE_M)
-            if corrected is not None:
-                final_lateral = corrected
-
-        _hn, _he, _ = await self.flight.get_position_ned()
-        # KANCA DENGE KONUMU: INIS ONCESI. Mekanizma 2b olcumu (2026-08-31).
-        # Duzeltme dongusu kancayi 0.94 m'de hizaliyor, oturma kapisi ise
-        # 0.33 m'de olcuyor. Aradaki sistematik kayma olculdu (+22.7 / +43.1
-        # mm) ve bunun yalnizca %22-51'i aracin kendi kaymasiyla aciklandi.
-        # Kalan terim "kancanin ARACA GORE denge konumu irtifayla degisiyor"
-        # hipotezi; onu kanitlamak ya da curutmek icin ayni buyuklugu inisin
-        # IKI YANINDA olcup karsilastirmak gerekiyor.
-        try:
-            _off_before = getattr(self.actuator, "hook_nose_ned_offset_m", lambda: None)()
-        except Exception:  # noqa: BLE001 -- salt olcum, gorevi dusuremez
-            _off_before = None
-        _alt_before = await self._current_alt_m()
-        logger.info("[KANCA_DENGE] INIS ONCESI irtifa=%s kanca_ofset=%s",
-                    f"{_alt_before:.3f} m" if _alt_before is not None else "yok",
-                    f"({_off_before[0]:+.4f}, {_off_before[1]:+.4f})" if _off_before else "yok")
-        # Y1 OLCUM TURU: iz, inisin BASINDAN ilk alma denemesinin sonuna
-        # kadar kesintisiz akar ki uc an (inis / temas / sonrasi) tek bir
-        # zaman ekseninde ayirt edilebilsin.
-        _trace = asyncio.create_task(self._hook_trace(45.0))
-        logger.info("Hizalandi -- %.2f m alma irtifasina SAF DIKEY iniliyor "
-                    "(yanal hareket yok).", GOREV3_DESCENT_ALTITUDE_M)
-        self._publish("GOREV3_PICKUP_STEP", "vertical_descent_start",
-                      data={"from_m": HOOK_VISUAL_ALIGN_ALTITUDE_M,
-                            "to_m": GOREV3_DESCENT_ALTITUDE_M,
-                            "lateral_before_mm": (round(final_lateral * 1000, 1)
-                                                  if final_lateral is not None else None)})
-        await self.flight.goto_position_ned_and_hold(
-            _hn, _he, -GOREV3_DESCENT_ALTITUDE_M, aligned_yaw, 6.0)
-        # Hizalama araci otelemis olabilir; tutma noktasi tazelenmeli.
-        _hn, _he, _ = await self.flight.get_position_ned()
-
-        logger.info("Yük alma mekanizması aktifleşiyor...")
-        # KONUMU ALMA BOYUNCA TUT (2026-08-21). Yukaridaki
-        # goto_position_ned_and_hold, alma baslamadan ONCE doner; alma ise
-        # 3 denemede ~50 s surebiliyor. O sure boyunca hicbir setpoint
-        # yayinlanmadigi icin PX4 Offboard'dan dusuyor ve arac kayiyor.
-        # Olculdu (mission15, magnet mesafesi denemeler boyunca):
-        #     1. deneme  4.1 cm   <- 4.0 cm esigin 1 mm disi
-        #     2. deneme  9.8 cm
-        #     3. deneme 11.1 cm
-        # Yani ilk deneme neredeyse tutmus, sonra arac surekli uzaklasmis.
-        # Setpoint akisini almaya PARALEL surdurmek bu kaymayi kaldirir.
-        # TUTMA GOREVI, yeniden hizalama sirasinda DURDURULUP yeni konumda
-        # yeniden baslatilabilsin diye bir kapta tutuluyor: iki ayri gorev
-        # ayni anda setpoint yayinlarsa PX4 celiskili hedefler alir.
-        _hold_ref = {}
-
-        def _start_hold(n_, e_):
-            _hold_ref["t"] = asyncio.create_task(self.flight.goto_position_ned_and_hold(
-                n_, e_, -GOREV3_DESCENT_ALTITUDE_M, aligned_yaw, PICKUP_HOLD_S))
-
-        async def _stop_hold():
-            t = _hold_ref.pop("t", None)
-            if t is None:
-                return
-            t.cancel()
+                if await self._reacquire_by_climbing(aligned_yaw):
+                    n0, e0, _d0 = await self.flight.get_position_ned()
+                    _c = math.cos(math.radians(aligned_yaw))
+                    _s = math.sin(math.radians(aligned_yaw))
+                    _hn, _he = _body_to_ned(HOOK_BODY_OFFSET_FORWARD_M, 0.0)
+                    await self.flight.goto_position_ned_and_hold(
+                        _hn, _he, -HOOK_VISUAL_ALIGN_ALTITUDE_M, aligned_yaw, 5.0)
+                    offset_m, visible = await self._rect_pixel_offset()
+                if not visible:
+                    logger.error("Kirmizi Dikdortgen yeniden bulunamadi -- Görev 3 Faz 1 başarısız.")
+                    return False
+            # KALIBRASYON: goruntu tahmini ile simulator gercegini YAN YANA yaz.
+            # 2026-08-23 kosusunda ikisi ayristi -- goruntu 5.7 cm, gercek 0.7 cm.
+            # Sebebi henuz bilinmiyor (irtifa kaynagi dogru cikti:
+            # get_global_position()[2] zaten relative_altitude_m; kamera da
+            # gercekten govde +0.085'te). Tahminle duzeltmek yerine olcuyoruz:
+            # birkac kosunun verisi sistematik bir sapma gosterirse duzeltilir.
+            # KARAR MERCII ARTIK IKISI DE DEGIL: alma, kancanin GERCEK Gazebo
+            # pozundan hesaplanan OTURMA GEOMETRISIYLE karara baglaniyor
+            # (core/mission/hook_seating.py). Buradaki iki sayi yalnizca
+            # goruntunun guvenilirligini olcmek icin yan yana yaziliyor.
+            truth_gap = None
             try:
-                await t
+                # Gercek kanca pozundan olculen yanal hata (magnet DEGIL: bu
+                # yapida manyetik kuvvet simule edilmiyor).
+                truth_gap = self.actuator.hook_lateral_error_m(self._color)
+            except Exception:  # noqa: BLE001
+                pass
+            try:
+                _la, _lo, _alt_now = await self.flight.get_global_position()
+            except Exception:  # noqa: BLE001
+                _alt_now = None
+            logger.info("[HIZA_KALIBRASYON] goruntu=%s  gercek=%s  irtifa=%s",
+                        f"{offset_m * 100:.1f} cm" if offset_m is not None else "yok",
+                        f"{truth_gap * 100:.1f} cm" if truth_gap is not None else "yok",
+                        f"{_alt_now:.2f} m" if _alt_now is not None else "yok")
+
+            if offset_m is not None:
+                if offset_m <= HOOK_VISION_ALIGN_TOLERANCE_M:
+                    logger.info("[GORUNTU] kanca yukun ortasinda: sapma %.1f cm (tol %.0f cm).",
+                                offset_m * 100, HOOK_VISION_ALIGN_TOLERANCE_M * 100)
+                else:
+                    logger.warning("[GORUNTU] kanca yukun ortasinda DEGIL: sapma %.1f cm "
+                                   "(tol %.0f cm) -- alma yine de denenecek; oturma kapisi "
+                                   "gercek kanca pozundan kendi kararini veriyor.",
+                                   offset_m * 100, HOOK_VISION_ALIGN_TOLERANCE_M * 100)
+
+            # KAPALI CEVRIM KANCA HIZALAMASI (Blocker 1, 2026-08-26).
+            # Buraya kadar her sey acik cevrimdi: kamera hedefi ortalar, arac
+            # govde ofseti kadar oteler, iner. Kanca ipin ucunda oldugu icin o
+            # zincirin sonunda nerede oldugu OLCULMEDEN bilinemez. Simdi
+            # olculuyor ve duzeltiliyor; oturma kapisi da ayni pozu kullaniyor.
+            # VINCI ONCE SAL, SONRA HIZALA (2026-08-26 canli kosusu).
+            #
+            # Ilk surumde sira tersti: once hizala, sonra alma mekanizmasini
+            # cagir -- ve alma mekanizmasi ilk isi olarak vinci 0.40 m saliyordu.
+            # Yani hizalama kanca HAVADAYKEN (vinc cekili, base_link-0.133)
+            # olculuyor, sonra kanca 30 cm asagi iniyor, o inis sirasinda
+            # salliniyor ve yukun YANINA konuyordu. Olculdu: hizalama 9.0 mm'ye
+            # yakinsadi, ardindan oturma kapisi 12 s boyunca 38-103 mm gordu ve
+            # ucunde de hakli olarak reddetti.
+            #
+            # Ip sarkan bir kancada olcumun BIRAKILACAGI yerde yapilmasi gerekir.
+            # Vinc simdi once saliniyor, kanca guverteye/zemine oturuyor, ve
+            # duzeltmeler kancanin gercek calisma pozisyonunu suruyor.
+            # VINC HIZALAMA BOYUNCA TOPLU KALIR -- olculdu, 2026-08-27.
+            #
+            # Onceki sira (once sal, sonra hizala) gorsel hizalamayi 5.1 mm'ye
+            # yakinsatiyordu ve ardindan oturma kapisi 222 mm olcuyordu. Sebep
+            # gorus degil, ip: vinc acikken alma irtifasina inilince kanca
+            # guverteye/zemine dayanir ve inisin geri kalani ipte GEVSEKLIK olur.
+            # Bu dosyanin ve arac SDF'sinin kendi notlari gevsekligin kancayi
+            # devirdigini zaten kaydediyor (olculen 49 derece). Devrilen kanca
+            # hizalandigi yerde durmaz.
+            #
+            # Toplu vincle kanca govdenin (-0.090, 0) altinda dik sarkar ve
+            # nerede oldugu bellidir. Hizalama orada bitirilir, dikey inilir
+            # (dikey inis yatay hizayi bozmaz), ve vinc EN SON salinir; boylece
+            # payout saf dikey bir harekettir.
+            # Zaten hizalama irtifasindayiz (yukaridaki inis oraya yapildi); bu
+            # yalnizca savunmaci bir teyit tutusu.
+            await self.flight.goto_position_ned_and_hold(
+                _hn, _he, -HOOK_VISUAL_ALIGN_ALTITUDE_M, aligned_yaw, 2.0)
+
+            # GORSEL HIZALAMA (2026-08-27). Alici artik KAMERADAN olculuyor.
+            #
+            # Onceki surum yuvanin konumunu dogrudan Gazebo'dan (ground truth)
+            # aliyordu. O, gercek bir dronede var olmayan bir bilgi: gorev artik
+            # yuvayi goruntuden buluyor (core/detection/receiver_detector.py,
+            # 66 etiketli karede alma irtifasinda 0.68 mm ortalama merkez hatasi),
+            # ve hatayi kancanin GERCEK pozuna karsi kapatiyor.
+            #
+            # Neden piksel farki degil de metre farki: kanca kameranin ALTINDA,
+            # yuva ise YERDE; iki farkli derinlik. Goruntude ust uste getirmek
+            # 1.2 m'lik bir suzulmede ~0.2 m yanilir ve kancanin O45 govdesi
+            # 0.65 m'nin altinda yuvanin agzini zaten kapatir. Ayrinti:
+            # core/mission/visual_alignment.py.
+            aligner = VisualHookAligner(
+                get_frame=self.camera.get_frame,
+                get_alt_m=lambda: self._current_alt_m(),
+                get_yaw_deg=self.flight.get_yaw_deg,
+                get_position_ned=self.flight.get_position_ned,
+                get_hook_ned_offset=getattr(self.actuator, "hook_nose_ned_offset_m",
+                                            lambda: None),
+                goto_ned_and_hold=lambda n, e, alt, yaw: self.flight.goto_position_ned_and_hold(
+                    n, e, -alt, yaw, 1.2),
+                color=self._color,
+                # SALT OLCUM (mekanizma 2c): gorus tahmininin yaninda gercek
+                # yanal hatayi da kaydeder, karar akisina girmez.
+                get_truth_lateral_m=lambda: getattr(
+                    self.actuator, "hook_lateral_error_m", lambda _c: None)(self._color))
+            vis = await aligner.align(GOREV3_APPROACH_ALTITUDE_M, aligned_yaw,
+                                      tolerance_m=HOOK_VISUAL_ALIGN_TOLERANCE_M)
+            logger.info("[GORSEL_HIZA] %s: son hata=%s, %d iterasyon, %d tespit, "
+                        "%.3f m hareket", vis.reason,
+                        f"{vis.final_error_m * 1000:.1f} mm" if vis.final_error_m is not None else "yok",
+                        vis.iterations, vis.detections, vis.travel_m)
+            # GORUS KAYBOLURSA KOR DEVAM ETME. Ama "yakinsamadi" ile "goremedim"
+            # ayni sey degil: elde saglam bir yuva olcumu varsa ve artik hata
+            # asagidaki duzeltmenin kapatabilecegi buyuklukteyse devam etmek
+            # dogru -- son sozu zaten oturma kapisi soyluyor.
+            usable = vis.converged or (
+                vis.receiver_ned is not None
+                and vis.final_error_m is not None
+                and vis.final_error_m <= HOOK_VISUAL_ALIGN_MAX_USABLE_M)
+            if not usable:
+                logger.error("Görsel hizalama kullanilabilir bir olcum vermedi (%s, "
+                             "hata=%s) -- Görev 3 Faz 1 GUVENLI SEKILDE durduruluyor.",
+                             vis.reason,
+                             f"{vis.final_error_m * 1000:.1f} mm" if vis.final_error_m else "yok")
+                return False
+            if not vis.converged:
+                logger.warning("Görsel hizalama yakinsamadi (%s) ama yuva olcumu "
+                               "saglam (artik %.1f mm) -- alma irtifasindaki "
+                               "duzeltmeyle devam ediliyor.",
+                               vis.reason, vis.final_error_m * 1000)
+            final_lateral = vis.final_error_m
+            recv_ned = vis.receiver_ned
+            logger.info("[GORSEL_HIZA] yuva GORUNTUDEN olculdu: NED=(%.3f, %.3f)",
+                        recv_ned[0], recv_ned[1]) if recv_ned else None
+            # ADIM 5 -- HOVER-KILIT + KANCA KONUMLANDIRMA.
+            # Gorsel is BITTI. Ofset SIMDI uygulaniyor: arac govde-ileri
+            # HOOK_BODY_OFFSET_FORWARD_M kadar kayar, boylece kameranin
+            # baktigi nokta kancanin altina gecer. Bu oteleme KOR ve tek
+            # seferliktir; dogrulugu, basladigi ortalamanin dogrulugu kadardir
+            # -- ve o ortalama az once 0.30 m'de tazelendi.
+            n0, e0, _d0 = await self.flight.get_position_ned()
+            _c = math.cos(math.radians(aligned_yaw))
+            _s = math.sin(math.radians(aligned_yaw))
+            _hn, _he = _body_to_ned(HOOK_BODY_OFFSET_FORWARD_M, 0.0)
+            logger.info("Kanca hedefin uzerine getiriliyor (govde +%.3f m ileri, "
+                        "gorsel is bitti)...", HOOK_BODY_OFFSET_FORWARD_M)
+            await self.flight.goto_position_ned_and_hold(
+                _hn, _he, -GOREV3_APPROACH_ALTITUDE_M, aligned_yaw, 4.0)
+            self._publish("GOREV3_PICKUP_STEP", "hook_offset_applied",
+                          data={"forward_m": HOOK_BODY_OFFSET_FORWARD_M,
+                                "altitude_m": GOREV3_APPROACH_ALTITUDE_M,
+                                "after_visual_work": True})
+
+            # DIKEY IN, sonra VINCI SAL, sonra GORUS OLCUMUNE GORE SON DUZELTME.
+            #
+            # Kamera, kancanin yuvaya ULASTIGI irtifada yuvayi GOREMEZ: kanca
+            # yuvanin ustundeyken kamera 0.26 m ileridedir ve 0.30 m'de bu 501 px
+            # asagi duser, yari-kadraj ise 480 px. Olculdu: gorev orada 30
+            # yinelemede 7 tespit yapabildi ve hakli olarak reddetti.
+            #
+            # Bu yuzden gorus YUKARIDA olcer, asagida UYGULANIR. Yuva hareket
+            # etmez, dolayisiyla iyi olculmus bir konum sonradan kullanilabilir.
+            # Son duzeltme, saklanan GORUS konumuna karsi kancanin GERCEK pozuyla
+            # kapatilir -- ve sonucu her halukarda oturma kapisi dogrular.
+            # SIRALAMA (2026-08-31): SAL -> HAVADA DUZELT -> DIKEY IN.
+            #
+            # Onceki sira "dikey in -> sal -> duzelt" idi ve iki olcum onu
+            # reddediyor:
+            #
+            #   a) Salim hatayi aciyor. Kayitli olcum (bu dosyanin 100-113
+            #      satirlari): payout ONCESI yanal 14.3 mm / egim 0.2 derece,
+            #      payout SONRASI 64.6 mm / 33.3 derece.
+            #   b) Salimdan SONRA kanca guverte/zemin uzerinde DINLENIYOR ve
+            #      duzeltme onu takip ettiremiyor. Olculdu (2026-08-31, uc temiz
+            #      kosu): arac komut yonunde kumulatif ~70 mm oteledi, kanca ise
+            #      BAGIMSIZ olarak 28 / 49 / 189 mm kaydi. Ayni kontrol yasasi
+            #      kanca HAVADAYKEN (gorsel hizalama fazi, vinc cekili) 18.6 /
+            #      27.3 / 13.3 mm'ye yakinsiyor.
+            #
+            # Yani sorun kontrol yasasinda ya da olcumde degil (ikisi de dogru,
+            # hook_nose_ned_offset_m gercek Gazebo pozunu okuyor); YANLIS
+            # REJIMDE calistirilmasinda. Cozum rejimi degistirmek:
+            #
+            #   1. Vinci burada, HALA YUKARIDAYKEN sal. Kanca ~0.5 m'de serbest
+            #      asili kalir, yani salimin acdigi hata duzeltilebilir bir anda
+            #      olusur.
+            #   2. Duzeltmeyi kanca SERBESTKEN kos -- calistigi kanitlanmis rejim.
+            #   3. Sonra SAF DIKEY in. Yanal surukleme hic olmaz; dikey inis
+            #      sarkaci yatay otelemeye kiyasla cok daha az uyarir.
+            #
+            # hook_payout_m() DEGISMEDI: salim yine SON irtifaya gore hesaplanir,
+            # kanca yalnizca inis tamamlanana kadar daha yuksekte asili kalir.
+            # SALIM HESABI TEK KAYNAKTAN: actuator.extend_winch_for(). Gorev
+            # katmani artik hook_payout_m'i kendisi cagirmiyor; hedef irtifayi
+            # verir, hesabi aktuator yapar -- alma anindaki yeniden hesapla ayni
+            # kod yolundan gecer.
+            _extend = getattr(self.actuator, "extend_winch_for", None)
+            if _extend is not None:
+                _payout_alt = await self._current_alt_m()
+                logger.info("Vinc salinacak (hedef irtifa %.2f m icin) -- ARAC HALA "
+                            "%.2f m'de, kanca serbest asili kalacak.",
+                            GOREV3_DESCENT_ALTITUDE_M,
+                            _payout_alt if _payout_alt is not None else float("nan"))
+                await _extend(GOREV3_DESCENT_ALTITUDE_M)
+                await asyncio.sleep(HOOK_PAYOUT_SETTLE_S)
+
+            if recv_ned is not None:
+                self._publish("GOREV3_PICKUP_STEP", "correction_airborne_start")
+                corrected = await self._settle_hook_onto(recv_ned, aligned_yaw,
+                                                         HOOK_VISUAL_ALIGN_ALTITUDE_M)
+                if corrected is not None:
+                    final_lateral = corrected
+
+            _hn, _he, _ = await self.flight.get_position_ned()
+            # KANCA DENGE KONUMU: INIS ONCESI. Mekanizma 2b olcumu (2026-08-31).
+            # Duzeltme dongusu kancayi 0.94 m'de hizaliyor, oturma kapisi ise
+            # 0.33 m'de olcuyor. Aradaki sistematik kayma olculdu (+22.7 / +43.1
+            # mm) ve bunun yalnizca %22-51'i aracin kendi kaymasiyla aciklandi.
+            # Kalan terim "kancanin ARACA GORE denge konumu irtifayla degisiyor"
+            # hipotezi; onu kanitlamak ya da curutmek icin ayni buyuklugu inisin
+            # IKI YANINDA olcup karsilastirmak gerekiyor.
+            try:
+                _off_before = getattr(self.actuator, "hook_nose_ned_offset_m", lambda: None)()
+            except Exception:  # noqa: BLE001 -- salt olcum, gorevi dusuremez
+                _off_before = None
+            _alt_before = await self._current_alt_m()
+            logger.info("[KANCA_DENGE] INIS ONCESI irtifa=%s kanca_ofset=%s",
+                        f"{_alt_before:.3f} m" if _alt_before is not None else "yok",
+                        f"({_off_before[0]:+.4f}, {_off_before[1]:+.4f})" if _off_before else "yok")
+            # Y1 OLCUM TURU: iz, inisin BASINDAN ilk alma denemesinin sonuna
+            # kadar kesintisiz akar ki uc an (inis / temas / sonrasi) tek bir
+            # zaman ekseninde ayirt edilebilsin.
+            _trace = asyncio.create_task(self._hook_trace(45.0))
+            logger.info("Hizalandi -- %.2f m alma irtifasina SAF DIKEY iniliyor "
+                        "(yanal hareket yok).", GOREV3_DESCENT_ALTITUDE_M)
+            self._publish("GOREV3_PICKUP_STEP", "vertical_descent_start",
+                          data={"from_m": HOOK_VISUAL_ALIGN_ALTITUDE_M,
+                                "to_m": GOREV3_DESCENT_ALTITUDE_M,
+                                "lateral_before_mm": (round(final_lateral * 1000, 1)
+                                                      if final_lateral is not None else None)})
+            await self.flight.goto_position_ned_and_hold(
+                _hn, _he, -GOREV3_DESCENT_ALTITUDE_M, aligned_yaw, 6.0)
+            # Hizalama araci otelemis olabilir; tutma noktasi tazelenmeli.
+            _hn, _he, _ = await self.flight.get_position_ned()
+
+            logger.info("Yük alma mekanizması aktifleşiyor...")
+            # KONUMU ALMA BOYUNCA TUT (2026-08-21). Yukaridaki
+            # goto_position_ned_and_hold, alma baslamadan ONCE doner; alma ise
+            # 3 denemede ~50 s surebiliyor. O sure boyunca hicbir setpoint
+            # yayinlanmadigi icin PX4 Offboard'dan dusuyor ve arac kayiyor.
+            # Olculdu (mission15, magnet mesafesi denemeler boyunca):
+            #     1. deneme  4.1 cm   <- 4.0 cm esigin 1 mm disi
+            #     2. deneme  9.8 cm
+            #     3. deneme 11.1 cm
+            # Yani ilk deneme neredeyse tutmus, sonra arac surekli uzaklasmis.
+            # Setpoint akisini almaya PARALEL surdurmek bu kaymayi kaldirir.
+            # TUTMA GOREVI, yeniden hizalama sirasinda DURDURULUP yeni konumda
+            # yeniden baslatilabilsin diye bir kapta tutuluyor: iki ayri gorev
+            # ayni anda setpoint yayinlarsa PX4 celiskili hedefler alir.
+            _hold_ref = {}
+
+            def _start_hold(n_, e_):
+                _hold_ref["t"] = asyncio.create_task(self.flight.goto_position_ned_and_hold(
+                    n_, e_, -GOREV3_DESCENT_ALTITUDE_M, aligned_yaw, PICKUP_HOLD_S))
+
+            async def _stop_hold():
+                t = _hold_ref.pop("t", None)
+                if t is None:
+                    return
+                t.cancel()
+                try:
+                    await t
+                except (asyncio.CancelledError, Exception):  # noqa: BLE001
+                    pass
+
+            async def _on_retry(attempt: int):
+                """Vinc cekili (kanca havada) -- duzeltmeyi yeniden kos."""
+                if recv_ned is None:
+                    return
+                await _stop_hold()
+                logger.info("[YENIDEN_HIZA] deneme %d oncesi, kanca havada -- "
+                            "duzeltme yeniden kosuluyor", attempt + 1)
+                corrected = await self._settle_hook_onto(recv_ned, aligned_yaw,
+                                                         GOREV3_DESCENT_ALTITUDE_M)
+                logger.info("[YENIDEN_HIZA] deneme %d icin yeni yanal: %s",
+                            attempt + 1,
+                            f"{corrected * 1000:.1f} mm" if corrected is not None else "olculemedi")
+                self._publish("GOREV3_REALIGN_BETWEEN_ATTEMPTS",
+                              f"deneme {attempt + 1}",
+                              data={"next_attempt": attempt + 1,
+                                    "lateral_mm": (round(corrected * 1000, 1)
+                                                   if corrected is not None else None)})
+                n2, e2, _ = await self.flight.get_position_ned()
+                _start_hold(n2, e2)
+
+            _start_hold(_hn, _he)
+            # Vinc salimi artik IRTIFADAN turetiliyor (gz_payload_actuator.
+            # hook_payout_m). Irtifa okunamazsa None gecilir ve actuator eski
+            # sabit salima duser -- davranis bilinmeyen irtifada degismez.
+            # KANCA DENGE KONUMU: INIS SONRASI. Yukaridaki olcumun esi.
+            try:
+                _off_after = getattr(self.actuator, "hook_nose_ned_offset_m", lambda: None)()
+            except Exception:  # noqa: BLE001 -- salt olcum, gorevi dusuremez
+                _off_after = None
+            _pick_alt = await self._current_alt_m()
+            if _off_before is not None and _off_after is not None:
+                _d_n = _off_after[0] - _off_before[0]
+                _d_e = _off_after[1] - _off_before[1]
+                _d = math.hypot(_d_n, _d_e)
+                logger.info("[KANCA_DENGE] INIS SONRASI irtifa=%s kanca_ofset=(%+.4f, %+.4f)"
+                            "  ->  DEGISIM=(%+.1f, %+.1f) mm  |%.1f mm|",
+                            f"{_pick_alt:.3f} m" if _pick_alt is not None else "yok",
+                            _off_after[0], _off_after[1], _d_n * 1000, _d_e * 1000, _d * 1000)
+                self._publish("GOREV3_HOOK_EQUILIBRIUM_SHIFT",
+                              f"{_d * 1000:.1f} mm",
+                              data={"alt_before_m": (round(_alt_before, 3)
+                                                     if _alt_before is not None else None),
+                                    "alt_after_m": (round(_pick_alt, 3)
+                                                    if _pick_alt is not None else None),
+                                    "offset_before": [round(_off_before[0], 4), round(_off_before[1], 4)],
+                                    "offset_after": [round(_off_after[0], 4), round(_off_after[1], 4)],
+                                    "shift_mm": round(_d * 1000, 1)})
+            # O1 (Gorev G, 2026-09-04): SALIM REFERANSI ARTIK TEK KAYNAK.
+            #
+            # Buraya kadar iki ayri cagri extend_winch_for()'a IKI FARKLI irtifa
+            # veriyordu ve ikincisi vinci GERI CEKIYORDU:
+            #   :924  extend_winch_for(GOREV3_DESCENT_ALTITUDE_M=0.30) -> salim 0.330 m
+            #   aktuator, her denemede: extend_winch_for(_pick_alt)    -> salim 0.124-0.191 m
+            # Olculdu (docs/gorevG-FAIL3-vinc-analiz.md, 4 bagimsiz kosum): ikinci
+            # cagri vinci 113-186 mm geri cekiyor ve insertion TAM O KADAR
+            # bozuluyor (r1 ve r3b'de 1.00 oranla, milimetre duzeyinde birebir).
+            #
+            # NEDEN NOMINAL DEGER DOGRU KAYNAK, olculen _pick_alt degil:
+            # alma penceresi boyunca araci tutan sey _start_hold()'dur ve o
+            # -GOREV3_DESCENT_ALTITUDE_M'i komut eder. _pick_alt ise pencereden
+            # ONCE alinmis TEK bir orneklemedir ve pencereyi temsil etmedigi
+            # olculdu: dort kosumda _pick_alt 0.094-0.161 m okurken, kancanin
+            # gercek dunya pozundan geri hesaplanan pencere irtifasi ~0.44 m
+            # cikiyor. Yani _pick_alt gecici bir alcalma dibini yakaliyor,
+            # tutmanin oturdugu irtifayi degil.
+            #
+            # _pick_alt OLCUM OLARAK KALIYOR (asagidaki olayda ve
+            # [KANCA_DENGE] satirinda) -- yalnizca SALIM HESABINDA
+            # kullanilmiyor.
+            self._publish("GOREV3_PICKUP_STEP", "pickup_attempt_start",
+                          data={"altitude_m": (round(_pick_alt, 3)
+                                               if _pick_alt is not None else None),
+                                "payout_reference_alt_m": GOREV3_DESCENT_ALTITUDE_M})
+            try:
+                picked = await self.actuator.activate_pickup_mechanism(
+                    altitude_m=GOREV3_DESCENT_ALTITUDE_M, on_retry=_on_retry)
+            finally:
+                await _stop_hold()
+            _trace.cancel()
+            try:
+                await _trace
             except (asyncio.CancelledError, Exception):  # noqa: BLE001
                 pass
+            _report = getattr(self.actuator, "last_pickup_report", None)
+            if _report is not None:
+                from core.telemetry.events import Severity as _Sev
+                # Severity uyesi WARN'dir, WARNING DEGIL (events.py:31). Ilk
+                # yazimda WARNING kullanildi ve bu, _publish'in kendi try/except'i
+                # DISINDA, cagri yerinde AttributeError'a yol acti -- olay hic
+                # yayinlanmadi. 2026-08-31 taramasinin 0.04 kosusunda yakalandi.
+                self._publish("HOOK_SEATING_RESULT",
+                              "seated" if picked else "not_seated",
+                              data=_report,
+                              severity=_Sev.INFO if picked else _Sev.WARN)
+            # THIRD MISSION SERVO
+            # BUG FIX (2026-08-21): donus degeri ATILIYORDU. Mekanizma simule bir
+            # placeholder oldugu surece zararsizdi (hep True donuyordu), ama artik
+            # gercek kancayi suruyor ve basarisiz olabiliyor. Olculdu (mission10):
+            # kanca 3 denemede de yuku alamadi, faz yine de devam etti ve
+            # "TUM GOREVLER BASARIYLA TAMAMLANDI" raporlandi -- hicbir yuk
+            # tasinmadan. Yuk alinamadiysa faz basarisizdir.
+            if not picked:
+                logger.error("Yük alma mekanizması yükü alamadı -- Görev 3 Faz 1 başarısız.")
+                return False
 
-        async def _on_retry(attempt: int):
-            """Vinc cekili (kanca havada) -- duzeltmeyi yeniden kos."""
-            if recv_ned is None:
-                return
-            await _stop_hold()
-            logger.info("[YENIDEN_HIZA] deneme %d oncesi, kanca havada -- "
-                        "duzeltme yeniden kosuluyor", attempt + 1)
-            corrected = await self._settle_hook_onto(recv_ned, aligned_yaw,
-                                                     GOREV3_DESCENT_ALTITUDE_M)
-            logger.info("[YENIDEN_HIZA] deneme %d icin yeni yanal: %s",
-                        attempt + 1,
-                        f"{corrected * 1000:.1f} mm" if corrected is not None else "olculemedi")
-            self._publish("GOREV3_REALIGN_BETWEEN_ATTEMPTS",
-                          f"deneme {attempt + 1}",
-                          data={"next_attempt": attempt + 1,
-                                "lateral_mm": (round(corrected * 1000, 1)
-                                               if corrected is not None else None)})
-            n2, e2, _ = await self.flight.get_position_ned()
-            _start_hold(n2, e2)
+            # Tirmanistan ONCEKI yuk irtifasi -- asagidaki dogrulama "yuk aracla
+            # birlikte yukseldi mi" sorusunu buna gore cevapliyor.
+            payload_z_before = self.actuator.payload_altitude_m(self._color)
 
-        _start_hold(_hn, _he)
-        # Vinc salimi artik IRTIFADAN turetiliyor (gz_payload_actuator.
-        # hook_payout_m). Irtifa okunamazsa None gecilir ve actuator eski
-        # sabit salima duser -- davranis bilinmeyen irtifada degismez.
-        # KANCA DENGE KONUMU: INIS SONRASI. Yukaridaki olcumun esi.
-        try:
-            _off_after = getattr(self.actuator, "hook_nose_ned_offset_m", lambda: None)()
-        except Exception:  # noqa: BLE001 -- salt olcum, gorevi dusuremez
-            _off_after = None
-        _pick_alt = await self._current_alt_m()
-        if _off_before is not None and _off_after is not None:
-            _d_n = _off_after[0] - _off_before[0]
-            _d_e = _off_after[1] - _off_before[1]
-            _d = math.hypot(_d_n, _d_e)
-            logger.info("[KANCA_DENGE] INIS SONRASI irtifa=%s kanca_ofset=(%+.4f, %+.4f)"
-                        "  ->  DEGISIM=(%+.1f, %+.1f) mm  |%.1f mm|",
-                        f"{_pick_alt:.3f} m" if _pick_alt is not None else "yok",
-                        _off_after[0], _off_after[1], _d_n * 1000, _d_e * 1000, _d * 1000)
-            self._publish("GOREV3_HOOK_EQUILIBRIUM_SHIFT",
-                          f"{_d * 1000:.1f} mm",
-                          data={"alt_before_m": (round(_alt_before, 3)
-                                                 if _alt_before is not None else None),
-                                "alt_after_m": (round(_pick_alt, 3)
-                                                if _pick_alt is not None else None),
-                                "offset_before": [round(_off_before[0], 4), round(_off_before[1], 4)],
-                                "offset_after": [round(_off_after[0], 4), round(_off_after[1], 4)],
-                                "shift_mm": round(_d * 1000, 1)})
-        # O1 (Gorev G, 2026-09-04): SALIM REFERANSI ARTIK TEK KAYNAK.
-        #
-        # Buraya kadar iki ayri cagri extend_winch_for()'a IKI FARKLI irtifa
-        # veriyordu ve ikincisi vinci GERI CEKIYORDU:
-        #   :924  extend_winch_for(GOREV3_DESCENT_ALTITUDE_M=0.30) -> salim 0.330 m
-        #   aktuator, her denemede: extend_winch_for(_pick_alt)    -> salim 0.124-0.191 m
-        # Olculdu (docs/gorevG-FAIL3-vinc-analiz.md, 4 bagimsiz kosum): ikinci
-        # cagri vinci 113-186 mm geri cekiyor ve insertion TAM O KADAR
-        # bozuluyor (r1 ve r3b'de 1.00 oranla, milimetre duzeyinde birebir).
-        #
-        # NEDEN NOMINAL DEGER DOGRU KAYNAK, olculen _pick_alt degil:
-        # alma penceresi boyunca araci tutan sey _start_hold()'dur ve o
-        # -GOREV3_DESCENT_ALTITUDE_M'i komut eder. _pick_alt ise pencereden
-        # ONCE alinmis TEK bir orneklemedir ve pencereyi temsil etmedigi
-        # olculdu: dort kosumda _pick_alt 0.094-0.161 m okurken, kancanin
-        # gercek dunya pozundan geri hesaplanan pencere irtifasi ~0.44 m
-        # cikiyor. Yani _pick_alt gecici bir alcalma dibini yakaliyor,
-        # tutmanin oturdugu irtifayi degil.
-        #
-        # _pick_alt OLCUM OLARAK KALIYOR (asagidaki olayda ve
-        # [KANCA_DENGE] satirinda) -- yalnizca SALIM HESABINDA
-        # kullanilmiyor.
-        self._publish("GOREV3_PICKUP_STEP", "pickup_attempt_start",
-                      data={"altitude_m": (round(_pick_alt, 3)
-                                           if _pick_alt is not None else None),
-                            "payout_reference_alt_m": GOREV3_DESCENT_ALTITUDE_M})
-        try:
-            picked = await self.actuator.activate_pickup_mechanism(
-                altitude_m=GOREV3_DESCENT_ALTITUDE_M, on_retry=_on_retry)
-        finally:
-            await _stop_hold()
-        _trace.cancel()
-        try:
-            await _trace
-        except (asyncio.CancelledError, Exception):  # noqa: BLE001
-            pass
-        _report = getattr(self.actuator, "last_pickup_report", None)
-        if _report is not None:
-            from core.telemetry.events import Severity as _Sev
-            # Severity uyesi WARN'dir, WARNING DEGIL (events.py:31). Ilk
-            # yazimda WARNING kullanildi ve bu, _publish'in kendi try/except'i
-            # DISINDA, cagri yerinde AttributeError'a yol acti -- olay hic
-            # yayinlanmadi. 2026-08-31 taramasinin 0.04 kosusunda yakalandi.
-            self._publish("HOOK_SEATING_RESULT",
-                          "seated" if picked else "not_seated",
-                          data=_report,
-                          severity=_Sev.INFO if picked else _Sev.WARN)
-        # THIRD MISSION SERVO
-        # BUG FIX (2026-08-21): donus degeri ATILIYORDU. Mekanizma simule bir
-        # placeholder oldugu surece zararsizdi (hep True donuyordu), ama artik
-        # gercek kancayi suruyor ve basarisiz olabiliyor. Olculdu (mission10):
-        # kanca 3 denemede de yuku alamadi, faz yine de devam etti ve
-        # "TUM GOREVLER BASARIYLA TAMAMLANDI" raporlandi -- hicbir yuk
-        # tasinmadan. Yuk alinamadiysa faz basarisizdir.
-        if not picked:
-            logger.error("Yük alma mekanizması yükü alamadı -- Görev 3 Faz 1 başarısız.")
-            return False
+                # MADDE 9 -- TEK BIR DOGRULAMA IRTIFASINA TIRMAN (2 m).
+            # Eskiden [1, 2, 3] m'ye sirayla cikiliyordu; spec tek bir 2 m
+            # istiyor. Uc kademe her denemeye ~3x sure ekliyordu ve 60 s'lik
+            # ust butceye sigmiyordu. 2 m'de kadraj 4.7 x 3.6 m, yani yuk
+            # (0.14 x 0.05 m) hala 38 x 13 px = 510 px2 ile alan kapisinin
+            # (400 px2) uzerinde -- gorsel dogrulama orada calisir.
+            for alt in (GOREV3_VERIFY_CLIMB_ALTITUDE_M,):
+                logger.info(f"Yükseliniyor: {alt}m")
+                # BUG FIX (2026-08-21): (0, 0) mutlak NED'de EV demek. Bu dongu
+                # "yukselmek" isterken araci her adimda eve ucuruyordu; mission10
+                # bu yuzden evden 48 m otede indi ve fazin son testi ("Kirmizi
+                # Dikdortgen goruntude yok") hedeften uzaklasildigi icin gecti.
+                # Yalnizca irtifa degismeli, yatay konum korunmali.
+                _vn, _ve, _ = await self.flight.get_position_ned()
+                await self.flight.goto_position_ned_and_hold(_vn, _ve, -alt, aligned_yaw, 2.0)
+                # ADR-010 P3: `self.detector` is a FeedDetector, which answers
+                # from the shared DetectionFeed and ignores the frame -- Görev 3
+                # must not be a second detect() caller (see vision_runtime.py).
+                # None is passed rather than a freshly grabbed frame precisely to
+                # make that explicit: the frame this phase could grab is NOT the
+                # frame the streak logic was advanced on.
+                detections = await self.detector.detect(None)
+                still_visible = any(d.shape_type == self._rect_class for d in detections)
+                if still_visible:
+                    logger.warning(f"{alt}m irtifada Kırmızı Dikdörtgen hâlâ görüntüde.")
 
-        # Tirmanistan ONCEKI yuk irtifasi -- asagidaki dogrulama "yuk aracla
-        # birlikte yukseldi mi" sorusunu buna gore cevapliyor.
-        payload_z_before = self.actuator.payload_altitude_m(self._color)
-
-        for alt in GOREV3_PICKUP_VERIFY_CLIMB_STEPS_M:
-            logger.info(f"Yükseliniyor: {alt}m")
-            # BUG FIX (2026-08-21): (0, 0) mutlak NED'de EV demek. Bu dongu
-            # "yukselmek" isterken araci her adimda eve ucuruyordu; mission10
-            # bu yuzden evden 48 m otede indi ve fazin son testi ("Kirmizi
-            # Dikdortgen goruntude yok") hedeften uzaklasildigi icin gecti.
-            # Yalnizca irtifa degismeli, yatay konum korunmali.
-            _vn, _ve, _ = await self.flight.get_position_ned()
-            await self.flight.goto_position_ned_and_hold(_vn, _ve, -alt, aligned_yaw, 2.0)
-            # ADR-010 P3: `self.detector` is a FeedDetector, which answers
-            # from the shared DetectionFeed and ignores the frame -- Görev 3
-            # must not be a second detect() caller (see vision_runtime.py).
-            # None is passed rather than a freshly grabbed frame precisely to
-            # make that explicit: the frame this phase could grab is NOT the
-            # frame the streak logic was advanced on.
+            logger.info("Doğrulama kontrolü yapılıyor (son irtifa)...")
             detections = await self.detector.detect(None)
             still_visible = any(d.shape_type == self._rect_class for d in detections)
-            if still_visible:
-                logger.warning(f"{alt}m irtifada Kırmızı Dikdörtgen hâlâ görüntüde.")
 
-        logger.info("Doğrulama kontrolü yapılıyor (son irtifa)...")
-        detections = await self.detector.detect(None)
-        still_visible = any(d.shape_type == self._rect_class for d in detections)
+            # HUKUM TERSINE CEVRILDI (olculdu, 2026-08-23 kosusu).
+            #
+            # Eski test: "yuk alindiysa yerden kalkar, dolayisiyla kamerada
+            # GORUNMEZ" -- ve goruntude kalmasi basarisizlik sayiliyordu. Bu,
+            # yuk YERDE kalirken dogruydu. Artik yuk KANCADA asili ve kanca
+            # govdenin altinda: arac yukseldikce yuk de birlikte yukseliyor ve
+            # kamerada gorunmeye DEVAM ediyor. Yani eski test, basarinin ta
+            # kendisini basarisizlik sayiyordu:
+            #     23:35:25 [HOOK] KILITLENDI (payload_red) -- vinc acik, yuk ipte
+            #     23:35:34 Kirmizi Dikdortgen hala goruntude! Alma basarisiz.
+            #
+            # Yeni hukum iki gercek kanita dayaniyor:
+            #   1) HookAttachSystem'in /hook/state onayi (fixed joint kuruldu)
+            #   2) yukun aracla BIRLIKTE yukselmis olmasi
+            # Eski gozlem SILINMEDI, yalnizca hukum olmaktan cikarilip log'a
+            # dusuruldu -- yuk yerde kalsaydi gorunmemesi hala anlamli bir
+            # isaret, ama tek basina karar verdirmiyor.
+            attached = self.actuator.is_hook_attached()
+            lifted_m = None
+            if payload_z_before is not None:
+                z_now = self.actuator.payload_altitude_m(self._color)
+                if z_now is not None:
+                    lifted_m = z_now - payload_z_before
 
-        # HUKUM TERSINE CEVRILDI (olculdu, 2026-08-23 kosusu).
-        #
-        # Eski test: "yuk alindiysa yerden kalkar, dolayisiyla kamerada
-        # GORUNMEZ" -- ve goruntude kalmasi basarisizlik sayiliyordu. Bu,
-        # yuk YERDE kalirken dogruydu. Artik yuk KANCADA asili ve kanca
-        # govdenin altinda: arac yukseldikce yuk de birlikte yukseliyor ve
-        # kamerada gorunmeye DEVAM ediyor. Yani eski test, basarinin ta
-        # kendisini basarisizlik sayiyordu:
-        #     23:35:25 [HOOK] KILITLENDI (payload_red) -- vinc acik, yuk ipte
-        #     23:35:34 Kirmizi Dikdortgen hala goruntude! Alma basarisiz.
-        #
-        # Yeni hukum iki gercek kanita dayaniyor:
-        #   1) HookAttachSystem'in /hook/state onayi (fixed joint kuruldu)
-        #   2) yukun aracla BIRLIKTE yukselmis olmasi
-        # Eski gozlem SILINMEDI, yalnizca hukum olmaktan cikarilip log'a
-        # dusuruldu -- yuk yerde kalsaydi gorunmemesi hala anlamli bir
-        # isaret, ama tek basina karar verdirmiyor.
-        attached = self.actuator.is_hook_attached()
-        lifted_m = None
-        if payload_z_before is not None:
-            z_now = self.actuator.payload_altitude_m(self._color)
-            if z_now is not None:
-                lifted_m = z_now - payload_z_before
+            logger.info("[ALMA_DOGRULAMA] kanca_kilitli=%s  yuk_yukseldi=%s  "
+                        "dikdortgen_goruntude=%s (bu sonuncusu artik yalnizca gozlem)",
+                        attached,
+                        f"{lifted_m:+.2f} m" if lifted_m is not None else "olculemedi",
+                        still_visible)
 
-        logger.info("[ALMA_DOGRULAMA] kanca_kilitli=%s  yuk_yukseldi=%s  "
-                    "dikdortgen_goruntude=%s (bu sonuncusu artik yalnizca gozlem)",
-                    attached,
-                    f"{lifted_m:+.2f} m" if lifted_m is not None else "olculemedi",
-                    still_visible)
+            if not attached:
+                logger.warning("Kanca kilitli degil -- Alma başarısız.")
+                return False
+            if lifted_m is not None and lifted_m < PICKUP_LIFT_CONFIRM_M:
+                logger.warning("Yuk aracla birlikte yukselmedi (%.2f m < %.2f m) -- "
+                               "Alma başarısız.", lifted_m, PICKUP_LIFT_CONFIRM_M)
+                return False
 
-        if not attached:
-            logger.warning("Kanca kilitli degil -- Alma başarısız.")
-            return False
-        if lifted_m is not None and lifted_m < PICKUP_LIFT_CONFIRM_M:
-            logger.warning("Yuk aracla birlikte yukselmedi (%.2f m < %.2f m) -- "
-                           "Alma başarısız.", lifted_m, PICKUP_LIFT_CONFIRM_M)
-            return False
+            logger.info("Yük Alma Başarılı (kanca kilitli%s).",
+                        f", yuk {lifted_m:+.2f} m yukseldi" if lifted_m is not None else "")
+            return True
 
-        logger.info("Yük Alma Başarılı (kanca kilitli%s).",
-                    f", yuk {lifted_m:+.2f} m yukseldi" if lifted_m is not None else "")
-        return True
+        for attempt in range(1, GOREV3_PICKUP_MAX_ATTEMPTS + 1):
+            logger.info("[ALMA] deneme %d/%d basliyor (ust butce %.0f s).",
+                        attempt, GOREV3_PICKUP_MAX_ATTEMPTS,
+                        GOREV3_PICKUP_ATTEMPT_TIMEOUT_S)
+            self._publish("GOREV3_PICKUP_ATTEMPT_STARTED", f"{attempt}/{GOREV3_PICKUP_MAX_ATTEMPTS}",
+                          data={"attempt": attempt,
+                                "max_attempts": GOREV3_PICKUP_MAX_ATTEMPTS,
+                                "budget_s": GOREV3_PICKUP_ATTEMPT_TIMEOUT_S})
+            try:
+                ok = await asyncio.wait_for(_attempt(attempt),
+                                            GOREV3_PICKUP_ATTEMPT_TIMEOUT_S)
+            except asyncio.TimeoutError:
+                # 60 s UST BUTCESI DOLDU. Bu bir arac arizasi degil, bir
+                # butce karari: denemenin ic dagilimi (4+6+30+15+5 s)
+                # tasti demektir. Sonraki deneme temiz baslasin.
+                ok = False
+                logger.warning("[ALMA] deneme %d/%d ust butceyi (%.0f s) doldurdu "
+                               "-- kesiliyor.", attempt, GOREV3_PICKUP_MAX_ATTEMPTS,
+                               GOREV3_PICKUP_ATTEMPT_TIMEOUT_S)
+                self._publish("GOREV3_PICKUP_ATTEMPT_TIMEOUT", f"{attempt}",
+                              data={"attempt": attempt,
+                                    "budget_s": GOREV3_PICKUP_ATTEMPT_TIMEOUT_S},
+                              severity=_WARN())
+            except Exception:  # noqa: BLE001 -- tek deneme fazi dusuremez
+                ok = False
+                logger.warning("[ALMA] deneme %d/%d hata ile bitti.", attempt,
+                               GOREV3_PICKUP_MAX_ATTEMPTS, exc_info=True)
+            self._publish("GOREV3_PICKUP_ATTEMPT_RESULT", "basarili" if ok else "basarisiz",
+                          data={"attempt": attempt, "success": bool(ok)})
+            if ok:
+                logger.info("[ALMA] deneme %d/%d BASARILI.", attempt,
+                            GOREV3_PICKUP_MAX_ATTEMPTS)
+                return True
+
+        # MADDE 12: uc denemenin hicbiri tutmadi. Bu FATAL DEGIL --
+        # orkestrator GOREV3_PICKUP_ABANDONED yayinlayip finish/start
+        # cizgisine doner ve gorev '2 is tamamlandi' diye biter.
+        logger.error("Yük alma %d denemede de basarisiz -- alma birakiliyor "
+                     "(gorev 2 is ile bitecek).", GOREV3_PICKUP_MAX_ATTEMPTS)
+        self._publish("GOREV3_PICKUP_EXHAUSTED",
+                      f"{GOREV3_PICKUP_MAX_ATTEMPTS} deneme tukendi",
+                      data={"attempts": GOREV3_PICKUP_MAX_ATTEMPTS}, severity=_WARN())
+        return False
