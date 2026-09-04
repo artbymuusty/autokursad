@@ -20,6 +20,7 @@ from core.config.parameters import (
     CENTERING_FLOOR_TOL_FRACTION,
     LOW_ALT_VISION_LIMIT_M, LOW_ALT_BBOX_CENTER, LOW_ALT_OPEN_LOOP_TIMEOUT_S,
     MOUNT_TRANSLATE_DIVERGE_TICKS, MOUNT_TRANSLATE_DIVERGE_EPS_M,
+    OFFBOARD_PAUSE_SETTLE_S,
     low_alt_vision_limit,
     PAYLOAD_RELEASE_ALTITUDE_TOLERANCE_M, LOW_ALT_OPEN_LOOP_MIN_DESCENT_M_S,
     TARGET_LOSS_GRACE_FRAMES,
@@ -207,6 +208,23 @@ class CenteringController:
         pause_at = asyncio.get_event_loop().time()
         await self.flight.switch_to_offboard_from_mission()
         paused_in_s = asyncio.get_event_loop().time() - pause_at
+
+        # K6 (2026-09-04) -- KOK NEDENIN ONLENMESI, bkz.
+        # parameters.py::OFFBOARD_PAUSE_SETTLE_S ve
+        # docs/gorevF1-offboard-start-kok-neden.md.
+        #
+        # pause_mission() ve offboard.start() AYNI MAVLink komutunu (176,
+        # DO_SET_MODE) gonderiyor ve MAVSDK v3.17.2 bu komut icin kimlige
+        # parametreleri KATMIYOR. Ikisi milisaniyeler icinde arka arkaya
+        # gidince, pause'un ACK'i offboard'in is kalemine yanlis atfedilip
+        # onu Success ile coziyor -- ve OFFBOARD komutu HIC GONDERILMIYOR.
+        # Olculen sessiz basarisizlik: %20-24. Bekleme koyunca: 0/150.
+        #
+        # BURAYA konuyor cunku engellenmesi gereken sey tam olarak bu iki
+        # komut arasindaki mesafe; daha yukarida (cagiran tarafta) beklemek
+        # ayni garantiyi vermez.
+        if OFFBOARD_PAUSE_SETTLE_S > 0:
+            await asyncio.sleep(OFFBOARD_PAUSE_SETTLE_S)
 
         try:
             await self.flight.start_offboard()

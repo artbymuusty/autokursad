@@ -396,6 +396,35 @@ CENTERING_ALTITUDE_CHANGE_ATTEMPTS: int = 200
 # 0 hata %2, 1 hata %4, >=2 hata %60. 1 hata cok yaygin ve neredeyse zararsiz;
 # zarar >=2'de patliyor. 3'te kesmek tek bir gecici aksakliga tolerans
 # birakirken butce tuketen kuyrugu keser.
+# --- K6 (2026-09-04): pause_mission() ile offboard.start() ARASINA BEKLEME ---
+# KOK NEDEN (docs/gorevF1-offboard-start-kok-neden.md): MAVSDK v3.17.2'de
+# CommandIdentification, DO_SET_MODE (176) icin komut PARAMETRELERINI
+# ICERMIYOR (maybe_param1/2 yalnizca REQUEST_MESSAGE ve SET_MESSAGE_INTERVAL
+# icin doldurulur). Dolayisiyla:
+#     mission.pause_mission() -> DO_SET_MODE 176, main=4 (AUTO/LOITER)
+#     offboard.start()        -> DO_SET_MODE 176, main=6 (OFFBOARD)
+# ikisinin kimligi BIREBIR AYNI {0,0,176,1,1}. pause'un ACK'i hala yoldayken
+# start() kendi is kalemini kuyruga koyarsa, gelen ACK offboard kalemine
+# ATFEDILIP onu Success ile coziyor -- offboard komutu HIC GONDERILMEDEN.
+# start() hatasiz doner, PX4 hicbir sey almaz, arac HOLD'da kalir.
+#
+# DEGER OLCULDU (tools/offboard_gap_sweep.py, 175 deneme, tek SITL oturumu):
+#     0 ms -> 5/25 basarisiz (%20.0)      [kulliyat ortalamasi %24.4]
+#    20 ms -> 0/25          40 ms -> 0/25         100 ms -> 0/25
+#    30 ms -> 0/25          50 ms -> 0/25         200 ms -> 0/25
+# Diz noktasi 0-20 ms arasinda, yani cakisma penceresi TAM BIR ROUND-TRIP
+# kadar (olculen start() round-trip'i 11-14 ms, en yuksek 25.4 ms).
+# >=20 ms olan alti bekleme birlesik: 0/150 -> %95 ust sinir ~%2.0.
+#
+# NEDEN 20 DEGIL DE 50: 20 ms TARANAN EN DUSUK degerdi, altinda olculmus pay
+# yok. 50 ms round-trip'in ~4 kati ve gozlenen en yuksek start() suresinin
+# (25.4 ms) 2 kati. Maliyet gorev basina 2-4 takip x 50 ms = 0.1-0.2 s,
+# 600 s'lik butcede olculemez. 100-200 ms'nin EK FAYDASI OLCULMEDI.
+#
+# BU BIR ONLEMDIR, sinirlayici degil: F1 guard'i (OFFBOARD_FAILURE_MAX_PER_TARGET)
+# ucuncu savunma katmani olarak KALIR -- 0/150'in ust siniri %2, sifir degil.
+OFFBOARD_PAUSE_SETTLE_S: float = 0.05
+
 OFFBOARD_FAILURE_MAX_PER_TARGET: int = 3
 CENTERING_MAX_ATTEMPTS_PER_TARGET: int = 3
 # Minimum spacing between two centering attempts on the SAME shape, so even
