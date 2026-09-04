@@ -237,6 +237,11 @@ async def test_6_and_7_illegal_resume_rejected_after_search_complete():
 
     flight = MockFlightBackend()
     orch = Gorev2Orchestrator.__new__(Gorev2Orchestrator)
+    # F2-a: __init__ atlandigi icin :158'deki _route_axis olusmuyordu.
+    # ENABLE_ROUTE_REJOIN acildiginda _resume_mission_route ->
+    # _rejoin_route_axis ilk satirinda AttributeError veriyordu. None =
+    # belgelenmis no-op, yani bu satir testin anlamini DEGISTIRMEZ.
+    orch._route_axis = None
     orch.flight = flight
     orch.publisher = NULL_PUBLISHER
     orch._search_complete = True

@@ -230,6 +230,11 @@ def _orchestrator_with_backoff():
     from core.mission.gorev2_orchestrator import Gorev2Orchestrator
     from core.telemetry.event_bus import NULL_PUBLISHER
     orch = Gorev2Orchestrator.__new__(Gorev2Orchestrator)
+    # F2-a: __init__ atlandigi icin :158'deki _route_axis olusmuyordu.
+    # ENABLE_ROUTE_REJOIN acildiginda _resume_mission_route ->
+    # _rejoin_route_axis ilk satirinda AttributeError veriyordu. None =
+    # belgelenmis no-op, yani bu satir testin anlamini DEGISTIRMEZ.
+    orch._route_axis = None
     orch.publisher = NULL_PUBLISHER
     orch._centering_attempts = {}
     orch._centering_cooldown_until = {}
@@ -527,6 +532,11 @@ def _resume_orchestrator(flight, publisher=None):
     from core.mission.gorev2_orchestrator import Gorev2Orchestrator
     from core.telemetry.event_bus import NULL_PUBLISHER
     orch = Gorev2Orchestrator.__new__(Gorev2Orchestrator)
+    # F2-a: __init__ atlandigi icin :158'deki _route_axis olusmuyordu.
+    # ENABLE_ROUTE_REJOIN acildiginda _resume_mission_route ->
+    # _rejoin_route_axis ilk satirinda AttributeError veriyordu. None =
+    # belgelenmis no-op, yani bu satir testin anlamini DEGISTIRMEZ.
+    orch._route_axis = None
     orch.flight = flight
     orch.publisher = publisher or NULL_PUBLISHER
     orch._search_complete = False

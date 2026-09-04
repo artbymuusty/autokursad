@@ -34,6 +34,11 @@ from core.mission.gorev2_orchestrator import Gorev2Orchestrator
 async def test_resume_mission_route_stops_offboard_then_starts_mission():
     flight = MockFlightBackend()
     orch = Gorev2Orchestrator.__new__(Gorev2Orchestrator)  # bypass full __init__, only need self.flight/self.publisher
+    # F2-a: __init__ atlandigi icin :158'deki _route_axis olusmuyordu.
+    # ENABLE_ROUTE_REJOIN acildiginda _resume_mission_route ->
+    # _rejoin_route_axis ilk satirinda AttributeError veriyordu. None =
+    # belgelenmis no-op, yani bu satir testin anlamini DEGISTIRMEZ.
+    orch._route_axis = None
     orch.flight = flight
     orch._search_complete = False
     orch._last_resume_at = 0.0   # ADR-009: resume spacing state (bypassed __init__)
@@ -55,6 +60,11 @@ async def test_resume_mission_route_rejected_once_search_complete():
     IMPOSSIBLE after both targets are confirmed."""
     flight = MockFlightBackend()
     orch = Gorev2Orchestrator.__new__(Gorev2Orchestrator)
+    # F2-a: __init__ atlandigi icin :158'deki _route_axis olusmuyordu.
+    # ENABLE_ROUTE_REJOIN acildiginda _resume_mission_route ->
+    # _rejoin_route_axis ilk satirinda AttributeError veriyordu. None =
+    # belgelenmis no-op, yani bu satir testin anlamini DEGISTIRMEZ.
+    orch._route_axis = None
     orch.flight = flight
     orch._search_complete = True
     from core.telemetry.event_bus import NULL_PUBLISHER
@@ -75,6 +85,11 @@ async def test_resume_mission_route_survives_stop_offboard_raising():
 
     flight = _RaisingStopOffboard()
     orch = Gorev2Orchestrator.__new__(Gorev2Orchestrator)
+    # F2-a: __init__ atlandigi icin :158'deki _route_axis olusmuyordu.
+    # ENABLE_ROUTE_REJOIN acildiginda _resume_mission_route ->
+    # _rejoin_route_axis ilk satirinda AttributeError veriyordu. None =
+    # belgelenmis no-op, yani bu satir testin anlamini DEGISTIRMEZ.
+    orch._route_axis = None
     orch.flight = flight
     orch._search_complete = False
     orch._last_resume_at = 0.0   # ADR-009: resume spacing state (bypassed __init__)

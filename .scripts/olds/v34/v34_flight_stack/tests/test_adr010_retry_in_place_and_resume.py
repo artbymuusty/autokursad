@@ -53,6 +53,11 @@ class _ScriptedCentering:
 def _orch(centering, feed=None, flight=None, publisher=None):
     from core.mission.gorev2_orchestrator import Gorev2Orchestrator
     orch = Gorev2Orchestrator.__new__(Gorev2Orchestrator)
+    # F2-a: __init__ atlandigi icin :158'deki _route_axis olusmuyordu.
+    # ENABLE_ROUTE_REJOIN acildiginda _resume_mission_route ->
+    # _rejoin_route_axis ilk satirinda AttributeError veriyordu. None =
+    # belgelenmis no-op, yani bu satir testin anlamini DEGISTIRMEZ.
+    orch._route_axis = None
     orch.centering = centering
     orch.flight = flight or MockFlightBackend()
     orch.camera = MockCameraSource()
