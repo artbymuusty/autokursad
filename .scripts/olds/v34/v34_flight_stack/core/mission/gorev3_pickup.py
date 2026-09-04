@@ -578,6 +578,12 @@ class Gorev3PickupPhase:
         # YANLIS SINIFI aratiyordu.
         self._rect_class = ("KIRMIZI_DIKDORTGEN" if self._color == "red"
                             else "MAVI_DIKDORTGEN")
+        # Gorunurluk stratejisi de AYNI sinifi aramali. Aksi halde faz
+        # dogru hedefe gider ama strateji KIRMIZI_DIKDORTGEN arar ve
+        # "bulunamadi" ile duser (canli olculdu, B1 kosumu).
+        _set = getattr(self.visibility_strategy, "set_rect_class", None)
+        if _set is not None:
+            _set(self._rect_class)
         logger.info("Görev 3 Faz 1 (Alma) Başlatıldı -- hedef: %s (yuk rengi: %s)",
                     shape, self._color)
         self._publish("GOREV3_PICKUP_TARGET", shape,
@@ -637,7 +643,8 @@ class Gorev3PickupPhase:
         self._publish("GOREV3_PICKUP_STEP", "transit_complete")
         target = await self._locate_target_with_retries()
         if target is None:
-            logger.error("Kırmızı Dikdörtgen bulunamadı -- Görev 3 Faz 1 başarısız.")
+            logger.error("%s bulunamadi -- Görev 3 Faz 1 başarısız "
+                         "(alma dongusu hic baslamadi).", self._rect_class)
             return False
 
         alignment_delta_deg = await self.visibility_strategy.compute_alignment_yaw(target, None)

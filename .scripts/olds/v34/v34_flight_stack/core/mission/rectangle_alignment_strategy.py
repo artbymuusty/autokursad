@@ -26,15 +26,35 @@ logger = logging.getLogger(__name__)
 
 
 class RectangleAlignmentStrategy(IPayloadVisibilityStrategy):
+    """Aranan yuk dikdortgeni ARTIK SABIT DEGIL (GOREV I / A+B).
+
+    KUSUR, canli olculdu (B1 kosumu, 2026-09-04): bu sinif her zaman
+    KIRMIZI_DIKDORTGEN ariyordu. Altigene KIRMIZI, ucgene MAVI yuk
+    birakildigi icin UCGEN ONCE birakildiginda alma hedefi ucgen olur ve
+    aranmasi gereken sinif MAVI_DIKDORTGEN'dir. O kosumda faz, dogru
+    hedefe gidip YANLIS SINIFI aradi ve transit_complete'ten 8.6 s sonra
+    "bulunamadi" ile dustu -- dis deneme dongusu hic calisamadi.
+
+    Gorev3PickupPhase, run() icinde rengi cozdukten sonra
+    `set_rect_class()` ile aranan sinifi bildirir. Bildirilmezse
+    varsayilan KIRMIZI_DIKDORTGEN kalir (eski davranis).
+    """
+
+    def __init__(self, rect_class: str = "KIRMIZI_DIKDORTGEN"):
+        self._rect_class = rect_class
+
+    def set_rect_class(self, rect_class: str) -> None:
+        self._rect_class = rect_class
+
     async def locate_target(self, detector, camera_frame: np.ndarray) -> Detection:
-        """Kırmızı Dikdörtgen'i bu karede arar. Bulunamazsa RAISE eder --
+        """Yukun dikdortgenini bu karede arar. Bulunamazsa RAISE eder --
         çağıran taraf (Gorev3PickupPhase) bir sonraki karede tekrar dener,
         tıpkı go_to_and_center()'ın kendi 'hedef kayboldu' döngüsü gibi."""
         detections = await detector.detect(camera_frame)
         for d in detections:
-            if d.shape_type == "KIRMIZI_DIKDORTGEN":
+            if d.shape_type == self._rect_class:
                 return d
-        raise RuntimeError("KIRMIZI_DIKDORTGEN bu karede bulunamadi")
+        raise RuntimeError(f"{self._rect_class} bu karede bulunamadi")
 
     async def locate_carried_payload(self, detector, camera_frame: np.ndarray) -> Optional[Detection]:
         """Bu tasarımda kullanılmaz -- dik yaklaşım hizalaması yalnızca

@@ -107,3 +107,37 @@ async def test_gorev3_tasima_hedefi_IKINCI_birakilan():
     assert pickup.gorulen == ["KIRMIZI_UCGEN"]
     assert transport.gorulen == ["MAVI_ALTIGEN"], (
         f"tasima hedefi ikinci birakilan olmaliydi, gecen: {transport.gorulen}")
+
+
+# --------------------------------------------------------------------
+# ARANAN SINIF -- canli B1 kosumunda yakalanan kusur
+# --------------------------------------------------------------------
+@pytest.mark.asyncio
+@pytest.mark.parametrize("shape,beklenen", [
+    ("MAVI_ALTIGEN", "KIRMIZI_DIKDORTGEN"),   # altigene KIRMIZI yuk
+    ("KIRMIZI_UCGEN", "MAVI_DIKDORTGEN"),     # ucgene MAVI yuk
+])
+async def test_aranan_dikdortgen_sinifi_YUKUN_rengine_gore(shape, beklenen, tmp_path):
+    """B1 kosumu (2026-09-04): ucgen once birakildi, faz DOGRU hedefe gitti
+    ama RectangleAlignmentStrategy sabit KIRMIZI_DIKDORTGEN ariyordu;
+    transit_complete'ten 8.6 s sonra 'bulunamadi' ile dustu ve dis deneme
+    dongusu HIC calisamadi."""
+    from core.mission.gorev3_pickup import Gorev3PickupPhase
+    from core.mission.rectangle_alignment_strategy import RectangleAlignmentStrategy
+    from core.position_log.position_store import PositionStore
+    from mocks.mock_flight_backend import MockFlightBackend
+    from mocks.mock_camera_source import MockCameraSource
+    from mocks.mock_payload_actuator import MockPayloadActuator
+
+    strateji = RectangleAlignmentStrategy()
+    faz = Gorev3PickupPhase(MockFlightBackend(), MockCameraSource(), None,
+                            MockPayloadActuator(),
+                            PositionStore(str(tmp_path / "p.json")),
+                            strateji, centering=None)
+    try:
+        await faz.run(shape)          # konum kayitli degil -> erken RuntimeError
+    except Exception:
+        pass
+    assert faz._rect_class == beklenen
+    assert strateji._rect_class == beklenen, \
+        "strateji hala eski sinifi ariyor -- B1 kusuru geri geldi"
