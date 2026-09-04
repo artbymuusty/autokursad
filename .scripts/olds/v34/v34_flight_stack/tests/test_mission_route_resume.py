@@ -174,7 +174,35 @@ async def test_failed_offboard_switch_resumes_the_paused_route(tmp_path):
 
 
 @pytest.mark.asyncio
-async def test_centering_timeout_resumes_the_paused_route(tmp_path):
+async def test_centering_timeout_resumes_the_paused_route(tmp_path, monkeypatch):
+    # RETRY_IN_PLACE (CENTERING_RETRY_COOLDOWN_S = 5 s) bu testten SONRA
+    # eklendi ve asagidaki 8 s'lik yoklama penceresini sessizce gecersiz
+    # kildi: merkezleme 3 kez deneniyor, her denemenin arasinda 5 s yerinde
+    # bekleniyor, yani rota devami ~18 s'de geliyor (olculdu: 40 s'lik
+    # pencereyle test 18.4 s'de gecmektedir). Test kirmizi olmasinin sebebi
+    # rotanin devam ETMEMESI degil, GEC devam etmesiydi.
+    #
+    # Bekleme burada sifirlaniyor -- conftest.py'nin MISSION_START_HOLD_S ve
+    # MISSION_RESUME_MIN_INTERVAL_S icin yaptiginin aynisi ve ayni
+    # gerekcesiyle: bu test ZAMANLAMAYI degil, "merkezleme zaman asimina
+    # ugrayinca rota kaldigi yerden devam eder" DAVRANISINI olcuyor.
+    # Cooldown'un kendi davranisi test_gorev2_orchestrator tarafinda duruyor.
+    #
+    # Degeri MODUL uzerinde patchleniyor, `parameters` uzerinde degil:
+    # gorev2_orchestrator onu DEGER olarak import ediyor.
+    import core.mission.gorev2_orchestrator as gorev2_orchestrator
+    monkeypatch.setattr(gorev2_orchestrator, "CENTERING_RETRY_COOLDOWN_S", 0.0)
+
+    # IKINCI GECERSIZ KILAN DEGISIKLIK: F2-a ENABLE_ROUTE_REJOIN'i True yapti.
+    # Pursuit birakilinca artik once rotaya ARA NOKTADAN donulmeye calisiliyor
+    # ve ancak o basarisiz olunca start_mission() cagriliyor.
+    # MockFlightBackend STATIKTIR -- komut verilince hareket etmez -- yani
+    # rejoin bu testte hicbir zaman yakinsayamaz, her seferinde 15 s'lik
+    # ROUTE_REJOIN_TIMEOUT_S'i tam yakar. Olculdu: birakma t=3.3 s'de oluyor,
+    # start_mission #2 ise t=18.4 s'de.
+    # Rejoin'in KENDI davranisi test_f2a_route_rejoin.py'de kapsanir.
+    monkeypatch.setattr(gorev2_orchestrator, "ROUTE_REJOIN_TIMEOUT_S", 0.5)
+
     flight = MockFlightBackend()  # start_offboard() confirms OFFBOARD
     orch = _build_orchestrator(flight, _NeverConvergesDetector(), tmp_path)
 
