@@ -116,6 +116,30 @@ GOREV3_DROP_CLIMB_STEPS_M: list[float] = [1.0, 2.0]
 #     here has been flown end to end yet; do not read this note as a claim
 #     that the phase passes.
 GOREV3_PICKUP_ALIGN_MAX_ATTEMPTS: int = 80
+# TEK ALMA DENEMESININ UST BUTCESI (GOREV I / B-S5, 2026-09-04).
+#
+# Operator karari: 60 s ve bu TUM DENEMEYI kapsar -- vinc sarkitma,
+# manyetik yakalama ve alma sonrasi gorsel dogrulama dahil. Onceden
+# boyle bir ust butce YOKTU; yalnizca yakalama penceresi
+# (HOOK_CONTACT_TIMEOUT_S = 12 s) vardi ve denemenin geri kalani
+# (salim, inis, tirmanip bakma) sinirsizdi.
+#
+# IC DAGILIM, olculen surelerden turetildi:
+#     vinc salimi + sonumleme (HOOK_PAYOUT_SETTLE_S = 4.0)      4 s
+#     alma irtifasina dikey inis (goto..._and_hold, 6.0)        6 s
+#     yakalama penceresi (HOOK_CONTACT_TIMEOUT_S, 12 -> 30)    30 s
+#     dogrulama: 2 m'ye tirmanis + gorsel kontrol              15 s
+#     pay (PX4 mod gecisleri, olcum gecikmeleri)                5 s
+#                                                          --------
+#                                                             60 s
+#
+# UC DENEME: 3 x 60 = 180 s en kotu durum. Gorev butcesi 600 s ve olculen
+# Gorev 2 suresi ~215 s (demo kosumu 16:24:44 -> 16:28:19), yani
+# 215 + 180 = 395 s ve geriye tasima + birakma + finish icin ~205 s kalir.
+# DAR AMA SIGAR; alma 3 denemeyi de tuketirse zaten pickup birakiliyor
+# (B maddesi 12) ve tasima/birakma calismiyor.
+GOREV3_PICKUP_ATTEMPT_TIMEOUT_S: float = 60.0
+
 GOREV3_PICKUP_VISIBILITY_CONFIRM_FRAMES: int = 3
 
 # TODO[PARAMETRE]: Normal görev seyir hızı (Görev 2/3) hala ekip tarafından

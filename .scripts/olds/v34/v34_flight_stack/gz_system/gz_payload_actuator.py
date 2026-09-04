@@ -14,7 +14,7 @@ from core.config.parameters import (
 from gz_system.gz_pose_monitor import GzPoseMonitor
 from core.mission.hook_seating import (
     SeatState, SeatingEvaluator, compute_seating_geometry,
-    SEAT_DWELL_S, SEAT_MAX_LATERAL_M, HOOK_POSE_MAX_AGE_S,
+    MAGNET_DWELL_S, MAGNET_CAPTURE_RADIUS_M, HOOK_POSE_MAX_AGE_S,
 )
 
 logger = logging.getLogger(__name__)
@@ -271,7 +271,25 @@ def hook_payout_m(altitude_m, deck_height_m: float = HOOK_RECEIVER_DECK_HEIGHT_M
 HOOK_WINCH_RETRACT_M = 0.0
 # Vincin 0.29 m'ye inmesi ~3 s suruyor; 6 s pencere dardi
 # (mission8: 3 denemenin 2'sinde temas hic gelmedi).
-HOOK_CONTACT_TIMEOUT_S = 12.0
+# YAKALAMA PENCERESI (GOREV I / B-S5, 2026-09-04): 12 -> 30 s.
+#
+# S5 karari: 60 s, TEK DENEMENIN ust butcesi (sarkitma + yakalama +
+# dogrulama dahil). Ic dagilim, olculen surelerden:
+#     vinc salimi + sonumleme (HOOK_PAYOUT_SETTLE_S)      4 s
+#     alma irtifasina dikey inis (hold)                   6 s
+#     YAKALAMA PENCERESI (burasi)                        30 s
+#     dogrulama: 2 m'ye tirmanis + goruntu kontrolu      15 s
+#     pay                                                 5 s
+#                                                    --------
+#                    GOREV3_PICKUP_ATTEMPT_TIMEOUT_S    60 s
+#
+# NEDEN PENCERE 30 s: yeni dwell (MAGNET_DWELL_S = 0.50 s) saf bir sarkac
+# gecisini bilerek disliyor -- kancanin gercekten OTURMASI gerekiyor.
+# Olculen sarkac periyodu 0.831 s ve her duzeltmeden sonra ~3 periyot
+# (2.5 s) sonumleme bekleniyor. 12 s'lik pencere ~14 periyot, yani
+# yalnizca birkac sonumleme denemesi birakiyordu; 30 s ~36 periyot verir.
+# Eskiden toplam yakalama suresi 3 x 12 = 36 s idi, simdi 3 x 30 = 90 s.
+HOOK_CONTACT_TIMEOUT_S = 30.0
 HOOK_STATE_TIMEOUT_S = 5.0
 HOOK_PICKUP_ATTEMPTS = 3
 # Kilitten sonra ipteki salinimin sonmesi icin beklenen sure.
@@ -295,7 +313,7 @@ HOOK_LINK_NAME = "hook_body_link"
 # yumusatir ve yine de bir "gecerken yakalama" olayindan cok daha kisadir.
 HOOK_REL_SPEED_WINDOW_S = 0.10
 # Oturma (seating) kapisinin ornekleme araligi. Poz akisi ~48 Hz, yani
-# 0.05 s her ornekte taze veri demek; SEAT_DWELL_S = 0.30 s icine en az 6
+# 0.05 s her ornekte taze veri demek; MAGNET_DWELL_S = 0.50 s icine en az 10
 # bagimsiz ornek dusuyor.
 HOOK_SEATING_POLL_S = 0.05
 GZ_STATE_LISTEN_TIMEOUT_S = 3.0
@@ -1222,14 +1240,15 @@ class GzPayloadActuator(IPayloadActuator):
         The gate now evaluates, in the RECEIVER's own frame and from the REAL
         hook pose (see get_hook_world_pose):
 
-            lateral    <= SEAT_MAX_LATERAL_M      (bore mouth radius)
-            insertion  in [SEAT_MIN_INSERTION_M, SEAT_MAX_INSERTION_M]
-            tilt       <= SEAT_MAX_TILT_RAD       (axes, not yaw: the bore
+            lateral    <= MAGNET_CAPTURE_RADIUS_M (magnet face overlap)
+            gap        <= MAGNET_MAX_GAP_M        (axial, one-sided: a
+                                                   magnet has no "too deep")
+            tilt       <= MAGNET_MAX_TILT_RAD     (axes, not yaw: a tilted
                                                    is rotationally symmetric)
             rel_speed  <= SEAT_MAX_REL_SPEED_MPS  (no locking mid pass-through)
             pose_age   <= HOOK_POSE_MAX_AGE_S     (stale pose fails closed)
 
-        and all of them must hold CONTINUOUSLY for SEAT_DWELL_S, so a hook
+        and all of them must hold CONTINUOUSLY for MAGNET_DWELL_S, so a hook
         swinging through the envelope cannot latch on a single sample.
 
         Every threshold is derived from the exported CAD in
@@ -1426,7 +1445,7 @@ class GzPayloadActuator(IPayloadActuator):
             candidate_samples, sample_count,
             ", ".join(f"{k}={v}" for k, v in
                       sorted(fail_counts.items(), key=lambda kv: -kv[1])) or "yok",
-            SEAT_MAX_LATERAL_M * 1000, SEAT_DWELL_S)
+            MAGNET_CAPTURE_RADIUS_M * 1000, MAGNET_DWELL_S)
         return False
 
     async def extend_winch_for(self, altitude_m, deck_height_m: float = HOOK_RECEIVER_DECK_HEIGHT_M) -> bool:

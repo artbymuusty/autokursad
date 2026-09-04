@@ -21,11 +21,11 @@ from core.mission.hook_seating import (
     HOOK_POSE_MAX_AGE_S,
     RECEIVER_DECK_OFFSET_M,
     RECEIVER_MOUTH_RADIUS_M,
-    SEAT_DWELL_S,
-    SEAT_MAX_LATERAL_M,
+    MAGNET_CAPTURE_RADIUS_M,
+    MAGNET_DWELL_S,
+    MAGNET_MAX_GAP_M,
+    MAGNET_MAX_TILT_RAD,
     SEAT_MAX_REL_SPEED_MPS,
-    SEAT_MAX_TILT_RAD,
-    SEAT_MIN_INSERTION_M,
     SeatState,
     SeatingEvaluator,
     compute_seating_geometry,
@@ -52,7 +52,7 @@ def geom(lateral_m=0.0, insertion_m=0.0, tilt_rad=0.0,
 def dwell_to_seated(g, evaluator=None, step=0.05, total=None):
     """Feed one geometry repeatedly across the dwell window."""
     ev = evaluator or SeatingEvaluator()
-    total = SEAT_DWELL_S + step if total is None else total
+    total = MAGNET_DWELL_S + step if total is None else total
     t = 0.0
     state = ev.update(g, t)
     while t < total:
@@ -107,30 +107,27 @@ def test_dwell_completion_is_what_authorises_attach():
     g = geom(lateral_m=0.002, insertion_m=0.002)
     ev = SeatingEvaluator()
     assert ev.update(g, 0.0) is SeatState.CAPTURE_CANDIDATE
-    assert ev.update(g, SEAT_DWELL_S * 0.5) is SeatState.CAPTURE_CANDIDATE
-    assert ev.update(g, SEAT_DWELL_S) is SeatState.SEATED
+    assert ev.update(g, MAGNET_DWELL_S * 0.5) is SeatState.CAPTURE_CANDIDATE
+    assert ev.update(g, MAGNET_DWELL_S) is SeatState.SEATED
 
 
-def test_seatable_at_the_nose_clearance_limit():
-    """The lateral limit is mouth radius MINUS nose radius, not the mouth
-    radius itself: 23.25 - 13.00 = 10.25 mm. A hook just inside that is the
-    last seatable pose."""
-    g = geom(lateral_m=SEAT_MAX_LATERAL_M - 1e-6, insertion_m=0.001)
+def test_yakalama_yaricapinin_hemen_icinde_oturur():
+    """GOREV I / B-S4 ile SINIR DEGISTI: eskiden yuva agzi eksi burun
+    yaricapi (23.25 - 13.00 = 10.25 mm) idi; artik MIKNATIS YARICAPI
+    (17.5 mm). Sinirin hemen icindeki poz son oturabilir pozdur."""
+    g = geom(lateral_m=MAGNET_CAPTURE_RADIUS_M - 1e-6, insertion_m=0.001)
     assert g.is_seatable(), g.failures()
 
 
 def test_full_mouth_radius_is_no_longer_seatable():
-    """CONTRACT CHANGE, with the bore collision (generate_bore_collision.py).
+    """Yuva agzi yaricapindaki (23.25 mm) bir poz REDDEDILMELI.
 
-    This used to assert the opposite: a hook exactly on the mouth radius was
-    the last seatable pose. That was correct while the bore had no collision
-    -- the gate could not claim precision the physics did not have, so it
-    gated on the mouth radius and said so in hook_seating.py.
-
-    Now the pocket wall is a real surface. An O26 nose whose axis sits on the
-    O46.50 mouth radius has half of it outside the bore; it fouls the wall
-    and lands on the deck. The gate has to agree with the physics, so this
-    pose must now be REJECTED, and rejected on the lateral term specifically.
+    Bu iddia iki farkli fizik altinda da dogru kaldi, gerekcesi degisti:
+      - pim-yuva: O26 burun O46.50 agzin yariciapindayken duvara carpar
+      - miknatis (GOREV I / B-S4): 23.25 mm, yakalama yaricapinin
+        (17.5 mm) DISINDA -- iki O35 yuz yeterince ortusmez
+    Test korunuyor cunku KORUDUGU DAVRANIS ayni; yalnizca hangi kapinin
+    reddettigi degisti.
     """
     g = geom(lateral_m=RECEIVER_MOUTH_RADIUS_M - 1e-6, insertion_m=0.001)
     assert not g.is_seatable()
@@ -152,23 +149,44 @@ def test_case7_regression_hook_1970mm_above_receiver_must_never_seat():
     """
     g = geom(lateral_m=0.0242, insertion_m=-1.970)
     assert not g.is_seatable()
-    assert any("too_high" in f for f in g.failures()), g.failures()
+    assert any("gap" in f for f in g.failures()), g.failures()
     state, _ = dwell_to_seated(g, total=10.0)
     assert state is SeatState.APPROACHING
 
 
-def test_hook_below_the_valid_seat_must_not_seat():
-    """Nose driven past the CAD insertion limit (payload lifted off it, or
-    the hook under the payload) is not a seat either."""
+def test_miknatis_modelinde_COK_DERIN_diye_bir_hata_YOKTUR():
+    """GOREV I / B-S4: pim-yuvada burun CAD giris sinirini asarsa hata
+    sayiliyordu ("too_deep"). Miknatista bu kavram YOK -- guverte kati,
+    miknatis yuzu onu gecemez; eksende anlamli tek hata UZAK kalmaktir.
+
+    Bu test o kaldirilan kapinin geri gelmedigini korur: eksende "derin"
+    bir okuma tek basina oturmayi ENGELLEMEMELI.
+    """
     g = geom(lateral_m=0.0, insertion_m=0.20)
+    assert not any("too_deep" in f for f in g.failures()), g.failures()
+
+
+def test_eksenel_BOSLUK_kapisi_miknatis_yuzunu_uzakta_birakmaz():
+    """Yuzeyler MAGNET_MAX_GAP_M'den uzaksa tutma kuvveti yok."""
+    g = geom(lateral_m=0.0, insertion_m=-(MAGNET_MAX_GAP_M + 0.001))
     assert not g.is_seatable()
-    assert any("too_deep" in f for f in g.failures()), g.failures()
+    assert any("gap" in f for f in g.failures()), g.failures()
+    # sinirin hemen icindeki ayni geometri gecmeli
+    ok = geom(lateral_m=0.0, insertion_m=-(MAGNET_MAX_GAP_M - 0.001))
+    assert ok.is_seatable(), ok.failures()
 
 
-def test_lateral_outside_the_bore_mouth_must_not_seat():
-    g = geom(lateral_m=SEAT_MAX_LATERAL_M + 0.001, insertion_m=0.0)
+def test_lateral_yakalama_yaricapinin_disinda_oturmaz():
+    """GOREV I / B-S4: sinir artik yuva agzi degil MIKNATIS YARICAPI.
+    O noktada iki O35 yuz %39.1 ortusuyor; otesinde ortusme ucte birin
+    altina duser."""
+    g = geom(lateral_m=MAGNET_CAPTURE_RADIUS_M + 0.001, insertion_m=0.0)
     assert not g.is_seatable()
     assert any("lateral" in f for f in g.failures()), g.failures()
+    # Eski pim-yuva siniri (10.25 mm) artik GECERLI olmali -- miknatis
+    # 1.7 kat daha toleransli, bu kazanc kaybolmasin.
+    eski_sinir = geom(lateral_m=0.01125, insertion_m=0.0)
+    assert eski_sinir.is_seatable(), eski_sinir.failures()
 
 
 def test_excessive_relative_speed_must_not_seat():
@@ -181,7 +199,7 @@ def test_excessive_relative_speed_must_not_seat():
 
 
 def test_excessive_tilt_must_not_seat():
-    g = geom(lateral_m=0.0, insertion_m=0.001, tilt_rad=SEAT_MAX_TILT_RAD + 0.05)
+    g = geom(lateral_m=0.0, insertion_m=0.001, tilt_rad=MAGNET_MAX_TILT_RAD + 0.05)
     assert not g.is_seatable()
     assert any("tilt" in f for f in g.failures()), g.failures()
 

@@ -143,6 +143,54 @@ SEAT_MAX_INSERTION_M: float = RECEIVER_MAX_INSERTION_M + SEAT_TOLERANCE_M   # 0.
 # 0.005-0.9 deg, so this is never the binding constraint in practice.
 SEAT_MAX_TILT_RAD: float = math.radians(15.0)
 
+# ==========================================================================
+# MIKNATIS MODELI (GOREV I / B-S4, 2026-09-04)
+# ==========================================================================
+# DONANIM REVIZYONU: yakalama artik PIM-YUVA degil MIKNATIS.
+# Yukaridaki RECEIVER_* / SEAT_*_INSERTION sabitleri O26 burnun O46.5
+# yuvaya girmesi icindi; miknatista "giris" diye bir sey yok, TEMAS var.
+# O sabitler SILINMEDI -- olcum alanlari (insertion_m) ve onlara bagli
+# araclar (seat_trace, O3 erisim korumasi) calismaya devam etsin diye
+# duruyorlar; yalnizca KAPI onlara bakmiyor.
+#
+# Her esik TURETILDI, secilmedi:
+
+#: Miknatis yaricapi (O35 mm, SDF hook_magnet_visual radius 0.0175).
+MAGNET_RADIUS_M: float = 0.0175
+
+#: YAKALAMA YARICAPI = miknatis yaricapi.
+#  Iki es-capli O35 yuz, merkezleri r kadar ayrikken %39.1 ortusur
+#  (lens alani 2r^2*acos(d/2r) - (d/2)*sqrt(4r^2-d^2), d=r).
+#  Bunun otesinde ortusen yuzey ucte birin altina duser ve tutma kuvveti
+#  hizla kaybolur. Eski pim-yuva kapisi 10.25 mm idi (yuva agzi eksi burun
+#  yaricapi); miknatis 1.7 kat daha toleransli.
+MAGNET_CAPTURE_RADIUS_M: float = MAGNET_RADIUS_M
+
+#: EKSENEL BOSLUK. Miknatis yuzu hedef diskten en fazla bu kadar uzakta
+#  olabilir. Turetme: hiz kapisi 0.05 m/s x 0.1 s ornekleme = 5.0 mm, yani
+#  iki ornek arasinda kat edilebilecek yol. CAD'in dinlenme acikligi
+#  0.20 mm ve miknatis kalinligi 2.00 mm; 5 mm ikisini de kapsar ve bir
+#  ornekleme adimini kaybetmeye dayanikli.
+MAGNET_MAX_GAP_M: float = 0.005
+
+#: EGIM. Egik bir miknatis yuzeyi kenariyla temas eder; uzak kenar
+#  2r*sin(t) kadar kalkar ve bu bosluk butcesini asmamali:
+#      sin(t) <= MAGNET_MAX_GAP_M / (2*MAGNET_RADIUS_M) = 0.1429
+#  -> 8.2 derece. Eski pim-yuva kapisi 15 dereceydi (yuvanin acisal
+#  toleransi); miknatis DAHA SIKI. Olculen egimler 0.1-4.8 derece, yani
+#  yeni sinirin rahatca icinde.
+MAGNET_MAX_TILT_RAD: float = math.radians(8.0)
+
+#: DWELL -- miknatis baglaminda YENIDEN TANIMLANDI: "yakalama yaricapi
+#  ICINDE kesintisiz gecirilen sure". Pim-yuvada bu "yuvada oturdu"
+#  demekti; miknatista "yuzeyler temas halinde kaldi" demek.
+#  TURETME (olculen sarkac): periyot 0.831 s, yanal genlik ~60 mm. Salinan
+#  bir kanca yakalama yaricapi (17.5 mm) icinde periyot basina yalnizca
+#  0.157 s gecirir. 0.50 s istemek, SAF BIR SALINIM GECISINI DISLAR ve
+#  kancanin gercekten oturmasini zorunlu kilar. Eski 0.30 s pim-yuva icindi
+#  ve yuva mekanik olarak tuttugu icin bu ayrimi yapmasi gerekmiyordu.
+MAGNET_DWELL_S: float = 0.50
+
 # DWELL. Derived from the MEASURED rope dynamics, not chosen: the pendulum
 # period is 0.831 s (acceptance test, 6 m lateral step). A hook swinging
 # with amplitude A spends only
@@ -196,15 +244,21 @@ class SeatingGeometry(NamedTuple):
         bad = []
         if self.pose_age_s > HOOK_POSE_MAX_AGE_S:
             bad.append(f"stale_pose({self.pose_age_s:.2f}s>{HOOK_POSE_MAX_AGE_S}s)")
-        if self.lateral_m > SEAT_MAX_LATERAL_M:
-            bad.append(f"lateral({self.lateral_m*1000:.1f}mm>{SEAT_MAX_LATERAL_M*1000:.1f}mm)")
-        if self.insertion_m < SEAT_MIN_INSERTION_M:
-            bad.append(f"too_high({self.insertion_m*1000:+.1f}mm<{SEAT_MIN_INSERTION_M*1000:+.1f}mm)")
-        if self.insertion_m > SEAT_MAX_INSERTION_M:
-            bad.append(f"too_deep({self.insertion_m*1000:+.1f}mm>{SEAT_MAX_INSERTION_M*1000:+.1f}mm)")
-        if self.tilt_rad > SEAT_MAX_TILT_RAD:
+        # MIKNATIS KAPISI (GOREV I / B-S4). Pim-yuvanin uc kapisi
+        # (lateral clearance + iki yonlu insertion penceresi) yerine
+        # iki kapi: yuzey ortusmesi ve eksenel bosluk.
+        if self.lateral_m > MAGNET_CAPTURE_RADIUS_M:
+            bad.append(f"lateral({self.lateral_m*1000:.1f}mm>"
+                       f"{MAGNET_CAPTURE_RADIUS_M*1000:.1f}mm)")
+        # insertion_m > 0 = burun guverte duzleminin ALTINDA. Miknatista
+        # "cok derin" diye bir hata yok (guverte kati, burun gecemez);
+        # tek anlamli hata yuzeyin UZAK kalmasidir.
+        if self.insertion_m < -MAGNET_MAX_GAP_M:
+            bad.append(f"gap({-self.insertion_m*1000:.1f}mm>"
+                       f"{MAGNET_MAX_GAP_M*1000:.1f}mm)")
+        if self.tilt_rad > MAGNET_MAX_TILT_RAD:
             bad.append(f"tilt({math.degrees(self.tilt_rad):.1f}deg>"
-                       f"{math.degrees(SEAT_MAX_TILT_RAD):.1f}deg)")
+                       f"{math.degrees(MAGNET_MAX_TILT_RAD):.1f}deg)")
         if self.rel_speed_mps > SEAT_MAX_REL_SPEED_MPS:
             bad.append(f"rel_speed({self.rel_speed_mps:.3f}>{SEAT_MAX_REL_SPEED_MPS}m/s)")
         return bad
@@ -270,7 +324,7 @@ class SeatingEvaluator:
     `now`, so the whole gate is unit-testable without a simulator.
     """
 
-    def __init__(self, dwell_s: float = SEAT_DWELL_S):
+    def __init__(self, dwell_s: float = MAGNET_DWELL_S):
         self.dwell_s = dwell_s
         self._valid_since: Optional[float] = None
         self.state = SeatState.APPROACHING

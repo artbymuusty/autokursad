@@ -22,18 +22,46 @@ VEH = "x500_mono_cam_down_0"
 LEVEL = (0.0, 0.0, 0.0, 1.0)
 
 
+class _LiveStamps(dict):
+    """Damgalari HER OKUMADA tazeler -- canli gz akisinin yaptigi sey.
+
+    NEDEN GEREKLI (GOREV I / B-S4): eski fikstur damgayi BIR KEZ atiyordu,
+    yani duvar saati ilerledikce her ornek stale_pose'a dusuyordu. Poz
+    yasi HOOK_POSE_MAX_AGE_S = 0.5 s'i asinca yalnizca ilk ~0.5 s'lik
+    ornekler gecerli kaliyordu; bu, eski MAGNET/SEAT dwell 0.30 s icin
+    ucu ucuna yetiyor, yeni 0.50 s icin YETMIYORDU.
+
+    Kapi degil FIKSTUR yanlisti: gercekten oturmus bir kanca canli akista
+    saniyelerce TAZE poz uretir. Bu sinif onu temsil eder.
+    """
+    def __init__(self, age=0.0):
+        super().__init__()
+        self._age = age
+
+    def __getitem__(self, k):
+        import time
+        if k in self.keys():
+            return time.time() - self._age
+        raise KeyError(k)
+
+    def get(self, k, default=None):
+        try:
+            return self[k]
+        except KeyError:
+            return default
+
+
 def monitor_with(veh_pos, hook_link_pos, payload_pos, veh_quat=LEVEL, age=0.0):
     """A GzPoseMonitor primed exactly the way the live stream primes it:
     model poses in world, link poses relative to their model."""
-    import time
     m = GzPoseMonitor("default")
-    stamp = time.time() - age
+    m._stamps = _LiveStamps(age)
     for name, pos, quat in ((VEH, veh_pos, veh_quat),
                             (HOOK_LINK_NAME, hook_link_pos, LEVEL),
                             ("payload_red", payload_pos, LEVEL)):
         m._poses[name] = pos
         m._quats[name] = quat
-        m._stamps[name] = stamp
+        dict.__setitem__(m._stamps, name, 0.0)   # varlik kaydi; deger okumada tazelenir
     return m
 
 
