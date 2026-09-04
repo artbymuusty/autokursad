@@ -282,3 +282,116 @@ K3'ün bulgusu öneri sırasını **değiştiriyor**:
   körlemesine tekrar değil **durum temizleme** olması.
 
 Hiçbiri uygulanmadı.
+
+---
+
+# KÖK NEDEN BULUNDU — komut-ACK yanlış eşleşmesi (MAVSDK v3.17.2 kaynağı)
+
+## Kanıt zinciri (hepsi v3.17.2 etiketinden, birebir)
+
+**1. `OffboardImpl::start()` kısa devre YAPMIYOR:**
+```cpp
+Offboard::Result OffboardImpl::start()
+{
+    {
+        std::lock_guard<std::mutex> lock(_mutex);
+        if (_mode == Mode::NotActive) {
+            return Offboard::Result::NoSetpointSet;
+        }
+        _watchdog_grace_start = _time.steady_time();
+    }
+    return offboard_result_from_command_result(_system_impl->set_flight_mode(FlightMode::Offboard));
+}
+```
+Tek erken dönüş `NoSetpointSet` — o da Python'da **istisna** olurdu, bizde hiç
+olmadı. Yani `set_flight_mode` **her zaman** çağrılıyor.
+→ **FAZ 1'deki "zaten aktif sayıp kısa devre yapıyor" hipotezi ÇÜRÜDÜ.**
+
+**2. `SystemImpl::set_flight_mode()` de kısa devre yapmıyor:**
+`make_command_flight_mode()` → `make_command_px4_mode()` → `send_command()`.
+Önbellekteki moda karşı hiçbir erken dönüş yok.
+
+**3. `send_command()` senkron ve ACK bekliyor:**
+```cpp
+auto prom = std::make_shared<std::promise<Result>>();
+auto res = prom->get_future();
+queue_command_async(command, [prom](Result result, float progress) {
+    if (result != Result::InProgress) { prom->set_value(result); } }, retries);
+return res.get();
+```
+
+**4. VE İŞTE KUSUR — `CommandIdentification` parametreleri içermiyor:**
+```cpp
+struct CommandIdentification {
+    uint32_t maybe_param1{0}; // only for commands where this matters
+    uint32_t maybe_param2{0}; // only for commands where this matters
+    uint16_t command{0};
+    uint8_t target_system_id{0};
+    uint8_t target_component_id{0};
+    bool operator==(const CommandIdentification& other) const { ... beş alan ... }
+};
+```
+`maybe_param1/2` yalnızca `MAV_CMD_REQUEST_MESSAGE` ve
+`MAV_CMD_SET_MESSAGE_INTERVAL` için doldurulur. **`DO_SET_MODE` (176) için
+ikisi de 0 kalır.**
+
+## Mekanizma
+
+Projenin (ve tekrar üretim betiğinin) dizisi:
+
+| adım | gönderilen MAVLink |
+|---|---|
+| `mission.pause_mission()` | `DO_SET_MODE` **176**, main=4 (AUTO), sub=3 (LOITER) |
+| ~1–15 ms sonra `offboard.start()` | `DO_SET_MODE` **176**, main=6 (OFFBOARD) |
+
+İkisinin `CommandIdentification`'ı **birebir aynı**:
+`{0, 0, 176, 1, 1}` — çünkü main/sub mod alanları `param1/param2`'de taşınıyor
+ve kimliğe **girmiyor**.
+
+**Sonuç:** `pause_mission()`'ın ACK'i hâlâ yoldayken `start()` kendi iş
+kalemini kuyruğa koyuyor. Gelen ACK, kimlik eşleştiğinden **offboard iş
+kalemine atfediliyor** ve onu **`Success`** ile çözüyor — offboard komutu
+**hiç gönderilmeden**.
+
+### İki dalın da ölçümle birebir örtüşmesi
+
+| | FAIL | OK |
+|---|---|---|
+| `start()` süresi | **3.4 ms** = pause ACK'inin kalan yolu | **11.5 ms** = gerçek MAVLink round-trip |
+| ULog'da `param2=6` | **yok** — komut hiç gönderilmedi | **var** |
+| `mavlink_command_sender.cpp:304` uyarısı | **yok** — ACK bir iş kalemine eşleşti | **var** — offboard'ın KENDİ ACK'i geç geldi, kalem çoktan silinmişti |
+
+> Uyarının yalnızca **başarılarda** çıkması, ilk bakışta ters görünüyordu;
+> mekanizma bunu tam tersine çeviriyor ve **doğruluyor**.
+
+Periyodiklik (1, 3, 6, 9, 12) de bununla uyumlu: çakışma penceresi ACK
+zamanlamasına bağlı, dolayısıyla yarı-düzenli.
+
+## Bu bir MAVSDK kusuru — proje kodu suçsuz
+
+Proje `pause_mission()` ve `start()`'ı arka arkaya çağırmakta haklı; MAVSDK'nin
+komut göndericisi aynı komut kimliğini taşıyan iki farklı mod komutunu
+ayırt edemiyor. İlgili kayıtlı davranış: MAVSDK issue
+[#1307](https://github.com/mavlink/MAVSDK/issues/1307) `is_active()`/`_mode`
+yarışını, MAVSDK-Python
+[#374](https://github.com/mavlink/MAVSDK-Python/issues/374) offboard
+iş parçacığı davranışını anlatıyor — **ama bu tam kusur (176 kimlik çakışması)
+için açılmış bir kayıt bulamadım.**
+
+## K1 mi K5 mi — **ikisi de mekanizmayı hedeflemiyor; K6 hedefliyor**
+
+| | mekanizmayı hedefliyor mu |
+|---|---|
+| **K1 — `start()` retry** | **Dolaylı.** Yeniden denemek, bayat ACK tüketildikten sonraki bir pencereye denk gelir ve çalışır. Ölçüm destekliyor: **her başarısızlığı hemen bir başarı izledi** (1→2, 3→4, 6→7, 9→10). Ama kök nedeni bilmeden "yarışı bekleyerek aşmak" |
+| **K5 — `stop()` + yeniden `start()`** | **HAYIR — hatta ters tepebilir.** `OffboardImpl::stop()` `set_flight_mode(FlightMode::Hold)` çağırıyor, yani **yine `DO_SET_MODE` 176**. K5, çakışma penceresine **üçüncü bir 176** sokar. Ayrıca sıfırlamayı hedeflediği `_mode` **ilgili durum değil** — ilgili durum komut göndericinin **iş kuyruğu**, ve `stop()` ona dokunmuyor |
+| **K6 (YENİ) — iki 176 komutunu zamanda ayır** | **EVET.** `pause_mission()` ile `offboard.start()` arasına, önceki ACK'in tüketilmesine yetecek bir bekleme koymak çakışma penceresini **doğrudan kapatır**. Ölçülen round-trip ~11 ms; ölçülerek seçilecek küçük bir bekleme (ör. 100–200 ms) yeterli olmalı |
+
+**Değerlendirmem:** K5'i **eliyorum** — sorunu yanlış yerde arıyor ve çakışmayı
+artırma riski taşıyor. **K6 birincil**, **K1 ikincil savunma** olarak
+anlamlı (K6 sonrası kalan artık vakalar için).
+
+**Ölçüm borcu:** K6'nın gerçekten çalıştığı, tekrar üretim betiğiyle
+(`k3_repro.py` + araya bekleme) **kod değiştirmeden** sınanabilir — betiği
+projeye dokunmadan çağırıyor.
+
+Hiçbiri uygulanmadı.
