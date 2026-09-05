@@ -693,7 +693,6 @@ class Gorev3PickupPhase:
                       f"{math.degrees(tilt0_rad):.1f} deg",
                       data={"tilt_before_deg": round(math.degrees(tilt0_rad), 1),
                             "hold_s": ADAPTIVE_DESCENT_RIGHTING_S})
-        await self._set_magnet_torque(True)
         hold = asyncio.create_task(self.flight.goto_position_ned_and_hold(
             n_ned, e_ned, -alt_m, yaw_deg, ADAPTIVE_DESCENT_RIGHTING_S))
         waited = 0.0
@@ -710,7 +709,6 @@ class Gorev3PickupPhase:
                     break
         finally:
             await hold
-            await self._set_magnet_torque(False)
         ok = tilt <= MAGNET_MAX_TILT_RAD
         logger.info("[TORK_DOGRULTMA] %s: egim %.1f -> %.1f derece (kapi %.1f), %.2f s",
                     "BASARILI" if ok else "BASARISIZ",
@@ -751,9 +749,8 @@ class Gorev3PickupPhase:
                             "lateral_mm": (round(lat0 * 1000, 1)
                                            if lat0 is not None else None),
                             "hold_s": ADAPTIVE_DESCENT_MAGNET_HOLD_S})
-        # GOREV M: SERBEST REJIM -- tork burada ACIK. Kanca havada asili,
-        # burun hicbir yere dayanmiyor; donme kisitsiz.
-        await self._set_magnet_torque(True)
+        # GOREV M: tork zaten ACIK -- artik inis basina TEK KEZ aciliyor
+        # (_adaptive_descend). Gerekce orada.
         hold = asyncio.create_task(self.flight.goto_position_ned_and_hold(
             n_ned, e_ned, -alt_m, yaw_deg, ADAPTIVE_DESCENT_MAGNET_HOLD_S))
         waited = 0.0
@@ -773,8 +770,6 @@ class Gorev3PickupPhase:
                     break
         finally:
             await hold
-            # Bant bitti -> inise donuluyor: tork KAPALI (operator karari).
-            await self._set_magnet_torque(False)
         delta = ((lat0 - lat) * 1000) if (lat0 is not None and lat is not None) else None
         logger.info("[MIKNATIS_BANDI] BITTI: yanal %s -> %s (%s), %.2f s",
                     f"{lat0 * 1000:.1f} mm" if lat0 is not None else "yok",
@@ -828,6 +823,43 @@ class Gorev3PickupPhase:
         steps = []
         magnet_holds = 0
         rightings = 0
+        # ==================================================================
+        # TORK: INIS BASINA TEK CIFT AC/KAPA (2026-09-05, OLCULDU)
+        # ==================================================================
+        # Once her epizot (bant tutusu, dogrultma) torku kendi acip
+        # kapatiyordu. OLCULDU (demo_20260905_173708): her `gz topic -p`
+        # yeni bir surec ve kendi gz-transport kesfini oduyor --
+        #     [MIKNATIS] hizalama torku ACIK  (gonderildi, 1.18 s)
+        #     [MIKNATIS] hizalama torku KAPALI (gonderildi, 1.23 s)
+        # Alti gecis ~7 s saf IPC etti ve 20 s'lik inis butcesini yedi:
+        #     [ADAPTIF_INIS] BITTI (butce): 6 adim, 18.6 s ... ins = -14.3 mm
+        # Yani inis, ALCALMADIGI icin degil BEKLEDIGI icin 14.3 mm eksik
+        # kaldi ve yakalama penceresinin yedi orneginin yedisi de yalnizca
+        # eksenel kapidan dondu (yanal 0 red, egim 0 red).
+        #
+        # OPERATOR KARARI ("tork yalnizca serbest rejimde") KORUNUYOR:
+        # inisin TAMAMI artik serbest rejim. Burun hicbir noktada guverteye
+        # DAYANMIYOR -- son bosluk hedefi 2.5 mm (ADAPTIVE_DESCENT_TARGET_
+        # GAP_M) ve pencere de vinci tekrar salmiyor. Ayni kosumun olcumu
+        # bunu dogruluyor: inis boyunca egim 1.4-5.6 derece, yani kanca
+        # serbestce sarkiyor. Degisen sey POLITIKA degil, onu uygulayan
+        # mekanizmanin maliyeti.
+        #
+        # GERI ALMAK TEK SATIR: asagidaki iki cagriyi kaldirip epizotlarin
+        # icine geri koymak yeter.
+        await self._set_magnet_torque(True)
+        try:
+            return await self._adaptive_descend_loop(
+                n_ned, e_ned, yaw_deg, start_alt_m, alt, t0, reason, steps,
+                magnet_holds, rightings)
+        finally:
+            await self._set_magnet_torque(False)
+
+    async def _adaptive_descend_loop(self, n_ned, e_ned, yaw_deg, start_alt_m,
+                                     alt, t0, reason, steps, magnet_holds,
+                                     rightings):
+        """_adaptive_descend'in govdesi. Ayrildi ki tork ac/kapa tek bir
+        try/finally ile inisin TAMAMINI sarsin."""
         for step in range(1, ADAPTIVE_DESCENT_MAX_STEPS + 1):
             geom = self._seating_geometry()
             if geom is None:
