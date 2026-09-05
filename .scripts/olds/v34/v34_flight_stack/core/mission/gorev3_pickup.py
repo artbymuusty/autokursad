@@ -17,6 +17,7 @@ from core.mission.hook_seating import (
     MAGNET_ATTRACT_RANGE_M,
     MAGNET_CAPTURE_RADIUS_M,
     MAGNET_MAX_GAP_M,
+    MAGNET_MAX_TILT_RAD,
     SEAT_MAX_REL_SPEED_MPS,
     _rotate as _quat_rotate,
 )
@@ -286,6 +287,25 @@ ADAPTIVE_DESCENT_MAGNET_GAP_M = 0.04      # 3-5 cm bandinin ortasi
 #  2.4 s'de kapanir. 3.0 s bunu pay ile kapsar ve 14 s'lik inis butcesine
 #  sigar.
 ADAPTIVE_DESCENT_MAGNET_HOLD_S = 3.0
+#: Bant kac kez kullanilabilir. 2026-09-05 kosumu: bant yanali 29.2 -> 15.0 mm
+#  kapatti (kapinin ICINE), ama sonraki inis adimi onu 36.3 mm'ye geri acti.
+#  Tek atislik bir bant, kazanci inise geri veriyor. Ikinci sefer, kazanci
+#  temasa EN YAKIN noktada tazeler. Ust sinir 2, cunku her bant 3 s ve
+#  inis butcesi 17 s.
+ADAPTIVE_DESCENT_MAGNET_HOLDS_MAX = 2
+
+#: SON BOSLUK HEDEFI -- burun guverteye DAYANMASIN.
+#  2026-09-05 kosumunda inis boslugu 0.0 mm'ye kadar kapatti, yani burun
+#  guverteye oturdu; egim o ana kadar 0.9 derece iken pencerede
+#  34.7 -> 42.0 -> 39.4 dereceye firladi. Mekanizma: burun guvertede SIKISIK
+#  iken miknatisin yanal kuvveti kancayi kaydirmiyor, TEMAS NOKTASI ETRAFINDA
+#  DEVIRIYOR (kutle merkezine uygulanan kuvvet bile sabitlenmis bir uc
+#  etrafinda tork uretir). Serbest asili kanca ise 0.005-0.9 derece olcuyor
+#  (hook_seating.py).
+#  Cozum: temasin hemen USTUNDE dur. Kapi zaten -5 mm'ye kadar kabul ediyor;
+#  2.5 mm o pencerenin ortasi, yani hem kapi saglanir hem burun serbest kalir
+#  ve miknatis yanali kapatmaya devam edebilir.
+ADAPTIVE_DESCENT_TARGET_GAP_M = MAGNET_MAX_GAP_M / 2.0
 # Alma dogrulamasi: yuk en az bu kadar yukselmis olmali.
 # Tirmanis adimlari 1/2/3 m oldugu icin bu esik cok gevsek
 # secildi -- amac 'gercekten kalkti mi', 'ne kadar' degil.
@@ -712,7 +732,7 @@ class Gorev3PickupPhase:
         t0 = time.monotonic()
         reason = "adim_tavani"
         steps = []
-        magnet_hold_done = False
+        magnet_holds = 0
         for step in range(1, ADAPTIVE_DESCENT_MAX_STEPS + 1):
             geom = self._seating_geometry()
             if geom is None:
@@ -720,6 +740,29 @@ class Gorev3PickupPhase:
                 reason = "poz_yok"
                 break
             gap_m = -geom.insertion_m          # >0 => burun guverteden YUKARIDA
+
+            # DEVRILME KORUMASI (2026-09-05 kosumunda olculdu). Devrilmis bir
+            # kancanin burnu, govdesi yattigi icin guverte duzlemine yakin
+            # okunabilir ve eksenel kapi YANLISLIKLA "gecildi" der. Kosumun
+            # 2. ve 3. denemesi tam bunu yapti: 0.90 m irtifada, tek adimda,
+            # "KAPI GECILDI ... tilt=64.4 deg". 0.90 m'de burnun guvertede
+            # olmasi fiziksel olarak imkansiz; okuma anlamsizdi.
+            #
+            # ESIK SECILMEDI: serbest asili kanca 0.005-0.9 derece olcuyor
+            # (hook_seating.py) ve oturma kapisinin kendi siniri 8 derece.
+            # Bunun uzerindeki bir kanca ASILI DEGILDIR -- burun konumunu
+            # kordon degil TEMAS belirliyordur, dolayisiyla o poz bir inis
+            # kararina temel olamaz.
+            if geom.tilt_rad > MAGNET_MAX_TILT_RAD:
+                reason = "devrilmis_kanca"
+                logger.error("[ADAPTIF_INIS] %d: kanca DEVRILMIS (egim %.1f deg > "
+                             "%.1f deg) -- burun konumu kordonla degil TEMASLA "
+                             "belirleniyor, bu poz inis karari veremez. Inis "
+                             "durduruluyor, deneme basarisiz sayilacak.",
+                             step, math.degrees(geom.tilt_rad),
+                             math.degrees(MAGNET_MAX_TILT_RAD))
+                break
+
             if geom.insertion_m >= -MAGNET_MAX_GAP_M:
                 reason = "eksenel_kapi_gecti"
                 steps.append({"step": step, "gap_mm": round(gap_m * 1000, 1),
@@ -734,8 +777,10 @@ class Gorev3PickupPhase:
             # Kanca burada SERBEST ASILI ve miknatis yanal hatayi ancak bu
             # rejimde kapatabiliyor. Bant gecildikten sonra kanca guverteye
             # dayanir ve ayni kuvvet statik surtunmeye carpar.
-            if not magnet_hold_done and gap_m <= MAGNET_ATTRACT_RANGE_M:
-                magnet_hold_done = True
+            if (magnet_holds < ADAPTIVE_DESCENT_MAGNET_HOLDS_MAX
+                    and gap_m <= MAGNET_ATTRACT_RANGE_M
+                    and geom.lateral_m > MAGNET_CAPTURE_RADIUS_M):
+                magnet_holds += 1
                 spent_band = await self._magnet_band_hold(
                     n_ned, e_ned, yaw_deg, alt, gap_m)
                 steps.append({"step": step, "gap_mm": round(gap_m * 1000, 1),
@@ -762,8 +807,19 @@ class Gorev3PickupPhase:
                          room_m)
             # Banda TAM inmek icin kirp: bandin ALTINA dusmek, miknatisin
             # serbest-asili rejimde calisma firsatini atlamak demek.
-            if not magnet_hold_done:
+            #
+            # UC KOSUL BIRDEN: (a) bant henuz kullanilmadi, (b) yanal hata
+            # gercekten kapinin DISINDA -- zaten iceride ise bantta durmanin
+            # kapatacagi bir sey yok ve 3 s bosa gider, (c) bandin USTUNDEYIZ.
+            # (c) olmadan kirpma NEGATIF adim uretiyordu ve inis kilitleniyordu
+            # (birim testte yakalandi: bosluk 6.8 mm iken kirpma -33.2 mm).
+            if (magnet_holds == 0
+                    and geom.lateral_m > MAGNET_CAPTURE_RADIUS_M
+                    and gap_m > ADAPTIVE_DESCENT_MAGNET_GAP_M):
                 step_m = min(step_m, gap_m - ADAPTIVE_DESCENT_MAGNET_GAP_M)
+            # BURUN GUVERTEYE DAYANMASIN: son bosluk hedefinin altina inme.
+            # Gerekcesi ADAPTIVE_DESCENT_TARGET_GAP_M'in basinda (devrilme).
+            step_m = min(step_m, gap_m - ADAPTIVE_DESCENT_TARGET_GAP_M)
             if step_m < ADAPTIVE_DESCENT_MIN_STEP_M:
                 # DUZELTME (r2/A kosumunda olculdu, 2026-09-05): burada
                 # KOSULSUZ durulunca bosluk 6.8 mm iken oransal adim 4.76 mm
@@ -846,7 +902,7 @@ class Gorev3PickupPhase:
                                                  if final is not None else None),
                             "final_failures": (final.failures()
                                                if final is not None else None)})
-        return alt
+        return alt, reason
 
     async def _hook_trace(self, duration_s: float, hz: float = 10.0):
         """Kanca izini ~hz Hz orneklet (SALT OLCUM, Y1 turu 2026-08-31).
@@ -1512,8 +1568,19 @@ class Gorev3PickupPhase:
             # extend_winch_for hala GOREV3_DESCENT_ALTITUDE_M ile cagriliyor,
             # cunku inis boyunca salimin SABIT kalmasi bu hesabin on kabulu;
             # yeniden hesaplanirsa fazladan salim kapiyi bozar.
-            pickup_alt = await self._adaptive_descend(
+            pickup_alt, _descent_reason = await self._adaptive_descend(
                 _hn, _he, aligned_yaw, HOOK_VISUAL_ALIGN_ALTITUDE_M)
+            if _descent_reason == "devrilmis_kanca":
+                # Devrilmis kancayla yakalama penceresine girmek, 30 s'lik
+                # butceyi kesin bir basarisizliga harcamaktir: egim kapisi
+                # her ornegi reddeder. Denemeyi burada bitirmek, dis dongunun
+                # gorsel isi ve _settle_hook_onto'yu bastan kosmasini saglar --
+                # kancayi yeniden dikey astiran sey odur.
+                logger.error("Kanca devrilmis durumda -- bu deneme yakalama "
+                             "penceresine sokulmuyor, bastan denenecek.")
+                self._publish("GOREV3_PICKUP_ABORT", "devrilmis_kanca",
+                              data={"attempt": attempt}, severity=_WARN())
+                return False
             # Hizalama araci otelemis olabilir; tutma noktasi tazelenmeli.
             _hn, _he, _ = await self.flight.get_position_ned()
 

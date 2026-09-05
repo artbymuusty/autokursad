@@ -107,7 +107,8 @@ async def _run(phase, flight, actuator, start_alt=HOOK_VISUAL_ALIGN_ALTITUDE_M):
         last["alt"] = -d
 
     flight.goto_position_ned_and_hold = goto
-    return await phase._adaptive_descend(1.0, 2.0, 90.0, start_alt)
+    alt, _reason = await phase._adaptive_descend(1.0, 2.0, 90.0, start_alt)
+    return alt
 
 
 # --------------------------------------------------------------------------
@@ -316,3 +317,45 @@ async def test_bandin_ALTINA_dusulmuyor():
 def test_bant_hedefi_operatorun_3_5_cm_bandinda():
     assert 0.03 <= ADAPTIVE_DESCENT_MAGNET_GAP_M <= 0.05
     assert ADAPTIVE_DESCENT_MAGNET_GAP_M < MAGNET_ATTRACT_RANGE_M
+
+
+# --------------------------------------------------------------------------
+# DEVRILME KORUMASI ve SON BOSLUK HEDEFI (2026-09-05 kosumunda olculdu)
+# --------------------------------------------------------------------------
+from core.mission.gorev3_pickup import ADAPTIVE_DESCENT_TARGET_GAP_M
+from core.mission.hook_seating import MAGNET_MAX_TILT_RAD
+
+
+@pytest.mark.asyncio
+async def test_devrilmis_kanca_inis_kararina_temel_olamaz():
+    """Devrilmis kancanin burnu, govdesi yattigi icin guverte duzlemine yakin
+    okunabilir ve eksenel kapi YANLISLIKLA 'gecildi' der.
+
+    Olculdu (2026-09-05, deneme 2 ve 3): 0.90 m irtifada, tek adimda,
+    'KAPI GECILDI ... tilt=64.4 deg'. 0.90 m'de burnun guvertede olmasi
+    fiziksel olarak imkansiz."""
+    flight, act = _Flight(), _Actuator(gap_m=-0.0043, nose_z=0.070,
+                                       lateral_m=0.017,
+                                       tilt_rad=math.radians(64.4))
+    phase = _phase(flight, act)
+    alt, reason = await phase._adaptive_descend(1.0, 2.0, 90.0,
+                                                HOOK_VISUAL_ALIGN_ALTITUDE_M)
+    assert reason == "devrilmis_kanca", f"devrilme yakalanmadi: {reason}"
+    assert flight.commands == [], "devrilmis kancayla inis komut edildi"
+
+
+@pytest.mark.asyncio
+async def test_burun_guverteye_DAYANDIRILMIYOR():
+    """Inis, boslugu 0'a kadar kapatmamali: burun guvertede SIKISIK iken
+    miknatisin yanal kuvveti kancayi kaydirmiyor, temas noktasi etrafinda
+    DEVIRIYOR (2026-09-05: egim 0.9 -> 34.7 -> 42.0 derece)."""
+    flight, act = _Flight(), _Actuator(gap_m=0.200, nose_z=0.270,
+                                       lateral_m=0.008)
+    await _run(_phase(flight, act), flight, act)
+    assert act.gap_m >= ADAPTIVE_DESCENT_TARGET_GAP_M - 1e-9, \
+        f"burun hedef boslugun altina indi: {act.gap_m * 1000:.2f} mm"
+
+
+def test_son_bosluk_hedefi_kapinin_ICINDE_ve_temasin_USTUNDE():
+    assert 0.0 < ADAPTIVE_DESCENT_TARGET_GAP_M < MAGNET_MAX_GAP_M
+    assert ADAPTIVE_DESCENT_TARGET_GAP_M == MAGNET_MAX_GAP_M / 2.0
