@@ -149,11 +149,21 @@ HOOK_MOUNT_BODY_X_M = -0.090
 #  toleransi kadar nominal yerindedir; daha fazla beklemek sonucu
 #  degistiremez.
 HOOK_PLUMB_TOLERANCE_M = MAGNET_CAPTURE_RADIUS_M
-#: Sakul beklemesinin TAVANI. 8.0 s, _settle_hook_onto'nun fiilen harcadigi
-#  sonumleme suresiyle (3 x 2.5 s = 7.5 s) ayni mertebede -- ve o sure
-#  OLCULEREK 2-3 mm sakul hatasi uretiyordu. Tavan dolarsa faz DUSMEZ:
-#  olculen sarkma loglanip devam edilir, son sozu oturma kapisi soyler.
-HOOK_PLUMB_SETTLE_MAX_S = 8.0
+#: Sakul beklemesinin TAVANI.
+#  8.0 -> 12.0 (operator karari 2026-09-05, OLCUME dayali). Ilk deger
+#  _settle_hook_onto'nun fiilen harcadigi 7.5 s'ye gore secilmisti ve uc
+#  kosumun sekiz denemesinin YEDISINDE fazlasiyla yetti (sarkma 2.5-13.2 mm,
+#  bekleme 0.00-7.52 s). AMA bir denemede (demo_20260905_203631/3) tavan
+#  doldu ve sarkma 152.2 mm kaldi; inis o salinan kancayi gordu, egim
+#  37.6 dereceye cikti, tork dogrultmasi da tutmadi ve deneme dustu.
+#  12.0 s, bu dosyanin kendi turetmesinden geliyor: zeta ~0.03 ve periyot
+#  1.078 s ile 142 mm'yi 17.5 mm'ye indirmek
+#      ln(142/17.5) / (0.03 * 5.83) ~= 11.9 s
+#  ister. 8 s o hesabin ALTINDAYDI -- yani ilk tavan, kendi gerekcesiyle
+#  tutarsizdi.
+#  Tavan dolarsa faz yine DUSMEZ: sarkma loglanip devam edilir, son sozu
+#  oturma kapisi soyler.
+HOOK_PLUMB_SETTLE_MAX_S = 12.0
 HOOK_PLUMB_POLL_S = 0.25
 # GORSEL HIZALAMA IRTIFASI. Hizalama alma irtifasinda (0.30 m) YAPILAMAZ, ve
 # bu bir ayar meselesi degil, kadraj geometrisi:
@@ -2147,7 +2157,11 @@ class Gorev3PickupPhase:
                     # birakiyor; tekrar salim onu guverteye indirip miknatisin
                     # devirmesine yol aciyordu (olculdu: 2.7 -> 21.7 derece,
                     # bes orneğin besi de yalnizca egim kapisindan dondu).
-                    extend_winch=False)
+                    extend_winch=False,
+                    # GOREV O (operator karari 2026-09-05): kilit sonrasi
+                    # sonumleme BUTCE DISINDA, _verify_lift'in basinda.
+                    # Gerekce aktuatordeki else dalinda.
+                    settle_after_lock=False)
             finally:
                 await _stop_hold()
             _trace.cancel()
@@ -2203,8 +2217,20 @@ class Gorev3PickupPhase:
             Gerekce _attempt'in sonundaki notta. Kendi zaman asimi var:
             2 m tirmanis (hold 2.0 s) + tespit + iki kontrol.
             """
+            # GOREV O: KILIT SONRASI SONUMLEME -- BUTCE DISINDA.
+            # Aktuator artik settle_after_lock=False ile cagriliyor; o
+            # 3.0 s'lik bekleme buraya, deneme butcesinin DISINA tasindi.
+            # Olculdu: kilit 58.1 s'de tamamlanip uyku 61.1 s'ye tasarken
+            # 60 s'lik butce _attempt'i kesiyordu ve bu fonksiyon HIC
+            # cagrilamiyordu (uc kosumun ucunde de).
+            from gz_system.gz_payload_actuator import HOOK_SETTLE_S as _SETTLE_S
+            logger.info("[ALMA] kilit sonrasi %.1f s sonumleme (butce disinda).",
+                        _SETTLE_S)
+            await asyncio.sleep(_SETTLE_S)
+
             # Tirmanistan ONCEKI yuk irtifasi -- asagidaki dogrulama "yuk aracla
             # birlikte yukseldi mi" sorusunu buna gore cevapliyor.
+            # SONUMLEMEDEN SONRA okunuyor: yuk artik durulmus durumda.
             payload_z_before = self.actuator.payload_altitude_m(self._color)
 
                 # MADDE 9 -- TEK BIR DOGRULAMA IRTIFASINA TIRMAN (2 m).

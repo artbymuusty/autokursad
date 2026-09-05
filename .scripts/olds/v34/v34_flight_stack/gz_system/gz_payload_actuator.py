@@ -1759,7 +1759,8 @@ class GzPayloadActuator(IPayloadActuator):
     async def activate_pickup_mechanism(self, altitude_m=None,
                                         deck_height_m: float = HOOK_RECEIVER_DECK_HEIGHT_M,
                                         on_retry=None, on_attract=None,
-                                        extend_winch: bool = True) -> bool:
+                                        extend_winch: bool = True,
+                                        settle_after_lock: bool = True) -> bool:
         """Görev 3 Faz 1, Adım 6: yükü kancayla al.
 
         Gercek sira (operator tarifi, 2026-08-21): kanca yukun hizasina
@@ -1921,7 +1922,26 @@ class GzPayloadActuator(IPayloadActuator):
                         f"; oturma: {geom.describe()}" if geom is not None else "")
             # Salinim sonsun diye kisa bir sabitleme; tasima bunun uzerine
             # baslar.
-            await asyncio.sleep(HOOK_SETTLE_S)
+            if settle_after_lock:
+                await asyncio.sleep(HOOK_SETTLE_S)
+            else:
+                # GOREV O (operator karari 2026-09-05): SONUMLEME BUTCE
+                # DISINA TASINDI -- cagiran taraf yapiyor.
+                #
+                # OLCULDU (demo_20260905_202743, deneme 2): kilit 58.1 s'de
+                # MEKANIK OLARAK TAMAMLANDI (SERVO3_GRIP_ENGAGED), ama bu
+                # 3.0 s'lik uyku yuzunden activate_pickup_mechanism ancak
+                # 61.1 s'de donecekti; 60 s'lik deneme butcesi 60.5 s'de
+                # _attempt'i tam burada kesti ve _verify_lift HIC CAGRILAMADI.
+                # Uc kosumun ucunde de ayni yerde kesildi.
+                #
+                # Ilke Gorev K'da onaylanmisti: butce BASARISIZ bir denemeyi
+                # keser, BASARILMIS birini atmaz. Kilit onaylandiktan
+                # sonrasi muhasebedir. Bu uyku, o ilkenin aktuator icinde
+                # kalan son parcasiydi.
+                logger.info("[HOOK] kilit sonrasi %.1f s sonumleme ATLANDI "
+                            "(cagiran taraf butce disinda yapiyor).",
+                            HOOK_SETTLE_S)
             return True
 
         self._seat_state = SeatState.APPROACHING

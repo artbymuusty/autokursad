@@ -412,7 +412,9 @@ def test_yakalama_penceresi_vinci_TEKRAR_SALMIYOR():
     olculdu 9.4 -> 15.4 -> 18.8 -> 21.4 -> 21.7 derece; bes ornegin BESI de
     yalnizca egim kapisindan dondu (yanal ve eksenel 0 red).
     Temas hic olusmazsa kaldirac da olusmaz."""
-    assert "extend_winch=False)" in SRC, \
+    # Cagriya settle_after_lock eklendigi icin artik ")" hemen ardindan
+    # gelmiyor; parametrenin KENDISI aranmali.
+    assert "extend_winch=False," in SRC or "extend_winch=False)" in SRC, \
         "pencere hala vinci tekrar saliyor"
 
 
@@ -543,8 +545,11 @@ def test_sakul_sabitleri_turetilmis():
     assert HOOK_MOUNT_BODY_X_M == -0.090
     # Tolerans SECILMEDI: kapinin kendi yakalama yaricapi
     assert HOOK_PLUMB_TOLERANCE_M == MAGNET_CAPTURE_RADIUS_M
-    # Tavan, _settle_hook_onto'nun fiilen harcadigi 7.5 s ile ayni mertebede
-    assert 7.0 <= HOOK_PLUMB_SETTLE_MAX_S <= 10.0
+    # Tavan: ILK deger 8.0 idi ve _settle_hook_onto'nun harcadigi 7.5 s'ye
+    # gore secilmisti; olcum onu curuttu (bir denemede doldu, 152.2 mm
+    # sarkma kaldi). Yeni tavan kendi TURETMESINDEN geliyor -- ayrintili
+    # kontrol test_sakul_tavani_kendi_turetmesiyle_TUTARLI'da.
+    assert HOOK_PLUMB_SETTLE_MAX_S >= 11.9
 
 
 def test_align_irtifasinin_KOMUT_oldugu_belgeli():
@@ -565,3 +570,43 @@ def test_settle_docstringi_DINLENIYOR_demiyor():
     doc = inspect.getdoc(g3.Gorev3PickupPhase._settle_hook_onto) or ""
     assert "RESTING hook" not in doc
     assert "HAVADA" in doc
+
+
+# --------------------------------------------------------------------------
+# GOREV O -- kilit sonrasi sonumleme BUTCE DISINDA, sakul tavani turetildi
+# --------------------------------------------------------------------------
+
+def test_kilit_sonrasi_sonumleme_BUTCE_DISINDA():
+    """OLCULDU (demo_20260905_202743/2): kilit 58.1 s'de MEKANIK OLARAK
+    tamamlandi (SERVO3_GRIP_ENGAGED), ama aktuator icindeki 3.0 s'lik
+    HOOK_SETTLE_S uykusu donusu 61.1 s'ye tasiyordu ve 60 s'lik butce
+    _attempt'i tam orada kesiyordu -- _verify_lift UC KOSUMUN UCUNDE DE
+    hic cagrilamadi."""
+    assert "settle_after_lock=False)" in SRC, \
+        "aktuator hala butce ICINDE sonumluyor"
+    i = SRC.index("async def _verify_lift")
+    blok = SRC[i:i + 1200]
+    assert "asyncio.sleep(_SETTLE_S)" in blok, \
+        "sonumleme butce disina TASINMADI"
+
+
+def test_aktuator_sonumlemeyi_atlayabiliyor_varsayilan_ESKI():
+    import inspect as _i
+    from gz_system.gz_payload_actuator import GzPayloadActuator
+    sig = _i.signature(GzPayloadActuator.activate_pickup_mechanism)
+    assert "settle_after_lock" in sig.parameters
+    assert sig.parameters["settle_after_lock"].default is True, \
+        "varsayilan eski davranis olmali -- baska cagiranlar bozulmasin"
+
+
+def test_sakul_tavani_kendi_turetmesiyle_TUTARLI():
+    """Ilk tavan (8.0 s) kendi gerekcesinin ALTINDAYDI: zeta ~0.03 ve
+    periyot 1.078 s ile 142 mm -> 17.5 mm icin
+        ln(142/17.5) / (0.03 * 5.83) ~= 11.9 s
+    gerekiyor. Olculdu: 8 s tavani bir denemede doldu ve 152.2 mm sarkma
+    kaldi; egim 37.6 dereceye cikti."""
+    import math
+    gereken = math.log(142.0 / 17.5) / (0.03 * (2 * math.pi / 1.078))
+    assert HOOK_PLUMB_SETTLE_MAX_S >= gereken, (
+        f"tavan {HOOK_PLUMB_SETTLE_MAX_S} s, kendi turetmesinin "
+        f"({gereken:.1f} s) altinda")

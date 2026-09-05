@@ -41,7 +41,8 @@ class _PickupTriggeringActuator(MockPayloadActuator):
     async def activate_pickup_mechanism(self, altitude_m=None,
                                         deck_height_m=None, on_retry=None,
                                         on_attract=None,
-                                        extend_winch: bool = True) -> bool:
+                                        extend_winch: bool = True,
+                                        settle_after_lock: bool = True) -> bool:
         result = await super().activate_pickup_mechanism()
         self._detector.picked_up = True  # THIRD MISSION SERVO succeeded -- shape leaves the ground
         return result

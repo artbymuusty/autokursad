@@ -22,7 +22,8 @@ class IPayloadActuator(ABC):
     async def activate_pickup_mechanism(self, altitude_m=None,
                                         deck_height_m=None, on_retry=None,
                                         on_attract=None,
-                                        extend_winch: bool = True) -> bool:
+                                        extend_winch: bool = True,
+                                        settle_after_lock: bool = True) -> bool:
         """Yuku kancayla al.
 
         on_attract (GOREV K / D, 2026-09-04): MIKNATIS CEKIMI geri cagrisi.
