@@ -21,9 +21,12 @@ from core.mission.gorev3_pickup import (
     HOOK_VISUAL_ALIGN_ALTITUDE_M,
 )
 from core.mission.hook_seating import (
+    MAGNET_ATTRACT_RANGE_M,
+    MAGNET_CAPTURE_RADIUS_M,
     MAGNET_MAX_GAP_M,
     SeatingGeometry,
 )
+from core.mission.gorev3_pickup import ADAPTIVE_DESCENT_MAGNET_GAP_M
 
 
 class _Flight:
@@ -73,6 +76,17 @@ class _Actuator:
         return ((0.0, 0.0, self.nose_z + 0.06465), (0.0, 0.0, 0.0, 1.0), 0.0)
 
 
+def _inisler(flight, start_alt):
+    """Yalnizca GERCEKTEN alcaltan komutlar (miknatis bandi tutusu ayni
+    irtifayi komut eder, o bir inis adimi degildir)."""
+    out, prev = [], start_alt
+    for c in flight.commands:
+        if c["alt"] < prev - 1e-9:
+            out.append(prev - c["alt"])
+        prev = c["alt"]
+    return out
+
+
 def _phase(flight, actuator):
     p = Gorev3PickupPhase.__new__(Gorev3PickupPhase)
     p.flight = flight
@@ -117,10 +131,12 @@ async def test_oransal_adim_kapiya_yakinsar():
     flight, act = _Flight(), _Actuator(gap_m=0.420, nose_z=0.490)
     alt = await _run(_phase(flight, act), flight, act)
     assert flight.commands, "hic adim komut edilmedi"
-    # Ilk adim tam olarak oransal olmali (tavan ve zemin bu senaryoda bagli degil).
+    # Ilk adim tam olarak oransal olmali (tavan, zemin ve bant bu senaryoda
+    # baglayici degil: 0.420*0.7 = 0.294 < 0.30 tavan ve < 0.420-0.04 bant).
     ilk = flight.commands[0]
-    beklenen = HOOK_VISUAL_ALIGN_ALTITUDE_M - min(0.420 * ADAPTIVE_DESCENT_GAIN,
-                                                  ADAPTIVE_DESCENT_MAX_STEP_M)
+    beklenen = (
+        HOOK_VISUAL_ALIGN_ALTITUDE_M - min(0.420 * ADAPTIVE_DESCENT_GAIN,
+                                           ADAPTIVE_DESCENT_MAX_STEP_M))
     assert ilk["alt"] == pytest.approx(beklenen, abs=1e-9)
     # Sonunda eksenel kapi gecilmis olmali.
     assert act.gap_m <= MAGNET_MAX_GAP_M + 1e-9
@@ -132,9 +148,8 @@ async def test_adimlar_kuculerek_gider_asim_yok():
     """Her adim bir oncekinden kucuk olmali; kazanc<1'in tum amaci bu."""
     flight, act = _Flight(), _Actuator(gap_m=0.420, nose_z=0.490)
     await _run(_phase(flight, act), flight, act)
-    alts = [HOOK_VISUAL_ALIGN_ALTITUDE_M] + [c["alt"] for c in flight.commands]
-    adimlar = [alts[i] - alts[i + 1] for i in range(len(alts) - 1)]
-    assert all(a > 0 for a in adimlar), f"asagi olmayan adim var: {adimlar}"
+    adimlar = _inisler(flight, HOOK_VISUAL_ALIGN_ALTITUDE_M)
+    assert adimlar, "hic inis adimi yok"
     assert adimlar == sorted(adimlar, reverse=True), f"adimlar kuculmuyor: {adimlar}"
     # Burun HICBIR ZAMAN zeminin altina inmemeli.
     assert act.nose_z >= ADAPTIVE_DESCENT_NOSE_FLOOR_M - 1e-9
@@ -169,15 +184,32 @@ async def test_poz_okunamazsa_kor_alcalma_yok():
 
 
 @pytest.mark.asyncio
-async def test_kapinin_toleransindan_kucuk_adim_komut_edilmez():
-    """Adim MAGNET_MAX_GAP_M'in altina duserse durulur: daha kucuk bir
-    hareket kapinin hukmunu degistiremez, yalnizca butce harcar."""
-    # bosluk * 0.7 < 5 mm  =>  bosluk < 7.14 mm; ama kapi 5 mm'de zaten
-    # gecildigi icin araligi 5-7.1 mm'ye kuruyoruz.
-    flight, act = _Flight(), _Actuator(gap_m=0.006, nose_z=0.076)
-    assert 0.006 * ADAPTIVE_DESCENT_GAIN < ADAPTIVE_DESCENT_MIN_STEP_M
+async def test_kapiya_YETEN_kucuk_adim_atilir():
+    """Oransal adim 5 mm esiginin altinda olsa bile, o adim boslugu kapinin
+    ICINE sokuyorsa ATILIR.
+
+    Bu, r2/A kosumunda OLCULEN bir kusurun testi: bosluk 6.8 mm iken oransal
+    adim 4.76 mm cikmis, kosulsuz min-adim kurali inisi kesmis ve kapi
+    ins = -6.8 mm ile 1.8 mm FARKLA kacirilmisti. 6.8 - 4.76 = 2.0 mm, yani
+    o adim kapiyi (5.0 mm) TAM DA aciyordu."""
+    flight, act = _Flight(), _Actuator(gap_m=0.0068, nose_z=0.0768)
+    assert 0.0068 * ADAPTIVE_DESCENT_GAIN < ADAPTIVE_DESCENT_MIN_STEP_M
     await _run(_phase(flight, act), flight, act)
-    assert flight.commands == []
+    assert _inisler(flight, HOOK_VISUAL_ALIGN_ALTITUDE_M), "kapiya yeten adim atilmadi"
+    assert act.gap_m <= MAGNET_MAX_GAP_M + 1e-9, \
+        f"inis bitti ama kapi hala acik: {act.gap_m * 1000:.1f} mm"
+
+
+@pytest.mark.asyncio
+async def test_kapiya_YETMEYEN_kucuk_adim_atilmaz():
+    """Zemin payi adimi kapiya yetmeyecek kadar kirpiyorsa durulur --
+    yoksa burun bosuna zemine surulur."""
+    # Bosluk 100 mm ama zemin payi yalnizca 2 mm: 2 mm'lik adim sonrasi
+    # 98 mm bosluk kalir, kapi acilmaz.
+    flight, act = _Flight(), _Actuator(gap_m=0.100, nose_z=0.002,
+                                       lateral_m=0.064)
+    await _run(_phase(flight, act), flight, act)
+    assert act.nose_z >= ADAPTIVE_DESCENT_NOSE_FLOOR_M - 1e-9
 
 
 @pytest.mark.asyncio
@@ -244,3 +276,43 @@ def test_tek_atis_inis_KALDIRILDI():
     """Eski sabit hedefli inis geri gelmemeli."""
     assert "-GOREV3_DESCENT_ALTITUDE_M, aligned_yaw, 6.0" not in SRC
     assert "await self._adaptive_descend(" in SRC
+
+
+# --------------------------------------------------------------------------
+# 3-5 cm MIKNATIS BANDI (operator karari 2026-09-05)
+# --------------------------------------------------------------------------
+
+@pytest.mark.asyncio
+async def test_miknatis_bandinda_DURULUYOR_ve_alcalmiyor():
+    """Bosluk cekim menziline (5 cm) girdiginde inis DURUR ve arac ayni
+    irtifayi tutar: kanca orada SERBEST ASILI ve miknatis yanal hatayi
+    ancak o rejimde kapatabiliyor. Bant sirasinda ALCALMA KOMUTU OLMAMALI."""
+    # Yanal buyuk baslasin ki bant beklemesi erken cikmasin.
+    flight, act = _Flight(), _Actuator(gap_m=0.045, nose_z=0.115,
+                                       lateral_m=0.040)
+    await _run(_phase(flight, act), flight, act)
+    # Bant tutusu ayni irtifayi komut eder -> gercek bir inis adimi yok
+    # (bandan sonra kapiyi kapatmak icin inilebilir, ama ilk komut TUTUS).
+    assert flight.commands, "bant tutusu hic komut etmedi"
+    assert flight.commands[0]["alt"] == pytest.approx(HOOK_VISUAL_ALIGN_ALTITUDE_M), \
+        "bant tutusu ayni irtifada olmali"
+
+
+@pytest.mark.asyncio
+async def test_bandin_ALTINA_dusulmuyor():
+    """Bant henuz kullanilmamisken adim, boslugu bandin altina indirecek
+    kadar buyuk olamaz -- yoksa miknatisin serbest-asili rejimde calisma
+    firsati atlanir ve kanca dogrudan guverteye dayanir (surtunme rejimi,
+    olculdu: 7 adimda 33.8 -> 33.4 mm)."""
+    flight, act = _Flight(), _Actuator(gap_m=0.300, nose_z=0.370,
+                                       lateral_m=0.040)
+    await _run(_phase(flight, act), flight, act)
+    ilk = HOOK_VISUAL_ALIGN_ALTITUDE_M - flight.commands[0]["alt"]
+    # 0.300*0.7 = 0.210 ama bant kirpmasi 0.300-0.040 = 0.260; kucuk olan 0.210.
+    assert ilk == pytest.approx(min(0.300 * ADAPTIVE_DESCENT_GAIN,
+                                    0.300 - ADAPTIVE_DESCENT_MAGNET_GAP_M), abs=1e-9)
+
+
+def test_bant_hedefi_operatorun_3_5_cm_bandinda():
+    assert 0.03 <= ADAPTIVE_DESCENT_MAGNET_GAP_M <= 0.05
+    assert ADAPTIVE_DESCENT_MAGNET_GAP_M < MAGNET_ATTRACT_RANGE_M

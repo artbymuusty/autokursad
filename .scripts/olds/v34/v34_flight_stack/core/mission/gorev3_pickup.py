@@ -14,14 +14,14 @@ from gz_system.gz_payload_actuator import HOOK_WINCH_EXTEND_M
 from core.mission.visual_alignment import VisualHookAligner
 from core.mission.hook_seating import (
     HOOK_NOSE_OFFSET_M,
+    MAGNET_ATTRACT_RANGE_M,
+    MAGNET_CAPTURE_RADIUS_M,
     MAGNET_MAX_GAP_M,
     SEAT_MAX_REL_SPEED_MPS,
     _rotate as _quat_rotate,
 )
 from core.config.parameters import (
     HSV_MIN_AREA_RECT_BASE,
-    GOREV3_MAGNET_ATTRACT_GAIN,
-    GOREV3_MAGNET_ATTRACT_MAX_STEP_M,
     GOREV3_APPROACH_ALTITUDE_M,
     GOREV3_PICKUP_ATTEMPT_TIMEOUT_S,
     GOREV3_PICKUP_MAX_ATTEMPTS,
@@ -241,14 +241,16 @@ ADAPTIVE_DESCENT_MIN_STEP_M = MAGNET_MAX_GAP_M
 #  geometri okumasina karsi akil sagligi kapisi ve mevcut tek atis inisin
 #  (0.60 m) yarisi.
 ADAPTIVE_DESCENT_MAX_STEP_M = 0.30
-#: Adim tavani. Kazanc 0.7 ile olculen en kotu boslugu 4 adimda kapatiyor;
-#  6 pay birakir. Asil sinir zaman butcesi.
-ADAPTIVE_DESCENT_MAX_STEPS = 6
+#: Adim tavani. Kazanc 0.7 ile olculen en kotu boslugu 4 adimda kapatiyor.
+#  6 -> 8: canli kosumda en kotu baslangic boslugu 800 mm cikti ve tam 6
+#  adim gerekti (2026-09-05 r1); miknatis bandi beklemesi de bir yineleme
+#  harcadigi icin 6 tavani yetmiyordu. Asil sinir zaman butcesi.
+ADAPTIVE_DESCENT_MAX_STEPS = 8
 #: SERT ZAMAN BUTCESI. Olculen adim maliyeti (4 adim): hold
 #  2.94+0.9+1.0+1.0 = 5.8 s + sonumleme 4 x 1.2 = 4.8 s ~= 10.6 s.
 #  14 s bunu pay ile kapsar. Bu +6 s'lik artis icin yer B1 ile acildi
 #  (reacquire 3->1, son duzeltme 6->3).
-ADAPTIVE_DESCENT_BUDGET_S = 14.0
+ADAPTIVE_DESCENT_BUDGET_S = 17.0   # 14.0 + 3.0 s miknatis bandi beklemesi
 #: Her adimdan sonra kancanin sonumlenmesi icin TAVAN (erken cikilir).
 #  Olculen sarkac periyodu GOREV J / 31 cm: 1.078 s; 1.2 s ~= 1.1 periyot.
 #  _settle_hook_onto'nun 2.5 s'inden kisa, cunku oradaki uyarim YATAY
@@ -262,6 +264,28 @@ ADAPTIVE_DESCENT_MIN_HOLD_S = 1.0
 #  eksenel bosluk hic kapanmaz ve tek koruma budur. Adim, burun bu sinirin
 #  ALTINA inecek sekilde HIC komut edilmez -- yani asim payi gerekmez.
 ADAPTIVE_DESCENT_NOSE_FLOOR_M = 0.0
+
+#: MIKNATIS BANDI (operator karari 2026-09-05): "yukun ortasindaki delige
+#  3-5 cm yukari alaninda" cekim calismali. Inis bu banda gelince DURUR ve
+#  miknatisin yanal hatayi kapatmasi BEKLENIR; sonra inise devam edilir.
+#
+#  NEDEN BURADA DURMAK ISE YARIYOR: bu irtifada kanca SERBEST ASILI.
+#  Guverteye dayanmis bir kancayi yana kaydirmak ~0.196 N statik surtunme
+#  yenmek demek; serbest asili kancayi 35 mm yana getiren sarkac kuvveti ise
+#  yalnizca m*g*x/L = 0.196 * 0.035 / 0.53 = 0.013 N. Yani miknatis serbest
+#  rejimde 15 kat daha kolay is yapiyor. Guvertede iken yapamadigi olculdu
+#  (7 adimda 33.8 -> 33.4 mm).
+#
+#  DIKKAT -- MIKNATIS EKSENEL BOSLUGU KAPATAMAZ: kanca gergin bir kordonun
+#  ucunda; asagi cekmek yalnizca kordonu gerer. Bandin isi YANAL hatayi
+#  kapatmak; eksenel bosluk yine ARACIN inisiyle kapanir. Isbolumu budur.
+ADAPTIVE_DESCENT_MAGNET_GAP_M = 0.04      # 3-5 cm bandinin ortasi
+#: Bantta ne kadar beklenecek. TURETME: menzil kenarinda kuvvet 0.044 N,
+#  sonumleme 2.0 N*s/m, yani sinir yaklasma hizi v = F/c = 0.022 m/s.
+#  Olculen en kotu yanal artik (_settle_hook_onto sonrasi 53 mm) bu hizla
+#  2.4 s'de kapanir. 3.0 s bunu pay ile kapsar ve 14 s'lik inis butcesine
+#  sigar.
+ADAPTIVE_DESCENT_MAGNET_HOLD_S = 3.0
 # Alma dogrulamasi: yuk en az bu kadar yukselmis olmali.
 # Tirmanis adimlari 1/2/3 m oldugu icin bu esik cok gevsek
 # secildi -- amac 'gercekten kalkti mi', 'ne kadar' degil.
@@ -598,6 +622,69 @@ class Gorev3PickupPhase:
         except Exception:  # noqa: BLE001
             return None
 
+    async def _magnet_band_hold(self, n_ned: float, e_ned: float,
+                                yaw_deg: float, alt_m: float, gap_m: float):
+        """3-5 cm MIKNATIS BANDINDA bekle: yanal hatayi FIZIK kapatsin.
+
+        Burada arac hicbir sey yapmaz -- yerinde durur. Kancayi ceken sey
+        MagnetForceSystem'in hook_body_link'e uyguladigi gercek kuvvettir.
+        Gorev katmani araci OYNATMAZ; iki ayri sey ayni kancayi cekerse
+        hangisinin ne yaptigi olculemez (eski taklit tam olarak buydu ve
+        7 adimda 33.8 -> 33.4 mm ile curutuldu).
+
+        Erken cikis: yanal, yakalama yaricapinin icine girdiginde beklemenin
+        surdurulmesi yalnizca butce harcar.
+        """
+        g0 = self._seating_geometry()
+        lat0 = g0.lateral_m if g0 is not None else None
+        logger.info("[MIKNATIS_BANDI] %.1f mm eksenel boslukta duruluyor "
+                    "(%.0f-%.0f mm bandi) -- yanal %s, fizik cekiyor, en fazla "
+                    "%.1f s.", gap_m * 1000,
+                    MAGNET_ATTRACT_RANGE_M * 1000 * 0.6, MAGNET_ATTRACT_RANGE_M * 1000,
+                    f"{lat0 * 1000:.1f} mm" if lat0 is not None else "olculemedi",
+                    ADAPTIVE_DESCENT_MAGNET_HOLD_S)
+        self._publish("GOREV3_MAGNET_BAND_HOLD_START", f"{gap_m * 1000:.1f} mm",
+                      data={"gap_mm": round(gap_m * 1000, 1),
+                            "lateral_mm": (round(lat0 * 1000, 1)
+                                           if lat0 is not None else None),
+                            "hold_s": ADAPTIVE_DESCENT_MAGNET_HOLD_S})
+        hold = asyncio.create_task(self.flight.goto_position_ned_and_hold(
+            n_ned, e_ned, -alt_m, yaw_deg, ADAPTIVE_DESCENT_MAGNET_HOLD_S))
+        waited = 0.0
+        lat = lat0
+        try:
+            while waited < ADAPTIVE_DESCENT_MAGNET_HOLD_S:
+                await asyncio.sleep(0.25)
+                waited += 0.25
+                g = self._seating_geometry()
+                if g is None:
+                    continue
+                lat = g.lateral_m
+                if lat <= MAGNET_CAPTURE_RADIUS_M:
+                    logger.info("[MIKNATIS_BANDI] yanal %.1f mm -- yakalama "
+                                "yaricapinin (%.1f mm) icine girdi, %.2f s'de.",
+                                lat * 1000, MAGNET_CAPTURE_RADIUS_M * 1000, waited)
+                    break
+        finally:
+            await hold
+        delta = ((lat0 - lat) * 1000) if (lat0 is not None and lat is not None) else None
+        logger.info("[MIKNATIS_BANDI] BITTI: yanal %s -> %s (%s), %.2f s",
+                    f"{lat0 * 1000:.1f} mm" if lat0 is not None else "yok",
+                    f"{lat * 1000:.1f} mm" if lat is not None else "yok",
+                    f"{delta:+.1f} mm kazanc" if delta is not None else "olculemedi",
+                    waited)
+        self._publish("GOREV3_MAGNET_BAND_HOLD_RESULT",
+                      f"{delta:+.1f} mm" if delta is not None else "olculemedi",
+                      data={"lateral_before_mm": (round(lat0 * 1000, 1)
+                                                  if lat0 is not None else None),
+                            "lateral_after_mm": (round(lat * 1000, 1)
+                                                 if lat is not None else None),
+                            "gain_mm": (round(delta, 1) if delta is not None else None),
+                            "waited_s": round(waited, 2),
+                            "inside_capture_radius": bool(
+                                lat is not None and lat <= MAGNET_CAPTURE_RADIUS_M)})
+        return waited
+
     async def _adaptive_descend(self, n_ned: float, e_ned: float,
                                 yaw_deg: float, start_alt_m: float):
         """KADEMELI al: sabit hedef irtifa yok, EKSENEL BOSLUK kapatilir.
@@ -625,6 +712,7 @@ class Gorev3PickupPhase:
         t0 = time.monotonic()
         reason = "adim_tavani"
         steps = []
+        magnet_hold_done = False
         for step in range(1, ADAPTIVE_DESCENT_MAX_STEPS + 1):
             geom = self._seating_geometry()
             if geom is None:
@@ -641,6 +729,19 @@ class Gorev3PickupPhase:
                             "(irtifa %.3f m).", step, gap_m * 1000,
                             MAGNET_MAX_GAP_M * 1000, alt)
                 break
+
+            # ---- 3-5 cm MIKNATIS BANDI (operator karari 2026-09-05) ----
+            # Kanca burada SERBEST ASILI ve miknatis yanal hatayi ancak bu
+            # rejimde kapatabiliyor. Bant gecildikten sonra kanca guverteye
+            # dayanir ve ayni kuvvet statik surtunmeye carpar.
+            if not magnet_hold_done and gap_m <= MAGNET_ATTRACT_RANGE_M:
+                magnet_hold_done = True
+                spent_band = await self._magnet_band_hold(
+                    n_ned, e_ned, yaw_deg, alt, gap_m)
+                steps.append({"step": step, "gap_mm": round(gap_m * 1000, 1),
+                              "action": "miknatis_bandi",
+                              "waited_s": round(spent_band, 2)})
+                continue
 
             nose_z = self._hook_nose_z_m()
             if nose_z is None:
@@ -659,12 +760,28 @@ class Gorev3PickupPhase:
             step_m = min(gap_m * ADAPTIVE_DESCENT_GAIN,
                          ADAPTIVE_DESCENT_MAX_STEP_M,
                          room_m)
+            # Banda TAM inmek icin kirp: bandin ALTINA dusmek, miknatisin
+            # serbest-asili rejimde calisma firsatini atlamak demek.
+            if not magnet_hold_done:
+                step_m = min(step_m, gap_m - ADAPTIVE_DESCENT_MAGNET_GAP_M)
             if step_m < ADAPTIVE_DESCENT_MIN_STEP_M:
-                reason = "adim_cok_kucuk"
-                logger.info("[ADAPTIF_INIS] %d: adim %.1f mm < %.1f mm -- daha "
-                            "kucugu kapinin hukmunu degistiremez, duruluyor.",
-                            step, step_m * 1000, ADAPTIVE_DESCENT_MIN_STEP_M * 1000)
-                break
+                # DUZELTME (r2/A kosumunda olculdu, 2026-09-05): burada
+                # KOSULSUZ durulunca bosluk 6.8 mm iken oransal adim 4.76 mm
+                # cikti, esik 5.0 mm oldugu icin inis kesildi ve kapi
+                # ins = -6.8 mm ile 1.8 mm FARKLA kacirildi.
+                #
+                # Esigin gerekcesi "kapinin hukmunu degistiremeyecek kadar
+                # kucuk adim atma"ydi; oysa o adim hukmu TAM DA DEGISTIRIYORDU
+                # (6.8 - 4.76 = 2.0 mm, kapinin 5.0 mm'lik icinde). Dogru kural
+                # adimin BUYUKLUGU degil, KAPIYA YETIP YETMEDIGI.
+                if (gap_m - step_m) > MAGNET_MAX_GAP_M:
+                    reason = "adim_cok_kucuk"
+                    logger.info("[ADAPTIF_INIS] %d: adim %.1f mm ve sonrasinda "
+                                "bosluk %.1f mm kalir (kapi %.1f mm) -- bu adim "
+                                "kapiyi acamaz, duruluyor.",
+                                step, step_m * 1000, (gap_m - step_m) * 1000,
+                                MAGNET_MAX_GAP_M * 1000)
+                    break
 
             hold_s = max(ADAPTIVE_DESCENT_MIN_HOLD_S,
                          step_m / ADAPTIVE_DESCENT_RATE_MPS)
@@ -1416,13 +1533,10 @@ class Gorev3PickupPhase:
             # ayni anda setpoint yayinlarsa PX4 celiskili hedefler alir.
             _hold_ref = {}
 
-            # Cekim adimlarinin uzerine bindigi taban tutma noktasi
-            # (_start_hold her guncelledigi icin burada tanimlanir).
-            _attract = {"n": None, "e": None, "steps": 0}
+            # Yalnizca "kac kez menzilde goruldu" sayaci (salt kayit).
+            _attract = {"steps": 0}
 
             def _start_hold(n_, e_):
-                # GOREV K / D: cekim adimlari bu hedefin uzerine biner.
-                _attract["n"], _attract["e"] = n_, e_
                 _hold_ref["t"] = asyncio.create_task(self.flight.goto_position_ned_and_hold(
                     n_, e_, -pickup_alt, aligned_yaw, PICKUP_HOLD_S))
 
@@ -1436,40 +1550,34 @@ class Gorev3PickupPhase:
                 except (asyncio.CancelledError, Exception):  # noqa: BLE001
                     pass
 
-            # GOREV K / D: MIKNATIS CEKIMI (operator karari "secenek 2").
-            # Aktuator, miknatis yuvanin agzina 5 cm'den yakin oldugunda ve
-            # kilitlenme kapilari HENUZ acilmamisken burayi periyodik cagirir.
-            # Yapilan sey: tutma hedefini kancayi agiza getirecek yone,
-            # sinirli bir adimla kaydirmak. Kapilar gevsetilmiyor.
+            # GOREV K / D: MIKNATIS ARTIK GERCEK -- BU GERI CAGRI SALT KAYIT.
+            #
+            # ONCEKI HALI TAKLITTI ve OLCULEREK CURUTULDU. Menzile girince
+            # ARACIN tutma hedefi kancayi agiza getirecek yone kaydiriliyordu.
+            # 2026-09-05 kosumu, yedi ardisik adim:
+            #     adim 1: d=33.8 mm -> hedef (+58.946, -7.657)
+            #     adim 2: d=33.8 mm -> hedef (+58.931, -7.670)
+            #     ...
+            #     adim 7: d=33.4 mm
+            # Yedi adimda 33.8 -> 33.4 mm. Sebep yapisal: kanca guvertede
+            # DURUYOR; araci kaydirmak onu suruklemiyor, yalnizca ipi egiyor.
+            # P3'un A/B'si de ayni sonucu vermisti (yanal medyan 59.9 -> 60.3 mm).
+            #
+            # ARTIK: cekimi fizik cozucusu yapiyor -- MagnetForceSystem
+            # hook_body_link'e gercek kuvvet uyguluyor (src/modules/simulation/
+            # gz_plugins/hook_attach/HookAttachSystem.cc). Gorev katmani
+            # KUVVETE KARISMAZ; aracin tutma hedefi sabit kalir, cunku iki
+            # ayri sey ayni kancayi cekerse hangisinin ne yaptigi olculemez.
             async def _on_attract(d_n: float, d_e: float, dist_m: float):
-                base_n = _attract["n"]
-                base_e = _attract["e"]
-                if base_n is None or base_e is None:
-                    return
-                step_n = d_n * GOREV3_MAGNET_ATTRACT_GAIN
-                step_e = d_e * GOREV3_MAGNET_ATTRACT_GAIN
-                mag = math.hypot(step_n, step_e)
-                if mag > GOREV3_MAGNET_ATTRACT_MAX_STEP_M and mag > 0:
-                    olcek = GOREV3_MAGNET_ATTRACT_MAX_STEP_M / mag
-                    step_n *= olcek
-                    step_e *= olcek
-                yeni_n = base_n + step_n
-                yeni_e = base_e + step_e
-                _attract["n"], _attract["e"] = yeni_n, yeni_e
                 _attract["steps"] += 1
-                await _stop_hold()
-                _start_hold(yeni_n, yeni_e)
-                logger.info("[MIKNATIS] cekim adimi %d: d=%.1f mm -> hedef "
-                            "(%+.3f, %+.3f) m, adim (%+.1f, %+.1f) mm",
-                            _attract["steps"], dist_m * 1000.0, yeni_n, yeni_e,
-                            step_n * 1000.0, step_e * 1000.0)
-                self._publish("MAGNET_ATTRACTION_STEP",
+                logger.info("[MIKNATIS] menzilde: d=%.1f mm (cekimi FIZIK "
+                            "uyguluyor, gorev katmani araci OYNATMIYOR)",
+                            dist_m * 1000.0)
+                self._publish("MAGNET_ATTRACTION_ACTIVE",
                               f"{dist_m * 1000.0:.1f} mm",
-                              data={"step": _attract["steps"],
+                              data={"sample": _attract["steps"],
                                     "distance_mm": round(dist_m * 1000.0, 1),
-                                    "step_n_mm": round(step_n * 1000.0, 1),
-                                    "step_e_mm": round(step_e * 1000.0, 1),
-                                    "hold_ned": [round(yeni_n, 4), round(yeni_e, 4)]})
+                                    "applied_by": "MagnetForceSystem"})
 
             async def _on_retry(attempt: int):
                 """Vinc cekili (kanca havada) -- duzeltmeyi yeniden kos."""

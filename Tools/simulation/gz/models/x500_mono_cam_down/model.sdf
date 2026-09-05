@@ -812,6 +812,39 @@
   <output_topic>/hook/state</output_topic>
 </plugin>
 
+<!--
+  MANYETIK CEKIM (GOREV K / D, 2026-09-05).
+
+  Bu satirlardan ONCE, bu dosyanin hook_magnet_visual notu "SADECE GORSEL:
+  manyetik cekim simule EDILMIYOR" diyordu ve bu DOGRUYDU. Gorev katmani
+  bosluga bir taklit koymustu: menzile girince ARACIN tutma hedefi kaydiriliyordu.
+  OLCULDU VE CALISMIYOR (2026-09-05, yedi ardisik adim): d = 33.8 -> 33.4 mm.
+  Sebep yapisal -- kanca guvertede duruyor, araci kaydirmak onu suruklemiyor,
+  yalnizca ipi egiyor. Daha onceki A/B'de (P3) taklit hicbir kazanc uretmedi
+  (yanal medyan 59.9 -> 60.3 mm).
+
+  Artik gercek: MagnetForceSystem hook_body_link'e KUVVET uygular, tepkisini
+  de yuke verir. Menzil, kuvvet yasasi ve sonumlemenin turetmesi eklentinin
+  kendi basligindadir (HookAttachSystem.cc). Eklentinin AYNI kutuphanede
+  olmasinin sebebi de orada yazili (CMake yeniden yapilandirmasindan kacinma).
+
+  hook_magnet_z, yukaridaki hook_magnet_visual'in pozuyla AYNI SAYI olmalidir
+  (-0.06565); ikisi ayrisirsa gorulen miknatis ile ceken miknatis farkli
+  yerlerde olur.
+-->
+<plugin filename="libHookAttachSystem.so" name="hook_attach::MagnetForceSystem">
+  <hook_link>hook_body_link</hook_link>
+  <hook_magnet_z>-0.06565</hook_magnet_z>
+  <payload_prefix>payload_</payload_prefix>
+  <payload_link>link</payload_link>
+  <payload_magnet_z>0.008</payload_magnet_z>
+  <range>0.05</range>
+  <max_force>0.40</max_force>
+  <falloff>0.025</falloff>
+  <damping>2.0</damping>
+  <state_topic>/hook/magnet/state</state_topic>
+</plugin>
+
 
     <include merge='true'>
       <uri>model://mono_cam</uri>
