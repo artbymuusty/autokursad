@@ -32,6 +32,10 @@ from gz_system.gz_pose_monitor import GzPoseMonitor
 from gz_system.gz_payload_actuator import (
     GzPayloadActuator, PAYLOAD_MODEL, VEHICLE_MODEL_NAME, HOOK_WINCH_RETRACT_M,
 )
+from core.mission.gorev3_pickup import (
+    HOOK_ALIGN_MAX_CORRECTIONS, HOOK_SETTLE_GAIN, HOOK_SETTLE_WAIT_S,
+    HOOK_PAYOUT_SETTLE_S,
+)
 from core.config.parameters import (
     GOREV3_MAGNET_ATTRACT_GAIN, GOREV3_MAGNET_ATTRACT_MAX_STEP_M,
     GOREV3_DESCENT_ALTITUDE_M,
@@ -43,6 +47,48 @@ YAW = 0.0
 
 def log(msg):
     print(f"[PROBE {time.strftime('%H:%M:%S')}] {msg}", flush=True)
+
+
+# ==========================================================================
+# K1 -- YUKU DETERMINISTIK VE DIK YERLESTIR (dusurme YOK)
+# ==========================================================================
+# v1 yuku 0.55 m'den birakiyordu ve durusu dogrulamiyordu. Olculdu
+# (docs/gorevK-D-probe-sonuc.md): payload_blue YAN YATTI -- yerel +Z ekseni
+# dunyada (+0.995, +0.103, 0.000), yani dikeyden 90.0 derece. Yuva agzi
+# yatay olunca oturma geometrisi tilt 179.6 deg okudu (kapi 8 deg) ve
+# olcum daha baslamadan gecersizlesti.
+#
+# NOT: bu bir GOREV kusuru DEGIL. 202 gercek birakmanin egimi tarandi:
+# ortanca 0.2 deg, max 6.7 deg, 15 derecenin ustunde 0/202. Gorevdeki
+# birakma koreografisi (RELEASE_HOLD + aim-offset) yuku duz birakiyor;
+# dusuren ve dogrulamayan sey probe'du.
+#
+# Cozum: dusurmek yerine Gazebo'ya DOGRUDAN poz yaziyoruz
+# (/world/<w>/set_pose, gz.msgs.Pose). Boylece K3 de kendiliginden
+# kapaniyor -- taklit edilecek bir birakma koreografisi kalmiyor.
+async def yuku_yerlestir(dunya, model, x, y, z=0.026):
+    """Yuku verilen noktaya DIK olarak koy. Kuaterniyon birim = duz."""
+    istek = (f'name: "{model}" '
+             f'position {{ x: {x} y: {y} z: {z} }} '
+             f'orientation {{ x: 0 y: 0 z: 0 w: 1 }}')
+    pr = await asyncio.create_subprocess_exec(
+        "gz", "service", "-s", f"/world/{dunya}/set_pose",
+        "--reqtype", "gz.msgs.Pose", "--reptype", "gz.msgs.Boolean",
+        "--timeout", "3000", "--req", istek,
+        stdout=asyncio.subprocess.PIPE, stderr=asyncio.subprocess.DEVNULL)
+    out, _ = await pr.communicate()
+    return b"true" in (out or b"").lower()
+
+
+async def durusu_dogrula(monitor, model, tol_deg=5.0):
+    """Yerlestirmeden sonra GERCEKTEN dik mi -- varsayma, olc."""
+    q = monitor._quats.get(model)
+    if q is None:
+        return None
+    x, y, z, w = q
+    zz = 1 - 2 * (x * x + y * y)
+    egim = math.degrees(math.acos(max(-1.0, min(1.0, zz))))
+    return egim if egim <= tol_deg else egim
 
 
 class Tutucu:
@@ -93,22 +139,100 @@ async def pencere(actuator, drone, tutucu, monitor, lateral_m, cekim: bool,
     if yuk is None or arac is None:
         log("HATA: yuk/arac pozu okunamadi")
         return None
-    off = actuator.hook_nose_ned_offset_m() or (0.0, 0.0)
+    # ======================================================================
+    # K2 -- KONUMLANDIRMA KAPALI CEVRIM
+    # ======================================================================
+    # v1 tek atislik bir NED hedefi hesapliyordu:
+    #     hedef = EKF_NED + (Gazebo dunya deltasi) - kanca_ofseti + lateral
+    # Iki hatasi vardi:
+    #  1) EKF NED'i ile Gazebo dunya deltasini karistiriyordu. O5'te
+    #     olculdu: EKF <-> gercek farki 0.09-0.29 m ve SABIT DEGIL. Acik
+    #     cevrim bu hatayi oldugu gibi devraliyor.
+    #  2) Kanca ofsetini TEK ORNEKTEN okuyordu; kanca sarkarken o deger
+    #     salinim iceriyor (v1'de iki kol (-0.089,-0.014) ve
+    #     (-0.064,-0.029) okudu, yani 25 mm fark).
+    # Olculen sonuc: istenen 41 mm yerine 192-229 / 96-109 mm.
+    #
+    # Simdi: EKF hic kullanilmiyor. Her adimda kancanin yuvaya gore GERCEK
+    # yanal hatasi Gazebo'dan okunuyor (oturma kapisinin baktigi ayni
+    # kaynak) ve setpoint o hatayi kapatacak sekilde duzeltiliyor. Kapali
+    # cevrim, EKF sapmasini ve sarkac salinimini birlikte yutar.
     pv = await drone.telemetry.position_velocity_ned().__aiter__().__anext__()
-    # dunya ENU: x=Dogu, y=Kuzey
-    d_n = (yuk[1] - arac[1]) - off[0] + lateral_m
-    d_e = (yuk[0] - arac[0]) - off[1]
-    hedef_n = pv.position.north_m + d_n
-    hedef_e = pv.position.east_m + d_e
-    log(f"{'CEKIM' if cekim else 'KONTROL'}: hedef NED ({hedef_n:+.3f}, {hedef_e:+.3f}), "
-        f"kanca ofseti ({off[0]:+.3f}, {off[1]:+.3f}), istenen yanal {lateral_m*1000:.0f} mm")
-
+    hedef_n, hedef_e = pv.position.north_m, pv.position.east_m
     await tutucu.basla(hedef_n, hedef_e, -0.9)
-    await asyncio.sleep(6.0)                      # 0.9 m'de sakinles
+    await asyncio.sleep(5.0)
     tutucu.hedef(hedef_n, hedef_e, -GOREV3_DESCENT_ALTITUDE_M)
-    await asyncio.sleep(6.0)                      # 0.30 m'ye in
+    await asyncio.sleep(5.0)
 
+    # ======================================================================
+    # VINCI ONCE SAL, SONRA HIZALA -- gorevin OLCTUGU sira.
+    # ======================================================================
+    # v2/v3'te hizalama dongusu vinc CEKILIYKEN kosuyordu, yani kanca
+    # serbest sarkiyordu. Olculdu (bu kosum): hizalama sirasinda tilt 78.9
+    # dereceye ciktu ve arac 0.760 m/s ile hareket halindeydi; 200 mm'lik
+    # bir duzeltme sarkaci uyandiriyor, sonraki okuma salinimi olcuyor ve
+    # dongu kendi uyandirdigi salinimi kovaliyordu.
+    #
+    # gorev3_pickup.py bu tuzagi zaten kaydetmis: "Ilk surumde sira tersti:
+    # once hizala, sonra alma mekanizmasini cagir -- ve alma mekanizmasi
+    # ilk isi olarak vinci saliyordu. Yani hizalama kanca HAVADAYKEN
+    # olculuyor, sonra kanca asagi iniyor, o inis sirasinda salliniyor ve
+    # yukun YANINA konuyordu." Cozum orada da ayni: once sal, kanca
+    # guverteye otursun, SONRA hizala -- surtunme sarkaci sonumler.
     await actuator.extend_winch_for(GOREV3_DESCENT_ALTITUDE_M)
+    await asyncio.sleep(HOOK_PAYOUT_SETTLE_S)
+
+    log(f"{'CEKIM' if cekim else 'KONTROL'}: kapali cevrim hizalama basliyor "
+        f"(vinc SALINMIS, istenen yanal {lateral_m*1000:.0f} mm)")
+    son_hata = None
+    for it in range(1, HOOK_ALIGN_MAX_CORRECTIONS + 1):
+        # (d_east, d_north): kanca burnundan yuva eksenine dunya vektoru.
+        # Arac NED'i Gazebo dunyasiyla eksen-hizali (aktuator docstring'i,
+        # ucusta dogrulanmis), yani north += d_north ; east += d_east.
+        off = actuator.hook_to_receiver_offset_world(RENK)
+        if off is None:
+            await asyncio.sleep(0.5)
+            continue
+        hata_n, hata_e = off[1], off[0]
+        # Istenen: kanca yuvanin `lateral_m` KUZEYINDE dursun, yani
+        # kancadan yuvaya vektor (dogu=0, kuzey=-lateral_m) olmali.
+        duz_n = hata_n + lateral_m
+        duz_e = hata_e
+        son_hata = math.hypot(duz_n, duz_e)
+
+        # AKIL SAGLIGI KAPISI: 1 m'den buyuk bir "duzeltme" okuma hatasidir.
+        # v2'de bu yoktu ve tek bir kotu okuma araci 400 km oteye ucurdu
+        # (setpoint +71393, -423256; artik 178 844 893 mm).
+        if son_hata > 1.0:
+            log(f"  it={it}: artik {son_hata*1000:.0f} mm -- OKUMA GECERSIZ, "
+                f"duzeltme UYGULANMIYOR")
+            await asyncio.sleep(HOOK_SETTLE_WAIT_S)
+            continue
+        if son_hata <= 0.004:
+            log(f"  hizalama yakinsadi: it={it} artik={son_hata*1000:.1f} mm")
+            break
+
+        # KAZANC ve BEKLEME GOREVIN OLCTUGU DEGERLER.
+        # v2 kazanc 0.6 + 0.5 s bekleme kullaniyordu: duzeltme uygulanip
+        # aracin VARMASI BEKLENMEDEN yenisi ekleniyordu, yani setpoint
+        # birikiyordu (integrator windup) ve dongu iraksadi.
+        # gorev3_pickup.py bu tuzagi zaten olcmus: "dead-beat tek adimda
+        # asiyor -- 93 -> 131 -> 68 -> 68 -> 48 -> 78 mm, yakinsamiyor",
+        # ve cozumu kazanc 0.5 + her adimdan sonra sarkacin durmasini
+        # beklemek (olculen periyot 1.078 s, HOOK_SETTLE_WAIT_S ~3 periyot).
+        adim_n = duz_n * HOOK_SETTLE_GAIN
+        adim_e = duz_e * HOOK_SETTLE_GAIN
+        hedef_n += adim_n
+        hedef_e += adim_e
+        tutucu.hedef(hedef_n, hedef_e)
+        log(f"  it={it:2d} artik={son_hata*1000:6.1f} mm  adim=({adim_n*1000:+6.1f},"
+            f"{adim_e*1000:+6.1f}) mm")
+        await asyncio.sleep(HOOK_SETTLE_WAIT_S)
+    else:
+        log(f"  UYARI: hizalama yakinsamadi, artik="
+            f"{son_hata*1000 if son_hata is not None else float('nan'):.1f} mm")
+    await asyncio.sleep(2.0)                       # sarkac sonumlensin
+
 
     async def _on_attract(dn, de, dist_m):
         step_n = dn * GOREV3_MAGNET_ATTRACT_GAIN
@@ -152,6 +276,7 @@ async def main() -> int:
     ap.add_argument("--url", default="udp://:14540")
     ap.add_argument("--lateral-mm", type=float, default=41.0)
     ap.add_argument("--timeout", type=float, default=25.0)
+    ap.add_argument("--world", default="default")
     args = ap.parse_args()
 
     monitor = GzPoseMonitor()
@@ -188,13 +313,38 @@ async def main() -> int:
         return 1
     await tutucu.basla(pv.position.north_m, pv.position.east_m, -0.55)
     await asyncio.sleep(8.0)
-    log("0.55 m'de -- yuk birakiliyor")
+    # Birakma HALA GEREKLI: yuk dunyaya DetachableJoint ile bagli ve
+    # ayrilmadan set_pose ile tasinamaz. Ama NEREYE dustugu artik
+    # ONEMSIZ -- asagidaki K1 yerlestirmesi konumu da durusu da eziyor.
+    log("0.55 m'de -- yuk AYIRILIYOR (dustugu yer onemsiz, yerlestirilecek)")
     await actuator.release_payload_at_kirmizi_ucgen()
     await asyncio.sleep(4.0)
     tutucu.hedef(tutucu.n, tutucu.e, -1.5)
-    await asyncio.sleep(5.0)
+    await asyncio.sleep(4.0)
+
+    # ------------------------------------------------------------------
+    # K1: yuku DUSURMEDEN, dogrudan ve DIK yerlestir; sonra durusu OLC.
+    # ------------------------------------------------------------------
+    arac0 = monitor.get(VEHICLE_MODEL_NAME)
+    if arac0 is None:
+        log("HATA: arac pozu okunamadi -- yerlestirme yapilamiyor")
+        return 1
+    hedef_x, hedef_y = arac0[0], arac0[1] + 1.0      # aracin 1 m kuzeyi
+    ok = await yuku_yerlestir(args.world, PAYLOAD_MODEL % RENK, hedef_x, hedef_y)
+    log(f"yuk yerlestirildi ({hedef_x:+.3f}, {hedef_y:+.3f}) -> servis={ok}")
+    await asyncio.sleep(2.0)
+    egim = await durusu_dogrula(monitor, PAYLOAD_MODEL % RENK)
     yuk = monitor.get(PAYLOAD_MODEL % RENK)
-    log(f"yuk yerde: {yuk}")
+    log(f"yuk yerde: {yuk}  DURUS egimi={egim if egim is None else round(egim,1)} deg")
+    if egim is None or egim > 5.0:
+        log("HATA: yuk DIK degil -- olcum gecersiz olurdu, durduruluyor")
+        return 1
+
+    # Araci yukun yanina getir (kaba), kapali cevrim gerisini halleder.
+    pv0 = await drone.telemetry.position_velocity_ned().__aiter__().__anext__()
+    tutucu.hedef(pv0.position.north_m + (hedef_y - arac0[1]),
+                 pv0.position.east_m + (hedef_x - arac0[0]), -1.5)
+    await asyncio.sleep(6.0)
 
     lateral = args.lateral_mm / 1000.0
     kontrol = cekimli = None
