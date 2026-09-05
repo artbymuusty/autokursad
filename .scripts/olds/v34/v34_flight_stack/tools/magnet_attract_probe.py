@@ -130,6 +130,39 @@ class Tutucu:
             self._task = None
 
 
+
+async def _tilt_tanisi(actuator, monitor, etiket):
+    """P2: oturma kapisinin gordugu her bileseni AYNI ANDA yaz."""
+    def _dikeyden(q):
+        if q is None:
+            return None
+        x, y, z, w = q
+        return math.degrees(math.acos(max(-1.0, min(1.0, 1 - 2 * (x * x + y * y)))))
+
+    hp = actuator.get_hook_world_pose()
+    hook_pos, hook_q = (hp[0], hp[1]) if hp else (None, None)
+    pay_q = monitor._quats.get(PAYLOAD_MODEL % RENK)
+    pay_pos = monitor.get(PAYLOAD_MODEL % RENK)
+    ws = actuator.winch_state() or {}
+    geom = actuator.seating_geometry(RENK)
+
+    log(f"[TILT-TANI] {etiket}")
+    log(f"   kanca  poz={None if hook_pos is None else tuple(round(v,4) for v in hook_pos)}"
+        f"  quat={None if hook_q is None else tuple(round(v,4) for v in hook_q)}"
+        f"  dikeyden={None if _dikeyden(hook_q) is None else round(_dikeyden(hook_q),1)} deg")
+    log(f"   yuva   poz={None if pay_pos is None else tuple(round(v,4) for v in pay_pos)}"
+        f"  quat={None if pay_q is None else tuple(round(v,4) for v in pay_q)}"
+        f"  dikeyden={None if _dikeyden(pay_q) is None else round(_dikeyden(pay_q),1)} deg")
+    log(f"   vinc   achieved={ws.get('achieved_m')}  span={ws.get('span_m')}"
+        f"  fold={ws.get('fold_deg')}  nose_z={ws.get('nose_z_m')}")
+    if geom is not None:
+        log(f"   GEOMETRI lateral={geom.lateral_m*1000:.1f} mm  "
+            f"insertion={geom.insertion_m*1000:+.1f} mm  "
+            f"tilt={math.degrees(geom.tilt_rad):.1f} deg")
+    else:
+        log("   GEOMETRI: None")
+
+
 async def pencere(actuator, drone, tutucu, monitor, lateral_m, cekim: bool,
                   timeout_s: float):
     """Tek bir oturma penceresi kos ve seat_trace dondur."""
@@ -159,9 +192,21 @@ async def pencere(actuator, drone, tutucu, monitor, lateral_m, cekim: bool,
     # cevrim, EKF sapmasini ve sarkac salinimini birlikte yutar.
     pv = await drone.telemetry.position_velocity_ned().__aiter__().__anext__()
     hedef_n, hedef_e = pv.position.north_m, pv.position.east_m
+    # P2 (2026-09-05): 0.30 m'ye ERKEN INIS KALDIRILDI.
+    # v4'te sira soyleydi: 0.30 m'ye in -> vinci sal -> hizala. Bu, 0.30 m
+    # irtifada 0.31 m salim demek: kanca 0.25 m uzunlugunda, yani burun
+    # ZEMININ ALTINA suruluyor. Olculdu (p41h): pencereye gelindiginde yuk
+    # 90 dereceye DEVRILMIS ve 0.3 m kaymis, kanca zinciri patlamis
+    # (poz km olceginde, fold 134 deg, span 0.127 yerine 0.235).
+    # 165-169 derecelik "tilt anomalisi" bunun sonucuydu -- probe ile gorev
+    # arasinda bir MODEL farki degil, probe'un kancayi yere surmesi.
+    #
+    # GOREVIN GERCEK SIRASI (gorev3_pickup.py:1071-1107): vinc 0.90 m'de
+    # salinir ("ARAC HALA 0.90 m'de, kanca serbest asili kalacak"),
+    # hizalama orada yapilir, SONRA "SAF DIKEY" inilir. Probe artik ayni
+    # sirayi izliyor. 0.90 m'de burun 0.90 - 0.25 - 0.31 = 0.34 m'de,
+    # yani serbest asili.
     await tutucu.basla(hedef_n, hedef_e, -0.9)
-    await asyncio.sleep(5.0)
-    tutucu.hedef(hedef_n, hedef_e, -GOREV3_DESCENT_ALTITUDE_M)
     await asyncio.sleep(5.0)
 
     # ======================================================================
@@ -203,7 +248,10 @@ async def pencere(actuator, drone, tutucu, monitor, lateral_m, cekim: bool,
         # AKIL SAGLIGI KAPISI: 1 m'den buyuk bir "duzeltme" okuma hatasidir.
         # v2'de bu yoktu ve tek bir kotu okuma araci 400 km oteye ucurdu
         # (setpoint +71393, -423256; artik 178 844 893 mm).
-        if son_hata > 1.0:
+        # P1: esik 1.0 -> 2.0 m. Kapinin isi 178 milyon mm'lik cop okumayi
+        # (v2'de araci 400 km ucuran sey) yakalamak; mesru bir baslangic
+        # hatasini degil. 2 m hala cop okumadan mertebelerce kucuk.
+        if son_hata > 2.0:
             log(f"  it={it}: artik {son_hata*1000:.0f} mm -- OKUMA GECERSIZ, "
                 f"duzeltme UYGULANMIYOR")
             await asyncio.sleep(HOOK_SETTLE_WAIT_S)
@@ -245,6 +293,23 @@ async def pencere(actuator, drone, tutucu, monitor, lateral_m, cekim: bool,
         tutucu.hedef(tutucu.n + step_n, tutucu.e + step_e)
         log(f"  cekim adimi: d={dist_m*1000:5.1f} mm  adim=({step_n*1000:+5.1f}, "
             f"{step_e*1000:+5.1f}) mm")
+
+    # ======================================================================
+    # P2 -- TILT ANOMALISI TANISI (2026-09-05)
+    # ======================================================================
+    # v4'te oturma kapisi kanca HAREKETSIZKEN tilt 165-169 deg okudu; ayni
+    # kapi gercek gorevde 0.1-0.5 deg okuyor. Fark kapanmadan A/B anlamsiz.
+    # Burada, kapinin baktigi ANIN ham bilesenleri yan yana yaziliyor:
+    # kanca kuaterniyonu, yuva kuaterniyonu, vinc achieved_m, burun dunya
+    # z'si ve geometrinin kendi tilt'i. Boylece "kanca gercekten mi
+    # devrilmis" ile "geometri baska bir referansla mi hesapliyor"
+    # ayrilabilir -- tahminle degil sayiyla.
+    # Hizalama bitti -> SAF DIKEY in (yanal surukleme yok).
+    log(f"hizalandi, {GOREV3_DESCENT_ALTITUDE_M:.2f} m alma irtifasina saf dikey iniliyor")
+    tutucu.hedef(tutucu.n, tutucu.e, -GOREV3_DESCENT_ALTITUDE_M)
+    await asyncio.sleep(6.0)
+
+    await _tilt_tanisi(actuator, monitor, "pencere oncesi")
 
     seated = await actuator._await_seating(RENK, timeout_s,
                                            on_attract=_on_attract if cekim else None)
@@ -329,7 +394,14 @@ async def main() -> int:
     if arac0 is None:
         log("HATA: arac pozu okunamadi -- yerlestirme yapilamiyor")
         return 1
-    hedef_x, hedef_y = arac0[0], arac0[1] + 1.0      # aracin 1 m kuzeyi
+    # P1 (2026-09-05): 1.0 m -> 0.15 m.
+    # v4'te yuk aracin 1.0 m kuzeyine konuyordu, yani kapali cevrim daha
+    # ilk iterasyonda ~1.18 m'lik bir "hata" goruyordu ve asagidaki akil
+    # sagligi kapisi (o zaman 1.0 m) bunu COP OKUMA sanip her duzeltmeyi
+    # blokluyordu. Kapi yanlis calismiyordu; kurulum kapinin altina
+    # sigmiyordu. 0.40 m: kapinin (2.0 m) rahat altinda ama kanca
+    # hizalama sirasinda yuke carpacak kadar yakin degil.
+    hedef_x, hedef_y = arac0[0], arac0[1] + 0.40
     ok = await yuku_yerlestir(args.world, PAYLOAD_MODEL % RENK, hedef_x, hedef_y)
     log(f"yuk yerlestirildi ({hedef_x:+.3f}, {hedef_y:+.3f}) -> servis={ok}")
     await asyncio.sleep(2.0)
