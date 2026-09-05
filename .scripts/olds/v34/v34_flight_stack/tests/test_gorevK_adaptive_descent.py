@@ -631,7 +631,8 @@ def test_bekleme_tavani_kendi_turetmesiyle_TUTARLI():
 
 
 def test_ADIM5_irtifayi_DUSURMUYOR():
-    """ADIM 5 YATAY bir otelemedir; irtifayi dusurmek onun isi degil.
+    """ADIM 5'in isi YALNIZCA IRTIFA (GOREV R'den sonra); dusurmek degil
+    YUKSELTMEK.
 
     OLCULDU (bes kosumluk seri, ATLANDI yolundaki uc deneme): 0.30 m'de
     salim 0.33 m ile burun 0.012 m'de, yani GUVERTE HIZASINDA -- adaptif
@@ -641,5 +642,9 @@ def test_ADIM5_irtifayi_DUSURMUYOR():
     _settle_hook_onto kostugunda araci 0.90 m'ye ucurdugu icin bosluk
     TESADUFEN kapaniyordu; artik KASITLI kapatiliyor."""
     assert "_hn, _he, -HOOK_VISUAL_ALIGN_ALTITUDE_M, aligned_yaw, 4.0)" in SRC,         "ADIM 5 hala alma irtifasina iniyor"
-    i = SRC.index('"hook_offset_applied"')
+    # Olay adi GOREV R'de degisti: ofset kalkti, geriye YALNIZCA irtifa isi
+    # kaldi ve ad da onu yansitiyor.
+    i = SRC.index('"align_altitude_restored"')
     assert "HOOK_VISUAL_ALIGN_ALTITUDE_M" in SRC[i:i + 300]
+    # ADIM 5 artik YATAY hareket etmiyor.
+    assert "_hn, _he = n0, e0" in SRC

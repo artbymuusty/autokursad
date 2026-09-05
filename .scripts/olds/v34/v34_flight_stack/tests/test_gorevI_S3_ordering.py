@@ -47,11 +47,34 @@ def test_her_gorsel_adim_ofsetten_ONCE_gelir(ad, kalip):
         f"{ad} kanca ofsetinden SONRA calisiyor -- 501 px kusuru geri geldi")
 
 
-def test_ofset_TEK_KEZ_uygulanir():
-    """Tasima sirasinda eski blogun bayat yayini geride kalmisti; iki kez
-    'hook_offset_applied' yayinlamak, ofsetin iki kez uygulandigi
-    izlenimini verir ve olay akisini yaniltir."""
-    assert SRC.count('"hook_offset_applied"') == 1, SRC.count('"hook_offset_applied"')
+def test_ofset_ANA_YOLDA_HIC_uygulanmiyor():
+    """GOREV R (2026-09-06): ADIM 5'in kanca ofseti KALDIRILDI.
+
+    Bu test eskiden "ofset TEK KEZ uygulanir" diyordu ve o zamanki dogruydu.
+    GOREV Q kok nedeni buldu: ADIM 4b (VisualHookAligner.align) KANCA
+    referansli -- visual_alignment.py:64 hatayi (recv - hook) olarak
+    donduruyor ve align() bunu araca uyguluyor. Yani yakinsadigi anda kanca
+    ZATEN yuvanin uzerinde; ofseti tekrar uygulamak onu 175 mm oteye
+    tasiyordu.
+    OLCULDU (5 kosum / 12 deneme): hizalama kancayi 6.5-29.7 mm'ye
+    getiriyordu, settle aninda kanca 184.6-235.0 mm otedeydi; sicrama
+    10/10 ornekte POZITIF, ortanca +201.9 mm.
+
+    ADIM 5 SILINMEDI: ikinci isi (hizalama irtifasina cikis) GEREKLI --
+    align() araci 0.30 m'de birakiyor, adaptif inisin alcalacak yeri olmali.
+    Kaldirilan yalnizca YATAY OTELEME."""
+    assert SRC.count('"hook_offset_applied"') == 0, \
+        "ana yolda kanca ofseti hala uygulaniyor"
+    assert '"align_altitude_restored"' in SRC, "ADIM 5'in irtifa isi kaybolmus"
+    assert "_hn, _he = n0, e0" in SRC, "yatay konum korunmuyor"
+
+
+def test_reacquire_dalindaki_ofset_KORUNUYOR():
+    """Reacquire dali ADIM 4b'den ONCE calisiyor ve orada referans hala
+    KAMERA: go_to_and_center kamerayi hedefe koyuyor, _rect_pixel_offset'in
+    want_y'si de kancanin hedefte olmasini bekliyor. O ofset DOGRU."""
+    assert SRC.count("_body_to_ned(HOOK_BODY_OFFSET_FORWARD_M, 0.0)") == 1, \
+        "reacquire dalindaki mesru ofset de kaldirilmis olabilir"
 
 
 def test_gorsel_hizalama_YAKLASMA_irtifasinda_kosar():

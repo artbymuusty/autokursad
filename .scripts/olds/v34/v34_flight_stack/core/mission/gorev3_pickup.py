@@ -1790,38 +1790,60 @@ class Gorev3PickupPhase:
             # baktigi nokta kancanin altina gecer. Bu oteleme KOR ve tek
             # seferliktir; dogrulugu, basladigi ortalamanin dogrulugu kadardir
             # -- ve o ortalama az once 0.30 m'de tazelendi.
+            # ==============================================================
+            # ADIM 5 -- YALNIZCA IRTIFA. KANCA OFSETI KALDIRILDI (GOREV R)
+            # ==============================================================
+            # KOK NEDEN (GOREV Q, docs/gorevQ-sicrama-kok-neden.md):
+            # bu adim bir zamanlar +HOOK_BODY_OFFSET_FORWARD_M (175 mm)
+            # govde-ileri oteliyordu ve gerekcesi "kameranin baktigi nokta
+            # kancanin altina gecsin" idi. O gerekce ADIM 4'ten
+            # (go_to_and_center -- KAMERA referansli) sonra DOGRUYDU.
+            #
+            # AMA ARADA ADIM 4b VAR: VisualHookAligner.align() ve o KANCA
+            # referansli. visual_alignment.py:64 hatayi
+            #     (recv_n - hook[0], recv_e - hook[1])
+            # yani KANCADAN YUVAYA vektor olarak donduruyor ve align() bunu
+            # dogrudan araca uyguluyor. Dolayisiyla yakinsadigi anda KANCA
+            # zaten yuvanin uzerinde. Ofseti tekrar uygulamak, hedefi
+            # tutturmus kancayi 175 mm OTEYE tasiyordu.
+            #
+            # OLCULDU (5 kosum / 12 deneme):
+            #   hizalama kancayi        6.5 -  29.7 mm'ye getiriyordu
+            #   settle aninda kanca   184.6 - 235.0 mm otedeydi
+            #   |arac-yuva| - |kanca-yuva| = 85-91 mm = hook_mount govde-x
+            #                                (-0.090) ile BIREBIR
+            # Sicrama: min +64.6, ORTANCA +201.9, maks +282.5 mm ve 10/10
+            # ornekte POZITIF.
+            #
+            # NEDEN ADIM TAMAMEN KALDIRILMIYOR (GOREV R / FAZ 1):
+            # bu adimin IKINCI bir isi var ve o GEREKLI -- IRTIFA. align()
+            # her duzeltmede goto_ned_and_hold(..., altitude_m, ...) ile
+            # GOREV3_APPROACH_ALTITUDE_M (0.30) komut ediyor, yani araci
+            # 0.30 m'de birakiyor. Adaptif inisin alcalacak yeri olmasi icin
+            # 0.90 m'ye cikmasi gerekiyor (GOREV O'da olculdu: 0.30'da burun
+            # zaten guvertede ve miknatis kaldirac yapip deviriyor).
+            # Bu yuzden adim KORUNUYOR, yalnizca YATAY OTELEME kaldiriliyor:
+            # ayni yatay noktada kal, irtifayi yukselt.
+            #
+            # REACQUIRE DALI (:1640) ETKILENMIYOR: o dal ADIM 4b'den ONCE
+            # calisiyor, kendi n0/e0'ini taziliyor ve ardindan KENDI
+            # olcumunu yapiyor (_rect_pixel_offset). Orada ofset DOGRU,
+            # cunku o noktada referans hala KAMERA (want_y zaten kancanin
+            # hedefte olmasini bekliyor).
             n0, e0, _d0 = await self.flight.get_position_ned()
             _c = math.cos(math.radians(aligned_yaw))
             _s = math.sin(math.radians(aligned_yaw))
-            _hn, _he = _body_to_ned(HOOK_BODY_OFFSET_FORWARD_M, 0.0)
-            # IRTIFA: ALMA IRTIFASI DEGIL, HIZALAMA IRTIFASI (operator karari
-            # 2026-09-05). Bu adim YATAY bir otelemedir; irtifayi dusurmek
-            # onun isi degil ve dusurmesi INISE IS BIRAKMIYORDU.
-            #
-            # ONCEKI HAL -GOREV3_APPROACH_ALTITUDE_M (0.30) komut ediyordu.
-            # Salim 0.33 m ile burun o irtifada 0.30 + 0.042 - 0.33 = 0.012 m,
-            # yani GUVERTE HIZASINDA. Adaptif alcalmanin alcalacagi mesafe
-            # kalmiyor ve kanca daha ilk anda TEMAS rejiminde oluyor -- tam da
-            # miknatisin kaldirac yapip devirdigi rejim (GOREV M/B).
-            # OLCULDU (bes kosumluk seri, ATLANDI yolundaki uc deneme):
-            #     ins +3.5 / -4.5 / +9.2 mm, egim 20.0-20.8 deg, ucu de
-            #     'devrilmis_kanca' ile dustu -- yanal 8.1-21.7 mm ile MUKEMMEL
-            #     olmasina ragmen.
-            # _settle_hook_onto kostugunda araci 0.90 m'ye geri ucurdugu icin
-            # bu bosluk TESADUFEN kapaniyordu; artik KASITLI kapatiliyor ve
-            # yan etkiye guvenilmiyor.
-            #
-            # 0.90 m'de burun 0.90 + 0.042 - 0.33 = 0.612 m'de, guvertenin
-            # (0.070) yarim metre uzerinde -- serbest asili. Inis oradan
-            # kendi olctugu kadar alcalir.
-            logger.info("Kanca hedefin uzerine getiriliyor (govde +%.3f m ileri, "
-                        "%.2f m'de -- YATAY oteleme, irtifa DUSURULMUYOR)...",
-                        HOOK_BODY_OFFSET_FORWARD_M, HOOK_VISUAL_ALIGN_ALTITUDE_M)
+            # Yatay konum DEGISMIYOR: align() kancayi zaten yuvaya oturttu.
+            _hn, _he = n0, e0
+            logger.info("Hizalama irtifasina cikiliyor (%.2f m) -- YATAY KONUM "
+                        "DEGISMIYOR: kanca ofseti ADIM 4b tarafindan zaten "
+                        "kapatildi (GOREV Q/R).", HOOK_VISUAL_ALIGN_ALTITUDE_M)
             await self.flight.goto_position_ned_and_hold(
                 _hn, _he, -HOOK_VISUAL_ALIGN_ALTITUDE_M, aligned_yaw, 4.0)
-            self._publish("GOREV3_PICKUP_STEP", "hook_offset_applied",
-                          data={"forward_m": HOOK_BODY_OFFSET_FORWARD_M,
+            self._publish("GOREV3_PICKUP_STEP", "align_altitude_restored",
+                          data={"forward_m": 0.0,
                                 "altitude_m": HOOK_VISUAL_ALIGN_ALTITUDE_M,
+                                "hook_offset_removed": True,
                                 "after_visual_work": True})
 
             # DIKEY IN, sonra VINCI SAL, sonra GORUS OLCUMUNE GORE SON DUZELTME.
