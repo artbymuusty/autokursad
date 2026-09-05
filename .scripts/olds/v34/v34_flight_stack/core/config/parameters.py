@@ -184,6 +184,14 @@ GOREV3_VERIFY_CLIMB_ALTITUDE_M: float = 2.0
 GOREV3_APPROACH_ALTITUDE_M: float = 0.30
 
 GOREV3_PICKUP_ATTEMPT_TIMEOUT_S: float = 60.0
+#: KILIT SONRASI DOGRULAMANIN kendi zaman asimi (2026-09-05).
+#  Dogrulama, deneme butcesinin DISINDA kosuyor: butce BASARISIZ bir
+#  denemeyi keser, basarilmis birini atmaz. Olculdu (demo_20260905_172017):
+#  kanca kilitlendi (MAGNET_LOCKED, dwell 0.61 s) ve dogrulama tirmanisi
+#  baslarken 60 s doldu; faz basarilmis almayi 'basarisiz' saydi.
+#  25 s: 2 m tirmanis (hold 2.0 s) + tespit + iki kontrol; O-B'nin olculen
+#  'dogrulama 15 s' tahminini pay ile kapsar.
+GOREV3_PICKUP_VERIFY_TIMEOUT_S: float = 25.0
 
 GOREV3_PICKUP_VISIBILITY_CONFIRM_FRAMES: int = 3
 

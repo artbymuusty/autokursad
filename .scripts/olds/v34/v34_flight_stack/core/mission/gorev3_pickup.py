@@ -25,6 +25,7 @@ from core.config.parameters import (
     HSV_MIN_AREA_RECT_BASE,
     GOREV3_APPROACH_ALTITUDE_M,
     GOREV3_PICKUP_ATTEMPT_TIMEOUT_S,
+    GOREV3_PICKUP_VERIFY_TIMEOUT_S,
     GOREV3_PICKUP_MAX_ATTEMPTS,
     GOREV3_VERIFY_CLIMB_ALTITUDE_M,
     GOREV3_CRUISE_ALTITUDE_M,
@@ -1908,6 +1909,32 @@ class Gorev3PickupPhase:
                 logger.error("Yük alma mekanizması yükü alamadı -- Görev 3 Faz 1 başarısız.")
                 return False
 
+            # ==============================================================
+            # KILIT ONAYLANDI -- DOGRULAMA BUTCE DISINDA (2026-09-05)
+            # ==============================================================
+            # OLCULDU (demo_20260905_172017, deneme 1): kanca gercekten
+            # kilitlendi --
+            #   MAGNET_LOCKED lat=15.9mm ins=+0.2mm tilt=4.7deg v=0.013m/s
+            #                 dwell 0.61 s (cekim kullanildi)
+            #   SERVO3 KAVRAMA ... [HOOK] LOCKED (payload_blue) -- yuk ipte
+            # -- ve hemen ardindan dogrulama tirmanisi baslarken 60 s'lik
+            # deneme butcesi doldu. Faz, BASARILMIS bir almayi 'basarisiz'
+            # sayip bastan denedi.
+            #
+            # Butcenin amaci BASARISIZ bir denemeyi kesmektir; basarilmis
+            # birini atmak degil. Kilit onaylandiktan sonrasi artik yakalama
+            # denemesi degil, MUHASEBE. Bu yuzden _attempt burada doner ve
+            # dogrulama dis dongude, KENDI zaman asimiyla kosar.
+            #
+            # 3 x 60 s SPEC'I KORUNUYOR: butce hala yakalamayi sinirliyor.
+            return True
+
+        async def _verify_lift(attempt: int) -> bool:
+            """KILIT SONRASI DOGRULAMA -- deneme butcesinin DISINDA.
+
+            Gerekce _attempt'in sonundaki notta. Kendi zaman asimi var:
+            2 m tirmanis (hold 2.0 s) + tespit + iki kontrol.
+            """
             # Tirmanistan ONCEKI yuk irtifasi -- asagidaki dogrulama "yuk aracla
             # birlikte yukseldi mi" sorusunu buna gore cevapliyor.
             payload_z_before = self.actuator.payload_altitude_m(self._color)
@@ -2014,9 +2041,27 @@ class Gorev3PickupPhase:
             self._publish("GOREV3_PICKUP_ATTEMPT_RESULT", "basarili" if ok else "basarisiz",
                           data={"attempt": attempt, "success": bool(ok)})
             if ok:
-                logger.info("[ALMA] deneme %d/%d BASARILI.", attempt,
+                logger.info("[ALMA] deneme %d/%d: KILIT ONAYLANDI -- dogrulama "
+                            "butce disinda kosuluyor.", attempt,
                             GOREV3_PICKUP_MAX_ATTEMPTS)
-                return True
+                try:
+                    verified = await asyncio.wait_for(
+                        _verify_lift(attempt), GOREV3_PICKUP_VERIFY_TIMEOUT_S)
+                except asyncio.TimeoutError:
+                    verified = False
+                    logger.warning("[ALMA] kilit sonrasi dogrulama %.0f s'de "
+                                   "tamamlanamadi.", GOREV3_PICKUP_VERIFY_TIMEOUT_S)
+                except Exception:  # noqa: BLE001
+                    verified = False
+                    logger.warning("[ALMA] kilit sonrasi dogrulama hata verdi.",
+                                   exc_info=True)
+                if verified:
+                    logger.info("[ALMA] deneme %d/%d BASARILI.", attempt,
+                                GOREV3_PICKUP_MAX_ATTEMPTS)
+                    return True
+                logger.warning("[ALMA] deneme %d/%d: kanca kilitlendi ama "
+                               "dogrulama gecmedi.", attempt,
+                               GOREV3_PICKUP_MAX_ATTEMPTS)
 
         # MADDE 12: uc denemenin hicbiri tutmadi. Bu FATAL DEGIL --
         # orkestrator GOREV3_PICKUP_ABANDONED yayinlayip finish/start

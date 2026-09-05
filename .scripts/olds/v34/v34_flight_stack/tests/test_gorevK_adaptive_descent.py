@@ -424,3 +424,30 @@ def test_aktuator_salimi_atlayabiliyor():
     assert "extend_winch" in sig.parameters
     assert sig.parameters["extend_winch"].default is True, \
         "varsayilan eski davranis olmali -- baska cagiranlar bozulmasin"
+
+
+# --------------------------------------------------------------------------
+# KILIT SONRASI DOGRULAMA, DENEME BUTCESININ DISINDA (2026-09-05)
+# --------------------------------------------------------------------------
+
+def test_dogrulama_deneme_butcesinin_DISINDA():
+    """Butcenin amaci BASARISIZ bir denemeyi kesmektir, basarilmis birini
+    atmak degil.
+
+    OLCULDU (demo_20260905_172017, deneme 1): kanca gercekten kilitlendi --
+        MAGNET_LOCKED lat=15.9mm ins=+0.2mm tilt=4.7deg dwell 0.61 s
+        SERVO3 KAVRAMA ... [HOOK] LOCKED (payload_blue) -- yuk ipte
+    -- ve dogrulama tirmanisi baslarken 60 s doldu; faz BASARILMIS almayi
+    'basarisiz' sayip bastan denedi."""
+    # _attempt kilit onaylaninca donmeli (dogrulama govdesini TASIMAMALI).
+    assert "_verify_lift" in SRC, "dogrulama ayri bir fonksiyona alinmamis"
+    # dogrulama KENDI zaman asimiyla, wait_for icinde kosmali
+    assert "_verify_lift(attempt), GOREV3_PICKUP_VERIFY_TIMEOUT_S" in SRC
+    # ve deneme butcesi hala yakalamayi sinirlamali (3 x 60 s spec'i)
+    assert "_attempt(attempt),\n                                            GOREV3_PICKUP_ATTEMPT_TIMEOUT_S" in SRC
+
+
+def test_dogrulama_zaman_asimi_tanimli_ve_makul():
+    from core.config.parameters import (GOREV3_PICKUP_VERIFY_TIMEOUT_S,
+                                        GOREV3_PICKUP_ATTEMPT_TIMEOUT_S)
+    assert 0 < GOREV3_PICKUP_VERIFY_TIMEOUT_S < GOREV3_PICKUP_ATTEMPT_TIMEOUT_S
