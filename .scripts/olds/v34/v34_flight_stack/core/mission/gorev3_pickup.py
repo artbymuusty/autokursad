@@ -122,6 +122,39 @@ HOOK_VISION_ALIGN_TOLERANCE_M = 0.05
 # 4 s artik ~3.7 periyot (eskiden ~4.8). Sabit DEGISTIRILMEDI -- kanca
 # uzamasinin sonumleme butcesine etkisi J'de olculur.
 HOOK_PAYOUT_SETTLE_S = 4.0
+# ==========================================================================
+# KANCANIN SAKULE DONMESI -- VARSAYIM DEGIL OLCUM (GOREV O, 2026-09-05)
+# ==========================================================================
+# ONCEKI HAL: payout sonrasi KOSULSUZ asyncio.sleep(HOOK_PAYOUT_SETTLE_S).
+# Bu "4 saniyede sarkac soner" VARSAYIMIYDI ve OLCUM onu curuttu:
+#   settle adimi ATLANAN uc denemede, inisten hemen once kanca ofseti
+#       -0.2318 / -0.2412 / -0.0513   (sakul: -0.090)
+#   yani kanca 142-151 mm SARKMIS haldeydi ve ilk inis yanali
+#       179.2 / 207.7 mm cikti.
+#   Adim KOSAN yedi denemede ofset -0.089..-0.092 (sakul) ve ilk inis
+#   yanali 8-60 mm. Fark, _settle_hook_onto'nun 3 x 2.5 s = 7.5 s'lik
+#   sonumleme beklemesiydi -- sonumlemeyi yapan sey o adimdi, sabit uyku
+#   degil.
+# Olculen sarkac periyodu 1.078 s (GOREV J); 4 s ~= 3.7 periyot ve zeta
+# ~0.03 ile (arac SDF'inin kendi olcumu) bu, 142 mm'yi 17.5 mm'ye indirmeye
+# YETMIYOR -- gereken sure ln(142/17.5)/(0.03*5.83) ~= 11.9 s.
+# Cozum sabiti buyutmek DEGIL, DURUMU OLCMEK.
+
+#: Kanca askisinin govde-x'i. KAYNAK: arac SDF'i,
+#  <frame name="hook_mount"><pose relative_to="base_link">-0.090 0 0.05 ...
+#  Sakuldeki burun, aracin bu noktasinin TAM ALTINDA olmali.
+HOOK_MOUNT_BODY_X_M = -0.090
+#: "Sakule dondu" toleransi. SECILMEDI: miknatisin yakalama yaricapi
+#  (MAGNET_CAPTURE_RADIUS_M = 17.5 mm). Altinda kanca, kapinin kendi
+#  toleransi kadar nominal yerindedir; daha fazla beklemek sonucu
+#  degistiremez.
+HOOK_PLUMB_TOLERANCE_M = MAGNET_CAPTURE_RADIUS_M
+#: Sakul beklemesinin TAVANI. 8.0 s, _settle_hook_onto'nun fiilen harcadigi
+#  sonumleme suresiyle (3 x 2.5 s = 7.5 s) ayni mertebede -- ve o sure
+#  OLCULEREK 2-3 mm sakul hatasi uretiyordu. Tavan dolarsa faz DUSMEZ:
+#  olculen sarkma loglanip devam edilir, son sozu oturma kapisi soyler.
+HOOK_PLUMB_SETTLE_MAX_S = 8.0
+HOOK_PLUMB_POLL_S = 0.25
 # GORSEL HIZALAMA IRTIFASI. Hizalama alma irtifasinda (0.30 m) YAPILAMAZ, ve
 # bu bir ayar meselesi degil, kadraj geometrisi:
 #
@@ -559,16 +592,25 @@ class Gorev3PickupPhase:
         return False
 
     async def _settle_hook_onto(self, recv_ned, yaw_deg: float, alt_m: float):
-        """Drive the RESTING hook onto a receiver position measured earlier.
+        """Kancayi, daha once OLCULEN alici konumuna surur.
 
-        The camera cannot see the receiver down here, so the target comes from
-        the visual alignment done at HOOK_VISUAL_ALIGN_ALTITUDE_M. What closes
-        the loop is the hook's own real pose: the winch is out and the hook is
-        resting, so each nudge drags it across the deck rather than swinging
-        it, which is why this converges where a mid-air correction would not.
+        DUZELTME (GOREV O, 2026-09-05): bu docstring "the winch is out and
+        the hook is RESTING, so each nudge drags it across the deck" diyordu.
+        BU YANLISTI ve kendi cagri yerinde gecerli degildi:
+            cagri  _settle_hook_onto(recv_ned, yaw, HOOK_VISUAL_ALIGN_ALTITUDE_M)
+            yani arac 0.90 m'de, salim 0.33 m, kanca burnu ~0.61 m'de
+        -- kanca HAVADA, hicbir seye dayanmiyor. "Dinlenen kancayi surukleme"
+        rejimi yalnizca alma irtifasinda (burun guverte hizasinda) gecerli;
+        burada yapilan sey HAVADAKI bir sarkaci kovalamak.
+        Yanlis gerekce zararsiz degildi: adimi kaldirirken (GOREV K) yalnizca
+        ilan edilmis isine bakildi ve SESSIZCE yaptigi iki is (sarkaci
+        sondurmek, araci 0.90 m'ye geri ucurmak) gozden kacti.
 
-        Returns the final lateral error in metres, or None if the hook pose
-        was unreadable (in which case the seating gate will refuse anyway).
+        Kamera bu irtifada aliciyi goremez; hedef, gorsel hizalamanin
+        olctugu konumdan gelir. Cevrimi kapatan sey kancanin GERCEK pozudur.
+
+        Donen: son yanal hata (m), ya da kanca pozu okunamadiysa None (o
+        durumda oturma kapisi zaten reddeder).
         """
         last = None
         for i in range(1, HOOK_ALIGN_MAX_CORRECTIONS + 1):
@@ -631,6 +673,65 @@ class Gorev3PickupPhase:
         logger.warning("[SON_DUZELTME] butce doldu; son yanal %s",
                        f"{last * 1000:.1f} mm" if last is not None else "olculemedi")
         return last
+
+    async def _wait_hook_plumb(self, yaw_deg: float):
+        """Kancanin SAKULE donmesini OLCEREK bekle (GOREV O, madde 2).
+
+        Sakul noktasi arac SDF'inden geliyor: kanca askisi govde
+        (-0.090, 0)'da, yani sakuldeki burun aracin o noktasinin tam
+        altinda. Sapma ona gore hesaplaniyor -- yaw'a bagimli, cunku govde
+        ofseti NED'de yaw ile doner.
+
+        Donen: (sarkma_m, beklenen_s, sakulde_mi). Tavan dolarsa faz DUSMEZ;
+        sarkma loglanip devam edilir, son sozu oturma kapisi soyler.
+        """
+        _c = math.cos(math.radians(yaw_deg))
+        _s = math.sin(math.radians(yaw_deg))
+        plumb_n = HOOK_MOUNT_BODY_X_M * _c
+        plumb_e = HOOK_MOUNT_BODY_X_M * _s
+
+        get_off = getattr(self.actuator, "hook_nose_ned_offset_m", None)
+        if get_off is None:
+            await asyncio.sleep(HOOK_PAYOUT_SETTLE_S)
+            return (None, HOOK_PAYOUT_SETTLE_S, False)
+
+        t0 = time.monotonic()
+        sway = None
+        while True:
+            try:
+                off = get_off()
+            except Exception:  # noqa: BLE001 -- salt olcum
+                off = None
+            if off is not None:
+                sway = math.hypot(off[0] - plumb_n, off[1] - plumb_e)
+                if sway <= HOOK_PLUMB_TOLERANCE_M:
+                    break
+            if (time.monotonic() - t0) >= HOOK_PLUMB_SETTLE_MAX_S:
+                break
+            await asyncio.sleep(HOOK_PLUMB_POLL_S)
+
+        waited = time.monotonic() - t0
+        ok = sway is not None and sway <= HOOK_PLUMB_TOLERANCE_M
+        if ok:
+            logger.info("[SAKUL] kanca sakule dondu: sarkma %.1f mm "
+                        "(tol %.1f mm), %.2f s.",
+                        sway * 1000, HOOK_PLUMB_TOLERANCE_M * 1000, waited)
+        else:
+            logger.warning("[SAKUL] tavan (%.1f s) doldu -- sarkma %s "
+                           "(tol %.1f mm). Faz DURDURULMUYOR: son sozu oturma "
+                           "kapisi soyluyor, ama ilk inis yanali BUYUK "
+                           "cikabilir.", HOOK_PLUMB_SETTLE_MAX_S,
+                           f"{sway * 1000:.1f} mm" if sway is not None else "olculemedi",
+                           HOOK_PLUMB_TOLERANCE_M * 1000)
+        self._publish("GOREV3_HOOK_PLUMB",
+                      f"{sway * 1000:.1f} mm" if sway is not None else "olculemedi",
+                      data={"sway_mm": (round(sway * 1000, 1)
+                                        if sway is not None else None),
+                            "tolerance_mm": round(HOOK_PLUMB_TOLERANCE_M * 1000, 1),
+                            "waited_s": round(waited, 2),
+                            "ceiling_s": HOOK_PLUMB_SETTLE_MAX_S,
+                            "plumb": bool(ok)})
+        return (sway, waited, ok)
 
     def _hook_nose_z_m(self):
         """Kanca burnunun DUNYA z'si (metre), yoksa None.
@@ -1594,8 +1695,16 @@ class Gorev3PickupPhase:
             # nerede oldugu bellidir. Hizalama orada bitirilir, dikey inilir
             # (dikey inis yatay hizayi bozmaz), ve vinc EN SON salinir; boylece
             # payout saf dikey bir harekettir.
-            # Zaten hizalama irtifasindayiz (yukaridaki inis oraya yapildi); bu
-            # yalnizca savunmaci bir teyit tutusu.
+            # SAVUNMACI TEYIT TUTUSU -- 0.90 m.
+            #
+            # DIKKAT (GOREV O, 2026-09-05): bu tutus 0.90 m'ye komut eder ama
+            # HEMEN ARDINDAN gelen VisualHookAligner.align(...) cagrisi
+            # GOREV3_APPROACH_ALTITUDE_M (0.30) ile cagriliyor ve `align`
+            # o degeri her duzeltmede KOMUT IRTIFASI olarak kullaniyor
+            # (visual_alignment.py: goto_ned_and_hold(n, e, altitude_m, yaw)).
+            # Yani GORSEL HIZALAMA FIILEN 0.30 m'DE KOSAR, 0.90 m'de degil.
+            # Bu dosyanin eski yorumlari "0.90 m'de hizalanir" diyordu ve
+            # YANLISTI; okuyan biri yanlis varsayimla kod yazabilirdi.
             await self.flight.goto_position_ned_and_hold(
                 _hn, _he, -HOOK_VISUAL_ALIGN_ALTITUDE_M, aligned_yaw, 2.0)
 
@@ -1626,6 +1735,9 @@ class Gorev3PickupPhase:
                 # yanal hatayi da kaydeder, karar akisina girmez.
                 get_truth_lateral_m=lambda: getattr(
                     self.actuator, "hook_lateral_error_m", lambda _c: None)(self._color))
+            # ILK ARGUMAN KOMUT IRTIFASIDIR, bir etiket degil: align() her
+            # duzeltmede goto_ned_and_hold(..., altitude_m, ...) cagirir.
+            # Burada 0.30 verildigi icin gorsel hizalama 0.30 m'de kosar.
             vis = await aligner.align(GOREV3_APPROACH_ALTITUDE_M, aligned_yaw,
                                       tolerance_m=HOOK_VISUAL_ALIGN_TOLERANCE_M)
             logger.info("[GORSEL_HIZA] %s: son hata=%s, %d iterasyon, %d tespit, "
@@ -1725,7 +1837,9 @@ class Gorev3PickupPhase:
                             GOREV3_DESCENT_ALTITUDE_M,
                             _payout_alt if _payout_alt is not None else float("nan"))
                 await _extend(GOREV3_DESCENT_ALTITUDE_M)
-                await asyncio.sleep(HOOK_PAYOUT_SETTLE_S)
+                # GOREV O madde 2: sabit uyku yerine SAKULE DONUSU OLC.
+                # Gerekce HOOK_PLUMB_* sabitlerinin basinda.
+                await self._wait_hook_plumb(aligned_yaw)
 
             # ==============================================================
             # _settle_hook_onto ANA YOLDAN CIKARILDI (operator karari 2026-09-05)
@@ -1845,8 +1959,30 @@ class Gorev3PickupPhase:
             # extend_winch_for hala GOREV3_DESCENT_ALTITUDE_M ile cagriliyor,
             # cunku inis boyunca salimin SABIT kalmasi bu hesabin on kabulu;
             # yeniden hesaplanirsa fazladan salim kapiyi bozar.
+            # GOREV O madde 1: BASLANGIC IRTIFASI OLCULUYOR, VARSAYILMIYOR.
+            #
+            # Onceki hal sabit HOOK_VISUAL_ALIGN_ALTITUDE_M (0.90) veriyordu
+            # ve bu YALNIZCA _settle_hook_onto kostugunda dogruydu -- cunku
+            # o adim araci 0.90 m'ye geri ucuruyordu. Adim atlandiginda arac
+            # 0.30 m'de kaliyor ve inisin ilk 'adimi' 0.900-0.300 = 0.600
+            # komut ediyordu: +0.296 m TIRMANIS, ustelik "SAF DIKEY, KADEMELI
+            # iniliyor (yanal hareket yok)" diye loglanarak. OLCULDU
+            # (18 deneme, istisnasiz):
+            #   settle KOSTU   -> inis oncesi 0.860-0.899 m, ilk yanal  8-60 mm
+            #   settle ATLANDI -> inis oncesi 0.301-0.305 m, ilk yanal 179-208 mm
+            # Turetme: docs/gorevO-gorsel-hizalama-darbogaz-analiz.md
+            _start_alt = await self._current_alt_m()
+            if _start_alt is None or _start_alt <= 0.0:
+                # Irtifa okunamadi: eski varsayima DUS, ama SESSIZCE DEGIL.
+                _start_alt = HOOK_VISUAL_ALIGN_ALTITUDE_M
+                logger.warning("[ADAPTIF_INIS] baslangic irtifasi OLCULEMEDI -- "
+                               "%.2f m varsayiliyor. Varsayim yanlissa ilk adim "
+                               "TIRMANIS olur.", _start_alt)
+            else:
+                logger.info("[ADAPTIF_INIS] baslangic irtifasi OLCULDU: %.3f m "
+                            "(varsayim degil).", _start_alt)
             pickup_alt, _descent_reason = await self._adaptive_descend(
-                _hn, _he, aligned_yaw, HOOK_VISUAL_ALIGN_ALTITUDE_M)
+                _hn, _he, aligned_yaw, _start_alt)
             if _descent_reason == "devrilmis_kanca":
                 # Devrilmis kancayla yakalama penceresine girmek, 30 s'lik
                 # butceyi kesin bir basarisizliga harcamaktir: egim kapisi

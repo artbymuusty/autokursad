@@ -308,7 +308,16 @@ class VisualHookAligner:
     async def align(self, altitude_m: float, yaw_deg: float,
                     timeout_s: float = ALIGN_TIMEOUT_S,
                     tolerance_m: float = ALIGN_TOLERANCE_M) -> AlignResult:
-        """tolerance_m is deliberately a parameter.
+        """`altitude_m` IS THE COMMANDED ALTITUDE, not a label.
+
+        Every correction step issues goto_ned_and_hold(n, e, altitude_m, yaw),
+        so the vehicle FLIES AT altitude_m for the whole alignment. Gorev 3
+        passes GOREV3_APPROACH_ALTITUDE_M (0.30), which means the visual
+        alignment actually runs at 0.30 m -- several comments in
+        gorev3_pickup.py used to claim 0.90 m and were wrong (GOREV O,
+        2026-09-05).
+
+        tolerance_m is deliberately a parameter.
 
         The AIRBORNE stage does not need millimetre precision: its job is to
         measure the receiver well and get roughly over it. The fine work is

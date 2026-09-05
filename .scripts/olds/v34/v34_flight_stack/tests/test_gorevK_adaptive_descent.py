@@ -492,3 +492,76 @@ def test_settle_miknatis_yetisemiyorsa_KOSAR():
     """Kosulsuz atlamak, yanal menzil disindayken denemeyi pesinen harcar
     (olculdu: 217.1 mm vs 1.9 mm, ayni kosumun iki denemesi)."""
     assert "GOREV3_SETTLE_HOOK_ONTO_ENABLED or not _magnet_can_reach" in SRC
+
+
+# --------------------------------------------------------------------------
+# GOREV O -- baslangic irtifasi OLCULUR, sakul OLCULEREK beklenir
+# --------------------------------------------------------------------------
+from core.mission.gorev3_pickup import (HOOK_MOUNT_BODY_X_M,
+                                        HOOK_PLUMB_SETTLE_MAX_S,
+                                        HOOK_PLUMB_TOLERANCE_M)
+
+
+def test_inis_baslangic_irtifasi_OLCULUYOR_varsayilmiyor():
+    """Sabit 0.90 varsayimi YALNIZCA _settle_hook_onto kostugunda dogruydu;
+    adim atlandiginda arac 0.30 m'de kaliyor ve ilk 'adim' 0.296 m TIRMANIS
+    oluyordu. OLCULDU (18 deneme, istisnasiz):
+        settle KOSTU   -> 0.860-0.899 m, ilk yanal   8-60 mm
+        settle ATLANDI -> 0.301-0.305 m, ilk yanal 179-208 mm"""
+    assert "_start_alt = await self._current_alt_m()" in SRC
+    assert "aligned_yaw, _start_alt)" in SRC
+    # DAR OL: _settle_hook_onto hala mesru olarak 0.90 aliyor (kendi komut
+    # irtifasi). Yasak olan sey INISIN sabit varsayimi.
+    assert "self._adaptive_descend(\n                _hn, _he, aligned_yaw, " \
+           "HOOK_VISUAL_ALIGN_ALTITUDE_M)" not in SRC, \
+        "inis hala sabit irtifa varsayiyor"
+
+
+def test_irtifa_okunamazsa_SESSIZCE_dusmuyor():
+    """Geri dusus mesru ama SESSIZ olmamali: varsayim yanlissa ilk adim
+    tirmanis olur ve bunu log soylemeli."""
+    i = SRC.index("_start_alt = await self._current_alt_m()")
+    blok = SRC[i:i + 700]
+    assert "OLCULEMEDI" in blok and "TIRMANIS" in blok
+
+
+def test_sakul_beklemesi_SABIT_UYKU_DEGIL():
+    """Payout sonrasi kosulsuz sleep(HOOK_PAYOUT_SETTLE_S) '4 s'de sarkac
+    soner' VARSAYIMIYDI. Olculdu: atlanan denemelerde kanca 142-151 mm
+    sarkmis kaliyordu (sakul -0.090, olculen -0.2318/-0.2412)."""
+    assert "await self._wait_hook_plumb(aligned_yaw)" in SRC
+    i = SRC.index("async def _wait_hook_plumb")
+    blok = SRC[i:i + 2200]
+    assert "hook_nose_ned_offset_m" in blok, "sakul OLCULMUYOR"
+    assert "HOOK_PLUMB_SETTLE_MAX_S" in blok, "tavan yok -- sonsuz bekleyebilir"
+    assert "break" in blok, "erken cikis yok"
+
+
+def test_sakul_sabitleri_turetilmis():
+    from core.mission.hook_seating import MAGNET_CAPTURE_RADIUS_M
+    # Sakul noktasi SDF'den: hook_mount govde x = -0.090
+    assert HOOK_MOUNT_BODY_X_M == -0.090
+    # Tolerans SECILMEDI: kapinin kendi yakalama yaricapi
+    assert HOOK_PLUMB_TOLERANCE_M == MAGNET_CAPTURE_RADIUS_M
+    # Tavan, _settle_hook_onto'nun fiilen harcadigi 7.5 s ile ayni mertebede
+    assert 7.0 <= HOOK_PLUMB_SETTLE_MAX_S <= 10.0
+
+
+def test_align_irtifasinin_KOMUT_oldugu_belgeli():
+    """Yorumlar '0.90 m'de hizalanir' diyordu; align() ilk argumani her
+    duzeltmede KOMUT IRTIFASI olarak kullaniyor, yani hizalama 0.30 m'de
+    kosuyor. Yanlis yorum, GOREV K'da adimin sessiz islerinin gozden
+    kacmasina katki yapti."""
+    import inspect
+    import core.mission.visual_alignment as va
+    doc = inspect.getdoc(va.VisualHookAligner.align) or ""
+    assert "COMMANDED ALTITUDE" in doc
+
+
+def test_settle_docstringi_DINLENIYOR_demiyor():
+    """Kanca 0.90 m'de, 0.33 m salimla ~0.61 m'de -- HAVADA, dinlenmiyor."""
+    import inspect
+    import core.mission.gorev3_pickup as g3
+    doc = inspect.getdoc(g3.Gorev3PickupPhase._settle_hook_onto) or ""
+    assert "RESTING hook" not in doc
+    assert "HAVADA" in doc
