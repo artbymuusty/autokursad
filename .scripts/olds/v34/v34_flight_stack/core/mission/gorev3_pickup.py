@@ -47,7 +47,21 @@ HOOK_ALIGN_ALTITUDE_M = 1.2
 # Yuk kamerada kaybolursa kac metre yukselip yeniden aranacak
 # ve kac kez denenecek (operator, 2026-08-23).
 HOOK_REACQUIRE_CLIMB_M = 1.0
-HOOK_REACQUIRE_MAX_CLIMBS = 3
+# 3 -> 1 (GOREV K / B1, operator karari 2026-09-05). BUTCE KARARI, ve
+# gerekcesi olculmus: O-B/C1'de ON HAZIRLIK 53.5-58.6 s surdu ve 60 s'lik
+# deneme butcesinden yakalama penceresine yalnizca 1.4-6.5 s kaldi. Adaptif
+# alcalma (madde 6) buraya ~+6 s daha ekliyor; yer acilmazsa her deneme
+# 60 s'de kesilir ve KAPILAR HIC DENENMEZ.
+#
+# NEDEN ILK TIRMANIS KORUNUYOR: H1 dogrulamasi (docs/gorevG-H1-dogrulama.md)
+# yeniden bulmanin CALISTIGINI olctu; kaldirmak calisan bir kurtarmayi
+# atmak olurdu. Kirpilan sey TEKRARI: ayni denemede ikinci ve ucuncu
+# tirmanis, ilkinin bulamadigi yuku ayni yontemle yeniden ariyor.
+#
+# BU DEGER OLCUMLE DOGRULANACAK: canli kosumda kac denemenin reacquire'a
+# dustugu ve ilk tirmanisin yetip yetmedigi loglaniyor. Yetmiyorsa geri
+# alinacak yer burasi, adaptif alcalma degil.
+HOOK_REACQUIRE_MAX_CLIMBS = 1
 # TESPIT TAVANI (Gorev G / H1, 2026-09-04).
 #
 # Yukaridaki tirmanis KOSULSUZ YUKARI gidiyordu ve tetiklendiginde kendi
@@ -123,7 +137,17 @@ HOOK_PAYOUT_SETTLE_S = 4.0
 # (asagi bak) ve son duzeltme zaten alma irtifasinda yapiliyor. Dedektorun
 # 66 kareli olcumunde bu bant (0.90-1.40 m) 0.076 cm merkez hatasi veriyor.
 HOOK_VISUAL_ALIGN_ALTITUDE_M = 0.90
-HOOK_ALIGN_MAX_CORRECTIONS = 6
+# 6 -> 3 (GOREV K / B1, operator karari 2026-09-05). Ayni butce karari.
+# O-B/C1 olcumu: _settle_hook_onto 10.9-15.7 s surdu, yani tek basina
+# denemenin dortte biri. Kazanc 0.5 ile her adim kalan hatanin yarisini
+# kapatiyor, dolayisiyla 3 adim artik hatanin 1/8'ini birakir: gorsel
+# hizalamanin kabul esigi HOOK_VISUAL_ALIGN_MAX_USABLE_M = 0.12 m
+# oldugundan en kotu giristen sonra 15 mm kalir. 6 adim 1.9 mm'ye inerdi
+# ama zaten HOOK_ALIGN_TARGET_LATERAL_M = 10 mm'de erken cikiliyor.
+# OLCULEN yakinsama (2026-08-31, uc kosum) 18.6 / 27.3 / 13.3 mm idi --
+# yani pratikte butce zaten hedefe varmadan doluyordu; 3 adim o rejimde
+# sureyi yariya indirir ve son sozu oturma kapisi soyler.
+HOOK_ALIGN_MAX_CORRECTIONS = 3
 # Duzeltmeyi birakma esigi: oturma kapisinin yanal sinirinin yarisi. Yarisi,
 # cunku kapinin tam sinirinda durmak PX4'un birkac mm'lik surukklenmesiyle
 # hemen disari cikar.
