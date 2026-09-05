@@ -11,6 +11,7 @@ from core.config.parameters import (
     PAYLOAD_DETACH_SEPARATION_M, PAYLOAD_EXPECTED_REST_Z_M,
     PAYLOAD_ON_TARGET_Z_TOLERANCE_M,
     GOREV3_MAGNET_ATTRACT_PERIOD_S,
+    GOREV3_SERVO3_POST_LOCK_DELAY_S,
 )
 from gz_system.gz_pose_monitor import GzPoseMonitor
 from core.mission.hook_seating import (
@@ -1340,6 +1341,9 @@ class GzPayloadActuator(IPayloadActuator):
         attract_last = 0.0
         attract_calls = 0
         attract_first_dist_mm = None
+        # GOREV N/A: kilit sonrasi dogrulama penceresinde kac kez kapilar
+        # bozuldu. Gecikmenin BEDAVA olup olmadigini bu sayi soyler.
+        post_lock_aborts = 0
         while asyncio.get_event_loop().time() < deadline:
             geom = self.seating_geometry(color)
             now = time.monotonic()
@@ -1413,6 +1417,52 @@ class GzPayloadActuator(IPayloadActuator):
                 candidate_samples += 1
 
             if state is SeatState.SEATED:
+                # ==========================================================
+                # GOREV N/A -- SERVO3 KILIT SONRASI GECIKMESI
+                # ==========================================================
+                # Operator tarifi: "1 cycle 35 s suruyorsa, 37. saniyede
+                # servo3 calistirilip kollari acarak tutma gerceklestirilecek"
+                # -- kilitlenme anindan SABIT bir sure sonra.
+                #
+                # ONCEKI DAVRANIS: gecikme YOKTU; dwell dolar dolmaz
+                # /hook/attach yayinlaniyordu.
+                #
+                # BU "BEKLE VE KORLEMESINE KAVRA" DEGIL: pencere boyunca
+                # kapilar ORNEKLENMEYE DEVAM EDER. Bir kez bile bozulursa
+                # kavrama YAPILMAZ, dwell bastan sayar ve ana dongu kaldigi
+                # yerden surer. Aksi halde gecikme garantiyi guclendirmek
+                # yerine ZAYIFLATIRDI -- kanca kayip gitmisken kavramak,
+                # oturma kapisinin var olma sebebi olan Case 7 kusurudur.
+                #
+                # MAGNET_DWELL_S'E DOKUNULMADI (Gorev M/S4 alani): bu ayri
+                # ve UST bir dogrulama penceresi.
+                if GOREV3_SERVO3_POST_LOCK_DELAY_S > 0.0:
+                    _t0 = time.monotonic()
+                    _stable = True
+                    _worst = None
+                    while (time.monotonic() - _t0) < GOREV3_SERVO3_POST_LOCK_DELAY_S:
+                        await asyncio.sleep(HOOK_SEATING_POLL_S)
+                        _g2 = self.seating_geometry(color)
+                        _st = evaluator.update(_g2, time.monotonic())
+                        self._seat_state = _st
+                        if _st is not SeatState.SEATED:
+                            _stable = False
+                            _worst = (evaluator.last_failures
+                                      or ["dwell_kesildi"])
+                            break
+                    if not _stable:
+                        logger.warning("[HOOK] KILIT SONRASI %.1f s dogrulama "
+                                       "penceresinde kapilar BOZULDU (%s) -- "
+                                       "kavrama YAPILMIYOR, dwell bastan.",
+                                       GOREV3_SERVO3_POST_LOCK_DELAY_S,
+                                       ", ".join(_worst))
+                        post_lock_aborts += 1
+                        continue
+                    logger.info("[HOOK] KILIT SONRASI %.1f s dogrulama penceresi "
+                                "TEMIZ -- servo3 tetikleniyor.",
+                                GOREV3_SERVO3_POST_LOCK_DELAY_S)
+                    geom = self.seating_geometry(color) or geom
+
                 # GOREV K / D: kapilar dwell boyunca acik kaldi -- miknatis
                 # kilitlendi. Mekanik tutus SIRADAKI asama (servo3).
                 logger.info("[HOOK] MAGNET_LOCKED: %s -- dwell %.2f s "
@@ -1431,6 +1481,8 @@ class GzPayloadActuator(IPayloadActuator):
                     "payout_cmd_m": self._last_payout_wanted_m,
                     "payout_sent_m": getattr(self, "_last_payout_m", None),
                     "capture_candidate_samples": candidate_samples,
+                    "post_lock_delay_s": GOREV3_SERVO3_POST_LOCK_DELAY_S,
+                    "post_lock_aborts": post_lock_aborts,
                     "gate_rejections": dict(fail_counts),
                     # GOREV K / D olcumleri: cekim gercekten devreye girdi mi,
                     # kac adim uygulandi, menzile girildiginde mesafe neydi.
@@ -1716,6 +1768,20 @@ class GzPayloadActuator(IPayloadActuator):
         ikilisinin karsiligi tek sey: HookAttachSystem'in fixed joint'i.
         Temas once dogrulanir, cunku joint'i temassiz kurmak "havada
         kilitlendi" demek olurdu."""
+        # SERVO ACILARI (GOREV N/B, operator tarifi 2026-09-05). Degerler
+        # core/config/parameters.py'da; burada HARDCODE YOK:
+        #   SERVO1 (birakma) GOREV3_SERVO1_ANGLES_DEG
+        #                    sol -90 | orta 0 | sag +90     (uc konum)
+        #   SERVO2 (vinc)    SOLA doner = SARKIT (salim artar)
+        #                    SAGA doner = CEK    (salim azalir)
+        #                    Kod karsiligi: extend_winch_for / set_winch(0).
+        #   SERVO3 (kavrama) GOREV3_SERVO3_SWEEP_DEG = 180, SOLDAN SAGA
+        #                    CLOSED 0 (kavriyor) | OPEN 180 (tam acik)
+        # GZ'de servo acisi SIMULE EDILMIYOR: kavrama, HookAttachSystem'in
+        # fixed joint'i ile temsil ediliyor. Acilar burada BELGE olarak
+        # duruyor ki gercek donanim yolu (real_payload_actuator) ile
+        # simulasyon ayni tanimi paylassin.
+        #
         # SERVO2 (VINC) + SERVO3 (KAVRAMA) -- eski adiyla THIRD MISSION SERVO.
         # GOREV K / C (2026-09-04): tek nokta IKIYE ayrildi.
         #   SERVO2 = kancayi indirip yukari ceken vinc  -> extend_winch_for /

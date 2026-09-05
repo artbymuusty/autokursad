@@ -52,7 +52,10 @@ class RealPayloadActuator(IPayloadActuator):
         # TODO[DONANIM]: Gerçek servo entegrasyonu
         # AYAR:
         #   Beklenen davranış : servo 90° SAĞA, ardından 90° SOLA (Görev 2 Rapor Bölüm 12)
-        #   Açı               : +90° / -90°  (Bölüm 12'de tanımlı)
+        #   Açı               : GOREV3_SERVO1_ANGLES_DEG (config -- HARDCODE DEĞİL)
+        #                       sol -90° | orta 0° | sağ +90°   (operatör, 2026-09-05)
+        #                       Bölüm 12'deki "+90 / -90" ile aynı mekanizma; buradaki
+        #                       üçüncü konum (orta = 0°) dinlenme/nötr konumdur.
         #   Süre              : TODO -- servo datasheet'inden ya da bankoda ölçülecek
         #   Kanal             : real_system.yaml -> actuator.mavi_altigen_release_channel
         #   Önerilen kütüphane: pigpio / RPi.GPIO / PX4 AUX kanalı (MAVSDK Actuator Control)
@@ -107,7 +110,12 @@ class RealPayloadActuator(IPayloadActuator):
         #   Beklenen davranış : 30 cm irtifaya inildiğinde kancayı yükün hizasına
         #                       kadar SARKIT; alma bitince yukarı ÇEK. GZ karşılığı
         #                       gz_payload_actuator.extend_winch_for / set_winch.
-        #   Açı/tur           : TODO -- salım uzunluğu (m) <-> servo turu dönüşümü
+        #   Yön               : SOLA döner = SARKIT (salım artar) |
+        #                       SAĞA döner = ÇEK (salım azalır)     (operatör, 2026-09-05)
+        #                       Kod karşılığı: extend_winch_for (sarkıt) / set_winch(0) (çek).
+        #                       Ö1 kuralı: alma penceresi boyunca salım YALNIZCA BÜYÜR.
+        #   Açı/tur           : TODO -- salım uzunluğu (m) <-> servo turu dönüşümü.
+        #                       ÖLÇÜLMEDİ: dişli oranı ve makara çapı bankoda ölçülecek.
         #   Süre              : TODO -- tam salım süresi (GZ'de eklem hız sınırı 0.5 m/s)
         #   Kanal             : real_system.yaml -> actuator.winch_channel
         #
@@ -117,8 +125,15 @@ class RealPayloadActuator(IPayloadActuator):
         #                       kilitlenme kapıları + dwell geçilince kanca içindeki
         #                       kollar KAPANIR ve yükü İÇERİDEN kavrar. Manyetik
         #                       tutuş konumlandırır, mekanik tutuşu bu servo sağlar.
-        #   Açı               : TODO -- kolların tam kapanma açısı
-        #   Süre              : TODO -- kolların kapanma süresi
+        #   Açı               : GOREV3_SERVO3_CLOSED_DEG = 0°  (config -- HARDCODE DEĞİL)
+        #                       Tam süpürme GOREV3_SERVO3_SWEEP_DEG = 180°, SOLDAN SAĞA
+        #                       (operatör, 2026-09-05). 0° = kapalı/kavrıyor,
+        #                       180° = tam açık.
+        #   Zamanlama         : dwell (MAGNET_DWELL_S) DOLDUKTAN SONRA
+        #                       GOREV3_SERVO3_POST_LOCK_DELAY_S kadar daha beklenir
+        #                       ve o pencerede kapılar örneklenmeye DEVAM eder
+        #                       (GÖREV N/A). Kapılar bozulursa kavrama YAPILMAZ.
+        #   Süre              : TODO -- kolların kapanma süresi (bankoda ölçülecek)
         #   Kanal             : real_system.yaml -> actuator.grip_channel
         #   Önerilen kütüphane: pigpio / RPi.GPIO / PX4 AUX kanalı (MAVSDK Actuator Control)
         #
@@ -142,8 +157,10 @@ class RealPayloadActuator(IPayloadActuator):
         #   Beklenen davranış : Almanın TERSİ -- kavrama kolları AÇILIR ve yük
         #                       bırakılır ("servo aciliyor -- yuk birakiliyor").
         #                       ALMADAKİ İLE AYNI FİZİKSEL SERVO, ters yön.
-        #   Açı               : TODO -- kapanma açısının tersi
-        #   Süre              : TODO -- kolların tam açılma süresi
+        #   Açı               : GOREV3_SERVO3_OPEN_DEG = 180°  (config -- HARDCODE DEĞİL)
+        #                       Kapanma açısının (0°) tam tersi; süpürme
+        #                       GOREV3_SERVO3_SWEEP_DEG = 180°, SOLDAN SAĞA.
+        #   Süre              : TODO -- kolların tam açılma süresi (bankoda ölçülecek)
         #   Kanal             : real_system.yaml -> actuator.grip_channel
         #   Önerilen kütüphane: pigpio / RPi.GPIO / PX4 AUX kanalı (MAVSDK Actuator Control)
         #

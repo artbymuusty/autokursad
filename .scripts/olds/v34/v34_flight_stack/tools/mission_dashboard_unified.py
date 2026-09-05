@@ -88,6 +88,9 @@ WINDOW = "KURSAD40 - Mission Dashboard (unified)"
 FALLBACK_SCREEN = (1710, 1112)
 
 COL_W = 470                      # orta kolon -- v2 ile ayni, panel davranisi degismesin
+#: SERVO DURUM paneli yuksekligi (GOREV N/C, operator istegi 2026-09-05).
+#  Minimap'in ALTINDA, Current Status'un USTUNDE. Uc satir + baslik.
+SERVO_H = 118
 TIMELINE_W = 330                 # ucuncu kolon; en uzun timeline satiri olculdu:
                                  # scale 0.43'te 292 px + 14 px sol bosluk = 306
 STATUS_H = 424                   # 11 adim x 27 px + baslik/alt satir icin olculen yukseklik
@@ -207,11 +210,17 @@ class Layout:
         self.col_x, self.col_w = cam, col
         self.tl_x, self.tl_w = cam + col, tl
         self.status_h = min(STATUS_H, max(200, self.H - MIN_MAP_H))
-        self.map_h = self.H - self.status_h
+        # GOREV N/C: servo paneli minimap ile status arasinda. Yeri haritadan
+        # aliniyor -- status paneli KISALTILMIYOR, cunku oradaki adim listesi
+        # sabit yukseklikte ve kirpilirsa son adim gorunmez olur.
+        self.servo_h = SERVO_H
+        self.map_h = self.H - self.status_h - self.servo_h
+        self.servo_y = self.map_h
 
     def describe(self) -> str:
         return (f"{self.W}x{self.H}  |  kamera {self.cam_w}x{self.cam_h}  "
-                f"map/status {self.col_w} ({self.map_h}/{self.status_h})  "
+                f"map/servo/status {self.col_w} "
+                f"({self.map_h}/{self.servo_h}/{self.status_h})  "
                 f"timeline {self.tl_w}")
 
 
@@ -496,6 +505,31 @@ class MissionState:
         # JSONL'i bastan okumak gerekirdi.
         self.events = []
         self.events_all = []
+
+        # ------------------------------------------------------------------
+        # GOREV N/C -- SERVO DURUMLARI (operator istegi 2026-09-05)
+        # ------------------------------------------------------------------
+        # YENI BIR OLAY KAYNAGI ICAT EDILMEDI: uc servo da ZATEN YAYINLANAN
+        # olaylardan turetiliyor. Her servo, kendisini en son guncelleyen
+        # OLAY KODUNU da tasiyor ve panel onu yaziyor -- boylece gosterilen
+        # durumun nereden geldigi ekranda gorunur ve panel sessizce
+        # yaniltamaz.
+        #   servo1 <- PAYLOAD_RELEASE_REQUESTED / PAYLOAD_RELEASED /
+        #             PAYLOAD_RELEASE_CONFIRMED / PAYLOAD_MISSION_*_STARTED
+        #   servo2 <- GOREV3_PICKUP_STEP (hook_offset_applied,
+        #             vertical_descent_start) / HOOK_SEATING_RESULT.payout_m
+        #   servo3 <- MAGNET_ATTRACTION_ACTIVE / HOOK_SEATING_RESULT /
+        #             GOREV3_PICKUP_ABORT / GOREV3_PICKUP_EXHAUSTED
+        self.servo = {
+            "1": {"label": "ORTA", "detail": "", "active": False, "src": "-", "ts": None},
+            "2": {"label": "CEKILI", "detail": "", "active": False, "src": "-", "ts": None},
+            "3": {"label": "ACIK", "detail": "180 deg", "active": False, "src": "-", "ts": None},
+        }
+
+    def _servo(self, key, label, detail, active, src, ts):
+        st = self.servo[key]
+        st["label"], st["detail"] = label, detail
+        st["active"], st["src"], st["ts"] = active, src, ts
         self.events_dropped = 0
 
         # -- CENTERING (CENTERING_STEP, centering_controller.py:972-991) ---
@@ -529,6 +563,54 @@ class MissionState:
         if len(self.events) > RECENT_EVENTS_MAX:
             self.events.pop(0)
 
+    def _apply_servo(self, code, e, ts) -> None:
+        """GOREV N/C -- uc servonun durumunu MEVCUT olaylardan turet.
+
+        TUREV OLDUGU ACIKCA YAZILIYOR: panel her satirda kaynak olay kodunu
+        gosteriyor. Gosterilen durum bir OLCUM degil, olay akisindan yapilan
+        bir CIKARIM -- ve hangi olaydan yapildigi ekranda okunabilir."""
+        d = e.get("data") or {}
+
+        # ---- SERVO1: birakma servosu (sol / orta / sag) ----
+        if code in ("PAYLOAD_MISSION_1_STARTED", "PAYLOAD_MISSION_2_STARTED"):
+            yon = "SOL" if code.endswith("1_STARTED") else "SAG"
+            aci = -90.0 if yon == "SOL" else +90.0
+            self._servo("1", yon, f"{aci:+.0f} deg (hedefte)", False, code, ts)
+        elif code == "PAYLOAD_RELEASE_REQUESTED":
+            cur = self.servo["1"]["label"]
+            yon = cur if cur in ("SOL", "SAG") else "SOL"
+            aci = -90.0 if yon == "SOL" else +90.0
+            self._servo("1", yon, f"{aci:+.0f} deg -- BIRAKIYOR", True, code, ts)
+        elif code in ("PAYLOAD_RELEASED", "PAYLOAD_RELEASE_CONFIRMED",
+                      "PAYLOAD_1_RELEASED", "PAYLOAD_2_RELEASED"):
+            self._servo("1", "ORTA", "0 deg (birakildi)", False, code, ts)
+
+        # ---- SERVO2: vinc (sarkit / cek) ----
+        elif code == "GOREV3_PICKUP_STEP":
+            msg = e.get("message") or ""
+            if msg == "hook_offset_applied":
+                self._servo("2", "SARKITIYOR", "sola donuyor", True, code, ts)
+            elif msg == "vertical_descent_start":
+                self._servo("2", "SALIM ACIK", "kanca serbest asili", False, code, ts)
+        elif code == "HOOK_SEATING_RESULT":
+            po = d.get("payout_m")
+            self._servo("2", "SALIM ACIK",
+                        f"{po:.3f} m" if isinstance(po, (int, float)) else "-",
+                        False, code, ts)
+        elif code in ("GOREV3_PICKUP_EXHAUSTED", "GOREV3_PICKUP_ABORT"):
+            self._servo("2", "CEKILI", "saga donuyor", True, code, ts)
+
+        # ---- SERVO3: kavrama kollari (0 kapali / 180 acik) ----
+        if code == "MAGNET_ATTRACTION_ACTIVE":
+            self._servo("3", "ACIK", "180 deg -- miknatis cekiyor", True, code, ts)
+        elif code == "HOOK_SEATING_RESULT":
+            if (e.get("message") or "") == "seated":
+                self._servo("3", "KAVRADI", "0 deg -- kollar kapali", True, code, ts)
+            else:
+                self._servo("3", "ACIK", "180 deg -- oturmadi", False, code, ts)
+        elif code in ("GOREV3_PICKUP_EXHAUSTED", "GOREV3_PICKUP_ABORT"):
+            self._servo("3", "ACIK", "180 deg", False, code, ts)
+
     def apply(self, e: dict) -> None:
         self.event_count += 1
         ts = e.get("ts")
@@ -542,6 +624,7 @@ class MissionState:
         self._ring_push(e)
 
         code = e.get("code")
+        self._apply_servo(code, e, ts)
         data = e.get("data") or {}
 
         if code == "MISSION_PHASE_CHANGED":
@@ -888,7 +971,62 @@ def draw_minimap(img, x0, y0, w, h, st: MissionState, positions):
 
 
 # --------------------------------------------------------------------------
-# Kolon 2 / Panel 2 -- Current Status  (v2'den davranisi degismeden)
+# Kolon 2 / Panel 2 -- SERVO DURUM (GOREV N/C, operator istegi 2026-09-05)
+# --------------------------------------------------------------------------
+SERVO_ROWS = (
+    ("1", "SERVO1", "birakma"),
+    ("2", "SERVO2", "vinc"),
+    ("3", "SERVO3", "kavrama"),
+)
+
+
+def draw_servos(img, x0, y0, w, h, st: MissionState):
+    """Uc servonun ANLIK durumu. Gri = pasif, yesil = aktif/hareket halinde.
+
+    Her satir, durumu ureten OLAY KODUNU da yaziyor. Bu suslemedir degil:
+    panel bir OLCUM gostermiyor, olay akisindan yapilmis bir CIKARIM
+    gosteriyor -- kaynagi ekranda okunmazsa panel sessizce yaniltabilirdi.
+    """
+    body_y = panel(img, x0, y0, w, h, "SERVO DURUM")
+    row_h = (h - (body_y - y0) - 6) // 3
+    for i, (key, ad, rol) in enumerate(SERVO_ROWS):
+        srv = st.servo[key]
+        ry = body_y + 3 + i * row_h
+        active = bool(srv["active"])
+        col = COL_GOOD if active else COL_TEXT_DIM
+
+        # Aktif satirin zemini + sol serit -- Current Status'un ACTIVE
+        # satiriyla AYNI dil, boylece iki panel ayni sekilde okunur.
+        if active:
+            cv2.rectangle(img, (x0 + 6, ry + 1), (x0 + w - 6, ry + row_h - 3),
+                          (44, 48, 40), -1)
+            cv2.rectangle(img, (x0 + 6, ry + 1), (x0 + 9, ry + row_h - 3),
+                          COL_GOOD, -1)
+
+        # Durum lambasi
+        cv2.circle(img, (x0 + 22, ry + row_h // 2 - 1), 5, col, -1)
+        cv2.circle(img, (x0 + 22, ry + row_h // 2 - 1), 5, (255, 255, 255), 1)
+
+        text(img, ad, x0 + 36, ry + row_h // 2 + 2, COL_TEXT, 0.44, 1)
+        text(img, rol, x0 + 100, ry + row_h // 2 + 2, COL_TEXT_DIM, 0.36)
+        text(img, str(srv["label"]), x0 + 152, ry + row_h // 2 + 2, col, 0.46, 1)
+        if srv["detail"]:
+            text(img, str(srv["detail"]), x0 + 246, ry + row_h // 2 + 2,
+                 COL_TEXT_DIM, 0.36)
+        # Kaynak olay kodu -- SAGA YASLI. Genislik TAHMIN EDILMIYOR,
+        # cv2.getTextSize ile olculuyor: ilk yazimda 7*len/2 tahmini
+        # kullanilmisti ve metin panelin sag kenarindan TASIYORDU
+        # ("PAYLOAD_2_RELEA~" diye kirpiliyordu).
+        src = str(srv["src"])
+        (sw, _sh), _ = cv2.getTextSize(src, FONT, 0.30, 1)
+        while sw > w - 160 and len(src) > 6:
+            src = src[:-2] + "~"
+            (sw, _sh), _ = cv2.getTextSize(src, FONT, 0.30, 1)
+        text(img, src, x0 + w - 12 - sw, ry + row_h // 2 + 2, COL_TEXT_DIM, 0.30)
+
+
+# --------------------------------------------------------------------------
+# Kolon 2 / Panel 3 -- Current Status  (v2'den davranisi degismeden)
 # --------------------------------------------------------------------------
 def draw_status(img, x0, y0, w, h, st: MissionState, positions):
     body_y = panel(img, x0, y0, w, h, "Current Status")
@@ -1292,7 +1430,10 @@ def main() -> int:
                     draw_camera(canvas[:, :lay.cam_w], cam.get_frame(), cam, det, st, lay)
                     pts = positions.points if positions else []
                     draw_minimap(canvas, lay.col_x, 0, lay.col_w, lay.map_h, st, pts)
-                    draw_status(canvas, lay.col_x, lay.map_h, lay.col_w, lay.status_h, st, pts)
+                    draw_servos(canvas, lay.col_x, lay.servo_y, lay.col_w,
+                                lay.servo_h, st)
+                    draw_status(canvas, lay.col_x, lay.servo_y + lay.servo_h,
+                                lay.col_w, lay.status_h, st, pts)
                     draw_timeline(canvas, lay.tl_x, 0, lay.tl_w, lay.H, st, filtered)
                 cv2.imshow(WINDOW, canvas)
 

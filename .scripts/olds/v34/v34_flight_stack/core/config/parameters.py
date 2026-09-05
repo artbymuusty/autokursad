@@ -193,6 +193,45 @@ GOREV3_PICKUP_ATTEMPT_TIMEOUT_S: float = 60.0
 #  'dogrulama 15 s' tahminini pay ile kapsar.
 GOREV3_PICKUP_VERIFY_TIMEOUT_S: float = 25.0
 
+# ==========================================================================
+# SERVO TANIMLARI (GOREV N, operator tarifi 2026-09-05)
+# ==========================================================================
+#: SERVO3 KILIT SONRASI GECIKME.
+#  Operator tarifi: "1 cycle 35 s suruyorsa, 37. saniyede servo3
+#  calistirilip kollari acarak tutma gerceklestirilecek" -- yani kilitlenme
+#  anindan SABIT bir sure sonra.
+#
+#  ONCEKI DAVRANIS: gecikme YOKTU. _await_seating, dwell dolar dolmaz
+#  SeatState.SEATED deyip donuyor ve /hook/attach hemen yayinlaniyordu.
+#
+#  BU BIR "BEKLE VE KORLEMESINE KAVRA" GECIKMESI DEGIL: pencere boyunca
+#  oturma kapilari ORNEKLENMEYE DEVAM EDER. Kapilar bu sure icinde bir kez
+#  bile bozulursa kavrama YAPILMAZ ve dwell bastan sayar. Aksi halde
+#  gecikme, garantiyi guclendirmek yerine ZAYIFLATIRDI -- kanca kayip
+#  gitmisken kavramak, oturma kapisinin var olma sebebi olan Case 7
+#  kusurunun ta kendisi olurdu.
+#
+#  MAGNET_DWELL_S'E DOKUNULMADI (Gorev M/S4 alani): bu ayri ve ust bir
+#  dogrulama penceresi. Etkisi, kesintisiz kapi saglama suresini
+#  0.60 s + 2.0 s = 2.60 s'ye cikarmak.
+#
+#  BUTCE ETKISI: yakalama penceresine +2.0 s biner. _settle_hook_onto
+#  kosullu hale gelince pencere ~8 s -> ~22 s'ye cikmisti; 2 s oradan
+#  karsilaniyor. OLCULECEK.
+GOREV3_SERVO3_POST_LOCK_DELAY_S: float = 2.0
+
+#: SERVO1 -- yuk birakma servosu. Uc konum (operator tarifi 2026-09-05):
+#  90 derece sol -- orta -- 90 derece sag.
+#  Orta 0 kabul edilir; sol/sag ona gore isaretlidir.
+GOREV3_SERVO1_ANGLES_DEG: dict = {"sol": -90.0, "orta": 0.0, "sag": +90.0}
+
+#: SERVO3 -- kavrama kollari. Tam aciklik 180 derece, soldan saga
+#  (operator tarifi 2026-09-05). 0 = kapali (kollar kapali, yuku tutuyor),
+#  180 = tam acik.
+GOREV3_SERVO3_SWEEP_DEG: float = 180.0
+GOREV3_SERVO3_CLOSED_DEG: float = 0.0
+GOREV3_SERVO3_OPEN_DEG: float = 180.0
+
 GOREV3_PICKUP_VISIBILITY_CONFIRM_FRAMES: int = 3
 
 # TODO[PARAMETRE]: Normal görev seyir hızı (Görev 2/3) hala ekip tarafından
