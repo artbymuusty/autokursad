@@ -677,8 +677,14 @@ class Gorev3PickupPhase:
                        f"{last * 1000:.1f} mm" if last is not None else "olculemedi")
         return last
 
-    async def _wait_hook_over_receiver(self):
-        """Kanca YUVANIN USTUNDE ve DURMUS olana kadar bekle (GOREV O).
+    async def _wait_hook_stopped(self):
+        """Kanca DURANA kadar bekle (GOREV O, operator karari 2026-09-05).
+
+        ADIN NEDEN DEGISTI: onceki adi _wait_hook_over_receiver idi ve olcut
+        "yuvanin ustunde VE durmus" idi. Olcum o olcutu curuttu (bes kosum,
+        0/15 kilit) -- bekleme, yanal hatayi KAPATAMAZ. Ad da olcutle
+        birlikte duzeltildi; yaniltici bir isim, bu dosyada daha once
+        (_settle_hook_onto docstring'i) gercek bir hataya katki yapmisti.
 
         Gerekce ve olculen anti-korelasyon HOOK_SETTLE_WAIT_* sabitlerinin
         basinda. Ozet: eski olcut "kanca aski noktasinin altinda sakulde mi"
@@ -693,37 +699,52 @@ class Gorev3PickupPhase:
             g = self._seating_geometry()
             if g is not None:
                 lat, spd = g.lateral_m, g.rel_speed_mps
-                if (lat <= MAGNET_ATTRACT_RANGE_M
-                        and spd <= SEAT_MAX_REL_SPEED_MPS):
+                # BEKLEMENIN ISI YALNIZCA "DURDU MU" (operator karari
+                # 2026-09-05, OLCUME dayali). Konum kararini CAGIRAN taraf
+                # veriyor: yanal > menzil ise _settle_hook_onto kosuyor,
+                # degilse atlaniyor.
+                #
+                # ONCEKI HAL ikisini birden bekliyordu ve BES KOSUMLUK
+                # SERIYI DUSURDU: 15 denemenin 12'sinde hiz ZATEN dusuktu
+                # (0.003-0.031 m/s, esik 0.05) ama yanal 121-198 mm oldugu
+                # icin 12 s tavan doluyordu. Bekleyerek yanal hata
+                # KAPANMIYOR -- kanca durmus, yalnizca yanlis yerde. 60 s'nin
+                # BESTE BIRI hicbir seyi degistirmeyen bir beklemeye
+                # gidiyordu ve o seride MAGNET_LOCKED 0/15 cikti (onceki uc
+                # kosumda 2 kilit vardi).
+                if spd <= SEAT_MAX_REL_SPEED_MPS:
                     break
             if (time.monotonic() - t0) >= HOOK_SETTLE_WAIT_MAX_S:
                 break
             await asyncio.sleep(HOOK_SETTLE_WAIT_POLL_S)
 
         waited = time.monotonic() - t0
-        ok = (lat is not None and spd is not None
-              and lat <= MAGNET_ATTRACT_RANGE_M
-              and spd <= SEAT_MAX_REL_SPEED_MPS)
+        # "hazir" = DURDU. Yanal ayrica raporlaniyor ama karara girmiyor.
+        ok = spd is not None and spd <= SEAT_MAX_REL_SPEED_MPS
         _l = f"{lat * 1000:.1f} mm" if lat is not None else "olculemedi"
         _v = f"{spd:.3f} m/s" if (spd is not None and spd != float("inf")) else "olculemedi"
         if ok:
-            logger.info("[KANCA_HAZIR] yuvanin ustunde ve durmus: yanal %s "
-                        "(<= %.0f mm), hiz %s (<= %.2f m/s), %.2f s.",
-                        _l, MAGNET_ATTRACT_RANGE_M * 1000, _v,
-                        SEAT_MAX_REL_SPEED_MPS, waited)
+            logger.info("[KANCA_HAZIR] kanca DURDU: hiz %s (<= %.2f m/s), "
+                        "%.2f s. Yanal %s (menzil %.0f mm) -- karar cagirana "
+                        "ait, bekleme onu degistiremez.",
+                        _v, SEAT_MAX_REL_SPEED_MPS, waited, _l,
+                        MAGNET_ATTRACT_RANGE_M * 1000)
         else:
-            logger.warning("[KANCA_HAZIR] tavan (%.1f s) doldu -- yanal %s, "
-                           "hiz %s. Faz DURDURULMUYOR: son sozu oturma kapisi "
-                           "soyluyor, ama inis salinan bir kancayla baslayabilir.",
-                           HOOK_SETTLE_WAIT_MAX_S, _l, _v)
+            logger.warning("[KANCA_HAZIR] tavan (%.1f s) doldu -- kanca HALA "
+                           "HAREKETLI (hiz %s > %.2f m/s), yanal %s. Faz "
+                           "DURDURULMUYOR: son sozu oturma kapisi soyluyor, "
+                           "ama inis salinan bir kancayla baslayabilir.",
+                           HOOK_SETTLE_WAIT_MAX_S, _v, SEAT_MAX_REL_SPEED_MPS, _l)
         self._publish("GOREV3_HOOK_READY", _l,
                       data={"lateral_mm": (round(lat * 1000, 1)
                                            if lat is not None else None),
                             "rel_speed_mps": (round(spd, 3)
                                               if (spd is not None
                                                   and spd != float("inf")) else None),
-                            "lateral_gate_mm": round(MAGNET_ATTRACT_RANGE_M * 1000, 1),
+                            "lateral_range_mm": round(MAGNET_ATTRACT_RANGE_M * 1000, 1),
                             "speed_gate_mps": SEAT_MAX_REL_SPEED_MPS,
+                            # Karar YALNIZCA hiza bakiyor; yanal bilgi amacli.
+                            "decided_on": "rel_speed",
                             "waited_s": round(waited, 2),
                             "ceiling_s": HOOK_SETTLE_WAIT_MAX_S,
                             "ready": bool(ok)})
@@ -1773,13 +1794,34 @@ class Gorev3PickupPhase:
             _c = math.cos(math.radians(aligned_yaw))
             _s = math.sin(math.radians(aligned_yaw))
             _hn, _he = _body_to_ned(HOOK_BODY_OFFSET_FORWARD_M, 0.0)
+            # IRTIFA: ALMA IRTIFASI DEGIL, HIZALAMA IRTIFASI (operator karari
+            # 2026-09-05). Bu adim YATAY bir otelemedir; irtifayi dusurmek
+            # onun isi degil ve dusurmesi INISE IS BIRAKMIYORDU.
+            #
+            # ONCEKI HAL -GOREV3_APPROACH_ALTITUDE_M (0.30) komut ediyordu.
+            # Salim 0.33 m ile burun o irtifada 0.30 + 0.042 - 0.33 = 0.012 m,
+            # yani GUVERTE HIZASINDA. Adaptif alcalmanin alcalacagi mesafe
+            # kalmiyor ve kanca daha ilk anda TEMAS rejiminde oluyor -- tam da
+            # miknatisin kaldirac yapip devirdigi rejim (GOREV M/B).
+            # OLCULDU (bes kosumluk seri, ATLANDI yolundaki uc deneme):
+            #     ins +3.5 / -4.5 / +9.2 mm, egim 20.0-20.8 deg, ucu de
+            #     'devrilmis_kanca' ile dustu -- yanal 8.1-21.7 mm ile MUKEMMEL
+            #     olmasina ragmen.
+            # _settle_hook_onto kostugunda araci 0.90 m'ye geri ucurdugu icin
+            # bu bosluk TESADUFEN kapaniyordu; artik KASITLI kapatiliyor ve
+            # yan etkiye guvenilmiyor.
+            #
+            # 0.90 m'de burun 0.90 + 0.042 - 0.33 = 0.612 m'de, guvertenin
+            # (0.070) yarim metre uzerinde -- serbest asili. Inis oradan
+            # kendi olctugu kadar alcalir.
             logger.info("Kanca hedefin uzerine getiriliyor (govde +%.3f m ileri, "
-                        "gorsel is bitti)...", HOOK_BODY_OFFSET_FORWARD_M)
+                        "%.2f m'de -- YATAY oteleme, irtifa DUSURULMUYOR)...",
+                        HOOK_BODY_OFFSET_FORWARD_M, HOOK_VISUAL_ALIGN_ALTITUDE_M)
             await self.flight.goto_position_ned_and_hold(
-                _hn, _he, -GOREV3_APPROACH_ALTITUDE_M, aligned_yaw, 4.0)
+                _hn, _he, -HOOK_VISUAL_ALIGN_ALTITUDE_M, aligned_yaw, 4.0)
             self._publish("GOREV3_PICKUP_STEP", "hook_offset_applied",
                           data={"forward_m": HOOK_BODY_OFFSET_FORWARD_M,
-                                "altitude_m": GOREV3_APPROACH_ALTITUDE_M,
+                                "altitude_m": HOOK_VISUAL_ALIGN_ALTITUDE_M,
                                 "after_visual_work": True})
 
             # DIKEY IN, sonra VINCI SAL, sonra GORUS OLCUMUNE GORE SON DUZELTME.
@@ -1835,7 +1877,7 @@ class Gorev3PickupPhase:
                 await _extend(GOREV3_DESCENT_ALTITUDE_M)
                 # GOREV O madde 2: sabit uyku yerine SAKULE DONUSU OLC.
                 # Gerekce HOOK_SETTLE_WAIT_* sabitlerinin basinda.
-                await self._wait_hook_over_receiver()
+                await self._wait_hook_stopped()
 
             # ==============================================================
             # _settle_hook_onto ANA YOLDAN CIKARILDI (operator karari 2026-09-05)

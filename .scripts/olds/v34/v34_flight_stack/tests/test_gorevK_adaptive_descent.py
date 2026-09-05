@@ -528,41 +528,45 @@ def test_irtifa_okunamazsa_SESSIZCE_dusmuyor():
 def test_bekleme_SABIT_UYKU_DEGIL():
     """Payout sonrasi kosulsuz sleep(HOOK_PAYOUT_SETTLE_S) '4 s'de sarkac
     soner' VARSAYIMIYDI. Olculdu: kanca 142-151 mm sarkmis kalabiliyordu."""
-    assert "await self._wait_hook_over_receiver()" in SRC
-    i = SRC.index("async def _wait_hook_over_receiver")
-    blok = SRC[i:i + 1800]
+    assert "await self._wait_hook_stopped()" in SRC
+    # Pencere, fonksiyonun SONUNA kadar -- sabit bir karakter sayisi
+    # yorumlar buyudukce sessizce kirpiyordu.
+    i = SRC.index("async def _wait_hook_stopped")
+    blok = SRC[i:SRC.index("    def _hook_nose_z_m(self):", i)]
     assert "self._seating_geometry()" in blok, "durum OLCULMUYOR"
     assert "HOOK_SETTLE_WAIT_MAX_S" in blok, "tavan yok -- sonsuz bekleyebilir"
     assert "break" in blok, "erken cikis yok"
 
 
-def test_bekleme_olcutu_YUVAYA_gore_askiya_gore_DEGIL():
-    """ESKI OLCUT TERSTI ve bu test onu kilitliyor.
+def test_bekleme_olcutu_YALNIZCA_DURMUSLUK():
+    """Iki kez duzeltildi; ikisi de OLCUMLE.
 
-    ADIM 5 araci KASITLI olarak HOOK_BODY_OFFSET_FORWARD_M = 0.175 m
-    govde-ileri oteliyor ki KANCA yukun ustune gelsin. Dolayisiyla kancanin
-    aski noktasinin ALTINDA sakul durmasi o noktadan sonra YANLIS olan
-    durumdur. OLCULDU (11 ornek, dort kosum, tam anti-korelasyon):
-        sakul_sarkma 2.4-13.2 mm  -> settle_yanal 144.7-226.9 mm  (KOTU)
-        sakul_sarkma 152-169 mm   -> settle_yanal   1.1-15.8 mm   (IYI)
-    her satirda toplam ~175 mm = HOOK_BODY_OFFSET_FORWARD_M.
-    Eski olcut, kanca YUVANIN USTUNDEYKEN 12 s tavani bosa yakiyor,
-    ASKI ALTINDA sakuldeyken hemen cikiyordu."""
-    i = SRC.index("async def _wait_hook_over_receiver")
-    blok = SRC[i:i + 1800]
-    assert "MAGNET_ATTRACT_RANGE_M" in blok, "yuvaya gore yanal kullanilmiyor"
-    assert "SEAT_MAX_REL_SPEED_MPS" in blok, "durmusluk olcutu yok"
-    # Aski noktasina gore sakul olcutu GERI GELMEMELI.
-    assert "HOOK_MOUNT_BODY_X_M" not in SRC, "ters (aski-altinda) olcut geri gelmis"
+    1) Ilk hali "kanca aski noktasinin altinda sakulde mi" idi ve TERSTI:
+       ADIM 5 araci kasitli 0.175 m otelediginden aski altinda sakul durmak
+       YANLIS olan durumdur. 11 ornekte tam anti-korelasyon.
+    2) Ikinci hali "yuvanin ustunde VE durmus" idi. Kavramsal olarak dogru
+       ama TAVAN davranisi yanlisti: bes kosumun 15 denemesinin 12'sinde hiz
+       ZATEN dusuktu (0.003-0.031 m/s) ama yanal 121-198 mm oldugu icin 12 s
+       tavan doluyordu -- 60 s'nin BESTE BIRI. O seride kilit 0/15 cikti
+       (onceki uc kosumda 2 kilit vardi).
+
+    DOGRU AYRIM: beklemenin isi "DURDU MU". "Dogru yerde mi" sorusunu
+    cagiran taraf cevapliyor (settle koşsun/atlansin secimi)."""
+    i = SRC.index("async def _wait_hook_stopped")
+    blok = SRC[i:SRC.index("    def _hook_nose_z_m(self):", i)]
+    assert "if spd <= SEAT_MAX_REL_SPEED_MPS:" in blok,         "karar hiza dayanmiyor"
+    # Yanal, KARARA girmemeli (yalnizca raporlanmali).
+    assert "lat <= MAGNET_ATTRACT_RANGE_M" not in blok,         "yanal hala karara giriyor -- 12 s bosa yanar"
+    # Ters (aski-altinda) olcut geri gelmemeli.
+    assert "HOOK_MOUNT_BODY_X_M" not in SRC
     assert "_wait_hook_plumb" not in SRC
 
 
 def test_bekleme_olcutleri_SECILMEDI_turetildi():
     """Iki esik de baska bir gerekceyle turetilmis proje sabiti; bu is icin
     yeni bir sayi UYDURULMADI."""
-    from core.mission.hook_seating import (MAGNET_ATTRACT_RANGE_M,
-                                           SEAT_MAX_REL_SPEED_MPS)
-    assert MAGNET_ATTRACT_RANGE_M == 0.05
+    from core.mission.hook_seating import SEAT_MAX_REL_SPEED_MPS
+    # Karar esigi SECILMEDI: oturma kapisinin KENDI hiz esigi.
     assert SEAT_MAX_REL_SPEED_MPS == 0.05
 
 
@@ -624,3 +628,18 @@ def test_bekleme_tavani_kendi_turetmesiyle_TUTARLI():
     assert HOOK_SETTLE_WAIT_MAX_S >= gereken, (
         f"tavan {HOOK_SETTLE_WAIT_MAX_S} s, kendi turetmesinin "
         f"({gereken:.1f} s) altinda")
+
+
+def test_ADIM5_irtifayi_DUSURMUYOR():
+    """ADIM 5 YATAY bir otelemedir; irtifayi dusurmek onun isi degil.
+
+    OLCULDU (bes kosumluk seri, ATLANDI yolundaki uc deneme): 0.30 m'de
+    salim 0.33 m ile burun 0.012 m'de, yani GUVERTE HIZASINDA -- adaptif
+    alcalmanin alcalacagi mesafe kalmiyor ve kanca ilk andan TEMAS
+    rejiminde. Ucu de 'devrilmis_kanca' ile dustu (egim 20.0-20.8 deg),
+    yanal 8.1-21.7 mm ile MUKEMMEL olmasina ragmen.
+    _settle_hook_onto kostugunda araci 0.90 m'ye ucurdugu icin bosluk
+    TESADUFEN kapaniyordu; artik KASITLI kapatiliyor."""
+    assert "_hn, _he, -HOOK_VISUAL_ALIGN_ALTITUDE_M, aligned_yaw, 4.0)" in SRC,         "ADIM 5 hala alma irtifasina iniyor"
+    i = SRC.index('"hook_offset_applied"')
+    assert "HOOK_VISUAL_ALIGN_ALTITUDE_M" in SRC[i:i + 300]
