@@ -906,6 +906,33 @@ class Gorev3PickupPhase:
                              math.degrees(MAGNET_MAX_TILT_RAD))
                 break
 
+            # EKSENEL OKUMA, BURUN YUVANIN USTUNDE DEGILSE ANLAMSIZ.
+            # OLCULDU (demo_20260905_183335, deneme 1):
+            #     1 adim, 0.9 s, irtifa 0.900 m
+            #     lat=217.5mm ins=+68.4mm tilt=0.4deg
+            # 0.90 m irtifada burnun guverte duzleminin 68 mm ALTINDA olmasi
+            # imkansiz. Sebep: insertion, yuva EKSENI boyunca alinan bir
+            # IZDUSUM. Burun yukun 217 mm YANINDA duruyorsa o izdusum
+            # "guverteye ne kadar yaklastim" sorusunu yanitlamaz -- yanindaki
+            # bos havayi olcer. Inis bunu "kapi gecildi" sanip 0.90 m'de durdu
+            # ve denemeyi harcadi.
+            #
+            # SINIR SECILMEDI: miknatis menzili (50 mm). Bunun otesinde ne
+            # kilitlenme mumkun ne de cekim; yani burun zaten "yuvanin
+            # uzerinde" sayilamaz. Devrilme korumasi bunu yakalayamiyor cunku
+            # kanca DIK asili (olculen egim 0.4 derece) -- kusur duruste degil
+            # KONUMDA.
+            if (geom.insertion_m >= -MAGNET_MAX_GAP_M
+                    and geom.lateral_m > MAGNET_ATTRACT_RANGE_M):
+                reason = "yanal_menzil_disi"
+                logger.error("[ADAPTIF_INIS] %d: eksenel okuma anlamsiz -- yanal "
+                             "%.1f mm, miknatis menzilinin (%.0f mm) DISINDA. "
+                             "Burun yuvanin ustunde degil YANINDA; insertion "
+                             "(%.1f mm) bos havayi olcuyor. Inis durduruluyor.",
+                             step, geom.lateral_m * 1000,
+                             MAGNET_ATTRACT_RANGE_M * 1000, geom.insertion_m * 1000)
+                break
+
             if geom.insertion_m >= -MAGNET_MAX_GAP_M:
                 reason = "eksenel_kapi_gecti"
                 steps.append({"step": step, "gap_mm": round(gap_m * 1000, 1),
@@ -1734,7 +1761,23 @@ class Gorev3PickupPhase:
                     _lat_now = _g.lateral_m if _g is not None else None
                 except Exception:  # noqa: BLE001 -- salt olcum
                     pass
-                if GOREV3_SETTLE_HOOK_ONTO_ENABLED:
+                # MIKNATIS YETISEMIYORSA ESKI DUZELTME DEVREDE.
+                # OLCULDU (demo_20260905_183335): ayni kosumun iki denemesinde
+                # bu noktadaki yanal 217.1 mm ve 1.9 mm cikti. Ikincisinde
+                # miknatis isi bitiriyor; BIRINCISINDE menzilin (50 mm) dort
+                # kati uzakta ve kapatacak KIMSE yok -- adimi kosulsuz atlamak
+                # o denemeyi pesinen harciyor.
+                # Butce kazanci korunuyor: adim yalnizca miknatisin
+                # erisemedigi durumda kosuyor, yani tipik kosumda hic kosmuyor.
+                _magnet_can_reach = (_lat_now is not None
+                                     and _lat_now <= MAGNET_ATTRACT_RANGE_M)
+                if GOREV3_SETTLE_HOOK_ONTO_ENABLED or not _magnet_can_reach:
+                    logger.info("[SON_DUZELTME] KOSULUYOR -- yanal %s, miknatis "
+                                "menzili %.0f mm (%s).",
+                                f"{_lat_now * 1000:.1f} mm" if _lat_now is not None
+                                else "olculemedi", MAGNET_ATTRACT_RANGE_M * 1000,
+                                "zorlandi" if GOREV3_SETTLE_HOOK_ONTO_ENABLED
+                                else "miknatis yetisemiyor")
                     self._publish("GOREV3_PICKUP_STEP", "correction_airborne_start")
                     corrected = await self._settle_hook_onto(
                         recv_ned, aligned_yaw, HOOK_VISUAL_ALIGN_ALTITUDE_M)

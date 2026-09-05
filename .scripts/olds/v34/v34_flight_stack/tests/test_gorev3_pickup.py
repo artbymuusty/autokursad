@@ -332,9 +332,12 @@ async def test_pickup_closes_the_loop_on_the_seen_receiver(tmp_path):
     # Dolayisiyla dogru olcum kancanindir: kanca = arac - 0.175 * ileri.
     assert camera.payload_ned is not None
     final_n, final_e, _ = flight._ned_pos
-    yaw = math.radians(await flight.get_yaw_deg())
-    hook_n = final_n - HOOK_BODY_OFFSET_FORWARD_M * math.cos(yaw)
-    hook_e = final_e - HOOK_BODY_OFFSET_FORWARD_M * math.sin(yaw)
+    # Kancanin araca gore konumu KODUN kullandigi ayni kaynaktan alinir
+    # (actuator.hook_nose_ned_offset_m); testin kendi kanca modelini
+    # uydurmasi, kodla sessizce ayrisan bir olcum demek olurdu.
+    _hook_off = actuator.hook_nose_ned_offset_m()
+    hook_n = final_n + _hook_off[0]
+    hook_e = final_e + _hook_off[1]
     residual = math.hypot(camera.payload_ned[0] - hook_n,
                           camera.payload_ned[1] - hook_e)
     start_offset = math.hypot(*camera.offset_ned)

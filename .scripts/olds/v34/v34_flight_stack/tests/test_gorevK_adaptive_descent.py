@@ -451,3 +451,44 @@ def test_dogrulama_zaman_asimi_tanimli_ve_makul():
     from core.config.parameters import (GOREV3_PICKUP_VERIFY_TIMEOUT_S,
                                         GOREV3_PICKUP_ATTEMPT_TIMEOUT_S)
     assert 0 < GOREV3_PICKUP_VERIFY_TIMEOUT_S < GOREV3_PICKUP_ATTEMPT_TIMEOUT_S
+
+
+# --------------------------------------------------------------------------
+# YANAL MENZIL DISI: eksenel okuma anlamsiz (2026-09-05 olculdu)
+# --------------------------------------------------------------------------
+
+@pytest.mark.asyncio
+async def test_yanal_menzil_disiyken_eksenel_kapi_GECERLI_SAYILMAZ():
+    """insertion, yuva EKSENI boyunca bir IZDUSUM. Burun yukun YANINDA
+    duruyorsa o izdusum 'guverteye ne kadar yaklastim'i yanitlamaz.
+
+    OLCULDU (demo_20260905_183335, deneme 1): 0.90 m irtifada
+        lat=217.5mm  ins=+68.4mm  tilt=0.4deg
+    -- burnun guvertenin 68 mm altinda olmasi imkansiz. Inis bunu 'kapi
+    gecildi' sanip tek adimda durdu ve denemeyi harcadi. Kanca DIK asili
+    (0.4 deg), yani devrilme korumasi yakalayamiyor: kusur duruste degil
+    KONUMDA."""
+    flight, act = _Flight(), _Actuator(gap_m=-0.0684, nose_z=0.070,
+                                       lateral_m=0.2175,
+                                       tilt_rad=math.radians(0.4))
+    phase = _phase(flight, act)
+    alt, reason = await phase._adaptive_descend(1.0, 2.0, 90.0,
+                                                HOOK_VISUAL_ALIGN_ALTITUDE_M)
+    assert reason == "yanal_menzil_disi", f"anlamsiz okuma kabul edildi: {reason}"
+
+
+@pytest.mark.asyncio
+async def test_yanal_menzil_ICINDEYKEN_eksenel_kapi_gecerli():
+    """Ayni okuma, yanal menzil icindeyken NORMAL calismali."""
+    flight, act = _Flight(), _Actuator(gap_m=0.002, nose_z=0.072,
+                                       lateral_m=0.012)
+    phase = _phase(flight, act)
+    alt, reason = await phase._adaptive_descend(1.0, 2.0, 90.0,
+                                                HOOK_VISUAL_ALIGN_ALTITUDE_M)
+    assert reason == "eksenel_kapi_gecti", reason
+
+
+def test_settle_miknatis_yetisemiyorsa_KOSAR():
+    """Kosulsuz atlamak, yanal menzil disindayken denemeyi pesinen harcar
+    (olculdu: 217.1 mm vs 1.9 mm, ayni kosumun iki denemesi)."""
+    assert "GOREV3_SETTLE_HOOK_ONTO_ENABLED or not _magnet_can_reach" in SRC
