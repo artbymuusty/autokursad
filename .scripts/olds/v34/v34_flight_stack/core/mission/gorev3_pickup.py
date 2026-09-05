@@ -1190,14 +1190,54 @@ class Gorev3PickupPhase:
             logger.warning("Mavi Altigen'e seyir irtifasinda (%.1f m) navigasyon zaman "
                            "asimina ugradi -- yine de devam ediliyor.", GOREV3_CRUISE_ALTITUDE_M)
 
-        # Hedefin UZERINDE dikey alcalma: yatay mesafe ~0 oldugu icin bu cagri
-        # yalnizca DESCEND + ARRIVAL_HOLD calistirir.
-        converged = await self.centering.goto_waypoint(
-            mavi_altigen_point.gps_lat, mavi_altigen_point.gps_lon, GOREV3_TRANSIT_ALTITUDE_M)
-        if not converged:
-            logger.warning("Mavi Altigen konumuna navigasyon zaman asimina ugradi -- yine de devam ediliyor.")
+        # ==============================================================
+        # ADIM 2 -- ONCE ARENA SEKLINI ORTALA (operator karari, 2026-09-05)
+        # ==============================================================
+        # OLCULEN KUSUR: bu faz, kayitli GPS noktasina varir varmaz DOGRUDAN
+        # kucuk DIKDORTGENI ariyordu ve bulamayinca dusuyordu. Iki kosumda
+        # ust uste (demo_20260905_152220 ve _161333) uc denemenin ucu de
+        # "Kirmizi Dikdortgen yeniden bulunamadi" ile bitti.
+        #
+        # NEDEN ARENA SEKLI DOGRU BASLANGIC: yuk, Gorev 2'de tam bu seklin
+        # MERKEZINE birakiliyor. Yani sekli ortalamak, kamerayi yukun
+        # uzerine getirir -- aramaya gerek kalmaz.
+        #
+        # NEDEN KUCUK HEDEFLE BASLAMAK CALISMIYOR (sayilarla):
+        #   yuk dikdortgeni  0.14 x 0.05 m
+        #   blue_hexagon     4.00 x 3.464 m   (worlds/models/blue_hexagon/model.sdf:65)
+        # 1.5 m'de kadraj 3.56 x 2.67 m. GPS/EKF hatasi 1.3 m'yi asinca
+        # dikdortgen kadrajin DISINDA kalir; altigen ise hala kadrajin
+        # buyuk bolumunu kaplar. Yani kucuk hedef kaybolurken buyuk hedef
+        # asla kaybolmuyor.
+        #
+        # NEDEN SEYIR IRTIFASINDA (3.0 m), 1.5'te DEGIL: altigen 4 m ve
+        # 1.5 m'de kadraja SIGMIYOR (3.56 m genislik) -- kenara degen kontur
+        # dedektorun sinir kapisinda elenir. 3.0 m'de kadraj 7.11 x 5.33 m,
+        # altigen 720 x 623 px ile rahatca iceride.
+        logger.info("%s (arena sekli) %.1f m'de ortalanıyor -- yuk bu seklin "
+                    "merkezine birakilmisti.", shape, GOREV3_CRUISE_ALTITUDE_M)
+        shape_centered = await self.centering.go_to_and_center(
+            shape, altitude_m=GOREV3_CRUISE_ALTITUDE_M)
+        self._publish("GOREV3_PICKUP_STEP", "arena_shape_centered",
+                      data={"shape": shape, "converged": bool(shape_centered),
+                            "altitude_m": GOREV3_CRUISE_ALTITUDE_M})
+        if not shape_centered:
+            logger.warning("%s ortalanamadi -- yine de devam ediliyor "
+                           "(dikdortgen aramasi kayitli konumdan baslayacak).",
+                           shape)
+
+        # ADIM 3 -- SAF DIKEY ALCALMA. Kayitli GPS noktasina GERI GITMEK
+        # yukaridaki ortalamayi CÖPE ATARDI; yalnizca irtifa degisiyor.
+        _sn, _se, _ = await self.flight.get_position_ned()
+        _syaw = await self.flight.get_yaw_deg()
+        logger.info("Ortalanan noktadan %.1f m'ye SAF DIKEY iniliyor "
+                    "(yatay hareket yok).", GOREV3_TRANSIT_ALTITUDE_M)
+        await self.flight.goto_position_ned_and_hold(
+            _sn, _se, -GOREV3_TRANSIT_ALTITUDE_M, _syaw, 5.0)
 
         self._publish("GOREV3_PICKUP_STEP", "transit_complete")
+        # ADIM 4 -- ARTIK kucuk dikdortgen araniyor: kamera seklin
+        # merkezinde, yani yukun uzerinde.
         target = await self._locate_target_with_retries()
         if target is None:
             logger.error("%s bulunamadi -- Görev 3 Faz 1 başarısız "

@@ -204,9 +204,13 @@ async def test_pickup_full_sequence_succeeds_and_confirms_shape_gone(tmp_path):
     #
     # SIRA onemli: once 3.0 m, SONRA 1.5 m. Ters olsaydi yatay hareket yine
     # alcakta yapilirdi ve degisiklik anlamsizlasirdi.
+    #
+    # 2026-09-05 (operator): IKINCI goto_waypoint KALDIRILDI. Artik seyir
+    # irtifasinda ARENA SEKLI ortalaniyor ve 1.5 m'ye SAF DIKEY iniliyor.
+    # Kayitli GPS noktasina geri gitmek, o ortalamayi cope atardi -- yani
+    # eski ikinci cagri, kendinden onceki ortalamayi geri aliyordu.
     assert centering.calls == [
         (41.0, 29.0, GOREV3_CRUISE_ALTITUDE_M),
-        (41.0, 29.0, GOREV3_TRANSIT_ALTITUDE_M),
     ], centering.calls
     assert GOREV3_CRUISE_ALTITUDE_M > GOREV3_TRANSIT_ALTITUDE_M, \
         "seyir irtifasi calisma irtifasindan YUKSEK olmali"
@@ -227,9 +231,22 @@ async def test_pickup_full_sequence_succeeds_and_confirms_shape_gone(tmp_path):
     # Ofset artik TUM GORSEL ISTEN SONRA uygulaniyor, yani 0.30 m'de
     # ortalama yaparken kadrajda 0.71 x 0.53 m'lik temiz bir goruntu var
     # ve 0.14 x 0.05 m'lik yuk rahatca icinde.
+    #
+    # 2026-09-05 (operator karari): EN BASA ARENA SEKLI EKLENDI. Yuk, Gorev
+    # 2'de tam bu seklin MERKEZINE birakiliyor; sekli ortalamak kamerayi
+    # dogrudan yukun uzerine getirir. Onceki hal kayitli GPS noktasina varir
+    # varmaz KUCUK dikdortgeni ariyordu ve iki kosumda ust uste uc denemenin
+    # ucu de "Kirmizi Dikdortgen yeniden bulunamadi" ile dustu.
+    #   yuk dikdortgeni  0.14 x 0.05 m
+    #   blue_hexagon     4.00 x 3.464 m
+    # 1.5 m'de kadraj 3.56 x 2.67 m: GPS/EKF hatasi 1.3 m'yi asinca kucuk
+    # hedef kadraj DISINDA kalir, buyuk hedef kalmaz. Seyir irtifasinda
+    # (3.0 m) yapiliyor cunku 4 m'lik altigen 1.5 m'de kadraja SIGMIYOR ve
+    # kenara degen kontur dedektorun sinir kapisinda elenir.
     assert centering.center_calls == [
-        ("KIRMIZI_DIKDORTGEN", HOOK_ALIGN_ALTITUDE_M),      # adim 2: gorus dostu
-        ("KIRMIZI_DIKDORTGEN", GOREV3_APPROACH_ALTITUDE_M), # adim 4: hassas
+        ("MAVI_ALTIGEN", GOREV3_CRUISE_ALTITUDE_M),         # adim 2: ARENA SEKLI
+        ("KIRMIZI_DIKDORTGEN", HOOK_ALIGN_ALTITUDE_M),      # adim 5: gorus dostu
+        ("KIRMIZI_DIKDORTGEN", GOREV3_APPROACH_ALTITUDE_M), # adim 7: hassas
     ], centering.center_calls
     hold_calls = [c for c in flight.calls if c[0] == 'goto_position_ned_and_hold']
     assert len(hold_calls) >= 3  # align, translate, descend (+ climb steps)
