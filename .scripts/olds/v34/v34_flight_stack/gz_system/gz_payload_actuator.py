@@ -151,6 +151,10 @@ def _lat_summary(lat_all, lat_gate_ok):
         out[f"{label}_le_23_25"] = sum(1 for v in xs if v <= 23.25)
     return out
 HOOK_WINCH_TOPIC = "/hook/winch/cmd"
+# GOREV M: hizalama torkunu ac/kapa. Eklenti tarafi
+# src/modules/simulation/gz_plugins/hook_attach/HookAttachSystem.cc
+# (MagnetForceSystem, torque_topic) ve arac SDF'i ayni adi tasimali.
+HOOK_MAGNET_TORQUE_TOPIC = "/hook/magnet/torque"
 # BILEREK FAZLA UZAMA. 0.30 m irtifada yuvanin ustune (dunya z=0.070) tam
 # denk gelen uzama 0.29 m'dir -- yani SIFIR pay, ve PX4'un birkac cm'lik
 # irtifa hatasi temasi kacirmaya yetiyor: olculdu, mission8'de 3 denemenin
@@ -1577,6 +1581,31 @@ class GzPayloadActuator(IPayloadActuator):
         """Vinci hedef uzamaya surer (metre, 0 = tamamen cekili)."""
         logger.info("[HOOK] vinc -> %.2f m", extension_m)
         return await self._gz_pub(HOOK_WINCH_TOPIC, "gz.msgs.Double", f"data: {extension_m}")
+
+    async def set_magnet_torque(self, enabled: bool) -> bool:
+        """MIKNATIS HIZALAMA TORKU'nu ac/kapa (GOREV M, 2026-09-05).
+
+        VARSAYILAN KAPALI. Operator karari 2026-09-05: tork YALNIZCA SERBEST
+        REJIMDE calisir -- 3-5 cm miknatis bandi tutusunda ve devrilme
+        dogrultma epizodunda. Inis adimlarinda ve temas aninda kapali.
+
+        NEDEN AYRIMI GOREV KATMANI YAPIYOR: eklenti kancanin TEMASTA olup
+        olmadigini bilmiyor (yalnizca miknatis-miknatis mesafesini hesapliyor).
+        Temasi bilen taraf, oturma geometrisini okuyan gorev katmani.
+
+        GECIKME OLCULUYOR: her `gz topic -p` yeni bir surec ve kendi
+        gz-transport kesfini oduyor. Epizot suresi bu cagri DONDUKTEN sonra
+        baslatiliyor, yani gecikme epizodu yemiyor -- ama butceye biniyor,
+        bu yuzden kaydediliyor.
+        """
+        t0 = time.monotonic()
+        ok = await self._gz_pub(HOOK_MAGNET_TORQUE_TOPIC, "gz.msgs.Boolean",
+                                f"data: {'true' if enabled else 'false'}")
+        logger.info("[MIKNATIS] hizalama torku %s (%s, %.2f s)",
+                    "ACIK" if enabled else "KAPALI",
+                    "gonderildi" if ok else "GONDERILEMEDI",
+                    time.monotonic() - t0)
+        return ok
 
     async def _retry_realign(self, on_retry, attempt: int) -> None:
         """DENEMELER ARASI YENIDEN HIZALAMA (2026-08-31).

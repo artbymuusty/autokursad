@@ -251,7 +251,7 @@ ADAPTIVE_DESCENT_MAX_STEPS = 8
 #  2.94+0.9+1.0+1.0 = 5.8 s + sonumleme 4 x 1.2 = 4.8 s ~= 10.6 s.
 #  14 s bunu pay ile kapsar. Bu +6 s'lik artis icin yer B1 ile acildi
 #  (reacquire 3->1, son duzeltme 6->3).
-ADAPTIVE_DESCENT_BUDGET_S = 17.0   # 14.0 + 3.0 s miknatis bandi beklemesi
+ADAPTIVE_DESCENT_BUDGET_S = 20.0   # 14.0 + 3.0 s bant + 2.0 s dogrultma + pay
 #: Her adimdan sonra kancanin sonumlenmesi icin TAVAN (erken cikilir).
 #  Olculen sarkac periyodu GOREV J / 31 cm: 1.078 s; 1.2 s ~= 1.1 periyot.
 #  _settle_hook_onto'nun 2.5 s'inden kisa, cunku oradaki uyarim YATAY
@@ -306,6 +306,22 @@ ADAPTIVE_DESCENT_MAGNET_HOLDS_MAX = 2
 #  2.5 mm o pencerenin ortasi, yani hem kapi saglanir hem burun serbest kalir
 #  ve miknatis yanali kapatmaya devam edebilir.
 ADAPTIVE_DESCENT_TARGET_GAP_M = MAGNET_MAX_GAP_M / 2.0
+
+#: DEVRILME DOGRULTMA (GOREV M, operator karari 2026-09-05).
+#  Devrilme gorulunce deneme HEMEN atilmiyor: once hizalama torkuyla
+#  dogrultulmasi deneniyor. Torkun asil isi tam olarak budur; denemeyi
+#  sinamadan atmak, yeni mekanizmayi hic denemeden cope atmak olurdu.
+#  Basarisiz olursa eski davranisa (denemeyi bastan baslat) dusulur.
+#
+#  2.0 s: kancanin tork altindaki yerlesme suresi. Kritik sonumlemede
+#  yerlesme ~4/omega_n; k = 0.03 N*m ve I = 9.6e-6 kg*m^2 icin
+#  omega_n = sqrt(k/I) = 55.9 rad/s, yani ~0.07 s. Iki saniye bunun 28 kati
+#  -- yani sinir tork degil, kancanin TEMASTAN kurtulup donebilmesi.
+ADAPTIVE_DESCENT_RIGHTING_S = 2.0
+#: Inis basina TEK dogrultma denemesi (operator tarifi). Basarisizsa dis
+#  dongu zaten vinci toplayip gorsel isi ve _settle_hook_onto'yu bastan
+#  kosuyor -- kancayi yeniden dikey astiran mekanizma odur.
+ADAPTIVE_DESCENT_RIGHTING_MAX = 1
 # Alma dogrulamasi: yuk en az bu kadar yukselmis olmali.
 # Tirmanis adimlari 1/2/3 m oldugu icin bu esik cok gevsek
 # secildi -- amac 'gercekten kalkti mi', 'ne kadar' degil.
@@ -642,6 +658,71 @@ class Gorev3PickupPhase:
         except Exception:  # noqa: BLE001
             return None
 
+    async def _set_magnet_torque(self, enabled: bool) -> None:
+        """Hizalama torkunu ac/kapa (GOREV M). Aktuator desteklemiyorsa
+        (testler, gercek donanim backend'i) sessizce gecilir."""
+        fn = getattr(self.actuator, "set_magnet_torque", None)
+        if fn is None:
+            return
+        try:
+            await fn(enabled)
+        except Exception:  # noqa: BLE001 -- tork bir iyilestirme, fazi dusuremez
+            logger.warning("[MIKNATIS] tork komutu gonderilemedi (%s).",
+                           "acma" if enabled else "kapatma", exc_info=True)
+
+    async def _magnet_righting(self, n_ned: float, e_ned: float,
+                               yaw_deg: float, alt_m: float,
+                               tilt0_rad: float) -> bool:
+        """DEVRILMIS KANCAYI TORKLA DOGRULT (GOREV M).
+
+        Inis DURUR, arac yerinde tutar, hizalama torku sinirli bir sure
+        acilir. Egim oturma kapisinin (8 derece) icine girerse True doner ve
+        inis kaldigi yerden devam eder; girmezse False ve deneme bastan
+        baslar.
+
+        SINIR -- DURUSTCE: bu, temastaki kancayi dondurmeye calisiyor. Burun
+        guverteye dayaliyken donme kisitli; torkun kazanci OLCULEN devirme
+        torkuna gore boyutlandirildi (3.04e-3 N*m) ama temas surtunmesi ayrica
+        olculmedi. Basari orani bu yuzden VARSAYILMIYOR, olculuyor.
+        """
+        logger.warning("[TORK_DOGRULTMA] kanca %.1f derece devrilmis -- inis "
+                       "DURDU, tork %.1f s acilip dogrultma deneniyor.",
+                       math.degrees(tilt0_rad), ADAPTIVE_DESCENT_RIGHTING_S)
+        self._publish("GOREV3_MAGNET_RIGHTING_START",
+                      f"{math.degrees(tilt0_rad):.1f} deg",
+                      data={"tilt_before_deg": round(math.degrees(tilt0_rad), 1),
+                            "hold_s": ADAPTIVE_DESCENT_RIGHTING_S})
+        await self._set_magnet_torque(True)
+        hold = asyncio.create_task(self.flight.goto_position_ned_and_hold(
+            n_ned, e_ned, -alt_m, yaw_deg, ADAPTIVE_DESCENT_RIGHTING_S))
+        waited = 0.0
+        tilt = tilt0_rad
+        try:
+            while waited < ADAPTIVE_DESCENT_RIGHTING_S:
+                await asyncio.sleep(0.25)
+                waited += 0.25
+                g = self._seating_geometry()
+                if g is None:
+                    continue
+                tilt = g.tilt_rad
+                if tilt <= MAGNET_MAX_TILT_RAD:
+                    break
+        finally:
+            await hold
+            await self._set_magnet_torque(False)
+        ok = tilt <= MAGNET_MAX_TILT_RAD
+        logger.info("[TORK_DOGRULTMA] %s: egim %.1f -> %.1f derece (kapi %.1f), %.2f s",
+                    "BASARILI" if ok else "BASARISIZ",
+                    math.degrees(tilt0_rad), math.degrees(tilt),
+                    math.degrees(MAGNET_MAX_TILT_RAD), waited)
+        self._publish("GOREV3_MAGNET_RIGHTING_RESULT",
+                      "basarili" if ok else "basarisiz",
+                      data={"tilt_before_deg": round(math.degrees(tilt0_rad), 1),
+                            "tilt_after_deg": round(math.degrees(tilt), 1),
+                            "gate_deg": round(math.degrees(MAGNET_MAX_TILT_RAD), 1),
+                            "waited_s": round(waited, 2), "success": bool(ok)})
+        return ok
+
     async def _magnet_band_hold(self, n_ned: float, e_ned: float,
                                 yaw_deg: float, alt_m: float, gap_m: float):
         """3-5 cm MIKNATIS BANDINDA bekle: yanal hatayi FIZIK kapatsin.
@@ -657,6 +738,7 @@ class Gorev3PickupPhase:
         """
         g0 = self._seating_geometry()
         lat0 = g0.lateral_m if g0 is not None else None
+        tilt0 = g0.tilt_rad if g0 is not None else None
         logger.info("[MIKNATIS_BANDI] %.1f mm eksenel boslukta duruluyor "
                     "(%.0f-%.0f mm bandi) -- yanal %s, fizik cekiyor, en fazla "
                     "%.1f s.", gap_m * 1000,
@@ -668,6 +750,9 @@ class Gorev3PickupPhase:
                             "lateral_mm": (round(lat0 * 1000, 1)
                                            if lat0 is not None else None),
                             "hold_s": ADAPTIVE_DESCENT_MAGNET_HOLD_S})
+        # GOREV M: SERBEST REJIM -- tork burada ACIK. Kanca havada asili,
+        # burun hicbir yere dayanmiyor; donme kisitsiz.
+        await self._set_magnet_torque(True)
         hold = asyncio.create_task(self.flight.goto_position_ned_and_hold(
             n_ned, e_ned, -alt_m, yaw_deg, ADAPTIVE_DESCENT_MAGNET_HOLD_S))
         waited = 0.0
@@ -687,6 +772,8 @@ class Gorev3PickupPhase:
                     break
         finally:
             await hold
+            # Bant bitti -> inise donuluyor: tork KAPALI (operator karari).
+            await self._set_magnet_torque(False)
         delta = ((lat0 - lat) * 1000) if (lat0 is not None and lat is not None) else None
         logger.info("[MIKNATIS_BANDI] BITTI: yanal %s -> %s (%s), %.2f s",
                     f"{lat0 * 1000:.1f} mm" if lat0 is not None else "yok",
@@ -702,7 +789,13 @@ class Gorev3PickupPhase:
                             "gain_mm": (round(delta, 1) if delta is not None else None),
                             "waited_s": round(waited, 2),
                             "inside_capture_radius": bool(
-                                lat is not None and lat <= MAGNET_CAPTURE_RADIUS_M)})
+                                lat is not None and lat <= MAGNET_CAPTURE_RADIUS_M),
+                            # GOREV M: torkun bantta ne yaptigini ayri olc.
+                            "tilt_before_deg": (round(math.degrees(tilt0), 2)
+                                                if tilt0 is not None else None),
+                            "tilt_after_deg": (round(math.degrees(gN.tilt_rad), 2)
+                                               if (gN := self._seating_geometry())
+                                               is not None else None)})
         return waited
 
     async def _adaptive_descend(self, n_ned: float, e_ned: float,
@@ -733,6 +826,7 @@ class Gorev3PickupPhase:
         reason = "adim_tavani"
         steps = []
         magnet_holds = 0
+        rightings = 0
         for step in range(1, ADAPTIVE_DESCENT_MAX_STEPS + 1):
             geom = self._seating_geometry()
             if geom is None:
@@ -754,6 +848,16 @@ class Gorev3PickupPhase:
             # kordon degil TEMAS belirliyordur, dolayisiyla o poz bir inis
             # kararina temel olamaz.
             if geom.tilt_rad > MAGNET_MAX_TILT_RAD:
+                # GOREV M (operator karari): once TORKLA dogrultmayi dene.
+                if rightings < ADAPTIVE_DESCENT_RIGHTING_MAX:
+                    rightings += 1
+                    if await self._magnet_righting(n_ned, e_ned, yaw_deg,
+                                                   alt, geom.tilt_rad):
+                        steps.append({"step": step, "action": "tork_dogrultma",
+                                      "sonuc": "basarili"})
+                        continue
+                    steps.append({"step": step, "action": "tork_dogrultma",
+                                  "sonuc": "basarisiz"})
                 reason = "devrilmis_kanca"
                 logger.error("[ADAPTIF_INIS] %d: kanca DEVRILMIS (egim %.1f deg > "
                              "%.1f deg) -- burun konumu kordonla degil TEMASLA "

@@ -843,6 +843,17 @@
   <falloff>0.025</falloff>
   <damping>2.0</damping>
   <state_topic>/hook/magnet/state</state_topic>
+  <!--
+    HIZALAMA TORKU (GOREV M, 2026-09-05). VARSAYILAN KAPALI: gorev katmani
+    torque_topic uzerinden yalnizca SERBEST REJIMDE aciyor (3-5 cm bant
+    tutusu ve devrilme dogrultma epizodu). Turetme eklentinin icinde:
+    k = 0.03 N*m, OLCULEN devirme torkundan (0.093 N x 0.0327 m kol =
+    3.04e-3 N*m) denge egimi 5.8 derece cikacak sekilde -- yani 8 derecelik
+    oturma kapisinin ICINDE. Kapi gevsetilmiyor.
+  -->
+  <align_torque>0.03</align_torque>
+  <align_damping>0.0027</align_damping>
+  <torque_topic>/hook/magnet/torque</torque_topic>
 </plugin>
 
 

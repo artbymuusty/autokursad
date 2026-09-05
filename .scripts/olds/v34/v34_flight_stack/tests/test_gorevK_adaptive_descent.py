@@ -111,6 +111,20 @@ async def _run(phase, flight, actuator, start_alt=HOOK_VISUAL_ALIGN_ALTITUDE_M):
     return alt
 
 
+async def _run_ham(phase, flight, actuator, start_alt=HOOK_VISUAL_ALIGN_ALTITUDE_M):
+    """_run ile ayni, ama (irtifa, sebep) ciftini dondurur."""
+    real_goto = flight.goto_position_ned_and_hold
+    last = {"alt": start_alt}
+
+    async def goto(n, e, d, yaw, dur):
+        await real_goto(n, e, d, yaw, dur)
+        actuator.descend(last["alt"] - (-d))
+        last["alt"] = -d
+
+    flight.goto_position_ned_and_hold = goto
+    return await phase._adaptive_descend(1.0, 2.0, 90.0, start_alt)
+
+
 # --------------------------------------------------------------------------
 
 @pytest.mark.asyncio
@@ -341,7 +355,31 @@ async def test_devrilmis_kanca_inis_kararina_temel_olamaz():
     alt, reason = await phase._adaptive_descend(1.0, 2.0, 90.0,
                                                 HOOK_VISUAL_ALIGN_ALTITUDE_M)
     assert reason == "devrilmis_kanca", f"devrilme yakalanmadi: {reason}"
-    assert flight.commands == [], "devrilmis kancayla inis komut edildi"
+    # GOREV M: artik once torkla dogrultma deneniyor -- o AYNI irtifada bir
+    # TUTUS komut eder. Yasak olan sey ALCALMAK.
+    assert _inisler(flight, HOOK_VISUAL_ALIGN_ALTITUDE_M) == [], \
+        "devrilmis kancayla ALCALMA komut edildi"
+
+
+@pytest.mark.asyncio
+async def test_tork_dogrultursa_inis_DEVAM_EDER():
+    """GOREV M: devrilme gorulunce deneme hemen atilmiyor -- tork kancayi
+    kapinin icine sokarsa inis kaldigi yerden surer."""
+    flight, act = _Flight(), _Actuator(gap_m=0.200, nose_z=0.270,
+                                       lateral_m=0.008,
+                                       tilt_rad=math.radians(40.0))
+
+    # Tork acilinca kanca dogruluyor: aktuator torku dinlesin.
+    async def set_magnet_torque(enabled):
+        if enabled:
+            act.tilt_rad = math.radians(3.0)
+        return True
+    act.set_magnet_torque = set_magnet_torque
+
+    phase = _phase(flight, act)
+    alt, reason = await _run_ham(phase, flight, act)
+    assert reason != "devrilmis_kanca", f"tork dogrulttu ama inis durdu: {reason}"
+    assert _inisler(flight, HOOK_VISUAL_ALIGN_ALTITUDE_M), "inis devam etmedi"
 
 
 @pytest.mark.asyncio

@@ -318,7 +318,12 @@ public:
       if (_sdf->HasElement("falloff"))          falloff_         = _sdf->Get<double>("falloff");
       if (_sdf->HasElement("damping"))          damping_         = _sdf->Get<double>("damping");
       if (_sdf->HasElement("state_topic"))      stateTopic_      = _sdf->Get<std::string>("state_topic");
+      if (_sdf->HasElement("align_torque"))     alignTorque_     = _sdf->Get<double>("align_torque");
+      if (_sdf->HasElement("align_damping"))    alignDamping_    = _sdf->Get<double>("align_damping");
+      if (_sdf->HasElement("torque_topic"))     torqueTopic_     = _sdf->Get<std::string>("torque_topic");
     }
+
+    node_.Subscribe(torqueTopic_, &MagnetForceSystem::OnTorqueEnable, this);
 
     statePub_ = node_.Advertise<gz::msgs::Vector3d>(stateTopic_);
 
@@ -329,6 +334,9 @@ public:
            << " max_force=" << maxForce_
            << " falloff=" << falloff_
            << " damping=" << damping_
+           << " align_torque=" << alignTorque_
+           << " align_damping=" << alignDamping_
+           << " torque_topic=" << torqueTopic_
            << " state_topic=" << stateTopic_
            << "\n";
   }
@@ -404,6 +412,78 @@ public:
         force -= vRel * damping_;
       }
 
+      // ======================================================================
+      // HIZALAMA TORKU (GOREV M, operator karari 2026-09-05)
+      // ======================================================================
+      // VARSAYILAN KAPALI. Operator karari: tork YALNIZCA SERBEST REJIMDE --
+      // yani gorev katmaninin acikca actigi iki sinirli epizotta (3-5 cm
+      // miknatis bandi tutusu ve devrilme-dogrultma). Inis adimlarinda ve
+      // temas aninda KAPALI.
+      //
+      // NEDEN GEREKLI (Gorev M / FAZ 1 teshisi): bu model o teshise kadar
+      // YAPISAL OLARAK SIFIR TORK uretiyordu -- AddWorldForce(ecm, force)
+      // kuvveti KUTLE MERKEZINE uygular (Link.hh:332-337) ve kutle merkezine
+      // uygulanan kuvvetin torku tanim geregi sifirdir. Kuaterniyonlar da
+      // yalnizca miknatis NOKTALARINI bulmak icin okunuyordu; kanca ekseni
+      // ile yuva ekseni arasindaki ACIYA bagli tek bir terim yoktu. Yani
+      // gercek miknatislarin "yuzeyler paralel olana kadar doner" davranisi
+      // hic modellenmemisti.
+      //
+      // BICIM: tau = k * (a_kanca x a_yuva) - c_w * omega
+      // Bu, dipol hizalama torkunun (tau = m x B) ta kendisi. Capraz carpim
+      // sin(theta) ile orantili oldugu icin hizaya yaklastikca KENDILIGINDEN
+      // yumusar -- "ani/sert degil kademeli" davranis modelin kendisinden
+      // cikar, ayri bir kazanc profili gerekmez.
+      //
+      // k = 0.03 N*m -- TURETILDI, secilmedi:
+      //   Devirme torku OLCULDU (2026-09-05 kosumu): burun guvertede sikisik
+      //   iken miknatisin yanal kuvveti temas noktasi etrafinda kaldirac
+      //   yapiyor. Kol = burun (-0.06465) ile kutle merkezi (-0.032) arasi
+      //   = 0.0327 m; olculen kuvvet d=26.9 mm'de 0.093 N.
+      //     tau_devirme = 0.093 * 0.0327 = 3.04e-3 N*m
+      //   Denge egimi tau_hizalama(theta) = tau_devirme kosulundan cikar:
+      //     sin(theta_denge) = 3.04e-3 / k
+      //   k = 0.03 icin theta_denge = 5.8 derece, yani 8 derecelik oturma
+      //   kapisinin ICINDE. Kapi GEVSETILMIYOR; kanca ona kendi giriyor.
+      //   SINIR: modelin azami kuvvetinde (0.40 N) devirme torku 1.31e-2 N*m
+      //   olur ve denge egimi 25.9 dereceye cikar. k o en kotu duruma gore
+      //   degil OLCULEN rejime gore boyutlandirildi; en kotu durumu inisin
+      //   kendi devrilme korumasi yakaliyor (gorev3_pickup.py).
+      //
+      // c_w = 2.7e-3 N*m*s -- kritik sonumleme 2*sqrt(k*I) = 2*sqrt(0.03 *
+      //   9.6e-6) = 1.07e-3; secilen deger onun 2.5 kati, yani ASIRI SONUMLU.
+      //   Bu oran, dogrusal sonumlemede kullanilan oranla AYNI (c=2.0 vs
+      //   c_crit=0.80) -- iki terim ayni karakterde davransin diye.
+      //   I_xx = I_yy = 9.6e-6 kg*m^2 (model.sdf, hook_body_link).
+      if (torqueEnabled_.load())
+      {
+        const gz::math::Vector3d hookAxis =
+          hookPose.Rot().RotateVector({0.0, 0.0, 1.0});
+        const gz::math::Pose3d bestPose = gz::sim::worldPose(bestLink, _ecm);
+        const gz::math::Vector3d recvAxis =
+          bestPose.Rot().RotateVector({0.0, 0.0, 1.0});
+
+        // a_kanca x a_yuva: buyuklugu sin(theta), yonu donme ekseni.
+        gz::math::Vector3d torque = hookAxis.Cross(recvAxis) * alignTorque_;
+
+        const auto wHook = hookLink.WorldAngularVelocity(_ecm);
+        const auto wPay = payLink.WorldAngularVelocity(_ecm);
+        if (wHook.has_value())
+        {
+          const gz::math::Vector3d wRel =
+            wHook.value() - (wPay.has_value() ? wPay.value()
+                                              : gz::math::Vector3d::Zero);
+          torque -= wRel * alignDamping_;
+        }
+
+        // SAF TORK: kuvvet asagida AYRI uygulaniyor (kutle merkezinde).
+        // AddWorldWrench kuvveti link ORIJININE uygular, kutle merkezine
+        // degil; ikisini tek cagriya koymak kuvvetin uygulama noktasini
+        // sessizce degistirirdi.
+        hookLink.AddWorldWrench(_ecm, gz::math::Vector3d::Zero, torque);
+        payLink.AddWorldWrench(_ecm, gz::math::Vector3d::Zero, -torque);
+      }
+
       // KANCAYA ceker...
       hookLink.AddWorldForce(_ecm, force);
       // ...ve YUKE esit-zit tepki (Newton 3). Yuk 0.15 kg ve zeminde
@@ -425,6 +505,12 @@ public:
   }
 
 private:
+  void OnTorqueEnable(const gz::msgs::Boolean &_msg)
+  {
+    torqueEnabled_.store(_msg.data());
+    gzwarn << "[Magnet] hizalama torku " << (_msg.data() ? "ACIK" : "KAPALI") << "\n";
+  }
+
   void RescanPayloads(gz::sim::EntityComponentManager &_ecm)
   {
     payloads_.clear();
@@ -497,6 +583,10 @@ private:
   double maxForce_{0.40};     // N   -- turetme yukarida
   double falloff_{0.025};     // m
   double damping_{2.0};       // N*s/m
+  double alignTorque_{0.03};    // N*m     -- turetme yukarida
+  double alignDamping_{2.7e-3}; // N*m*s
+  std::string torqueTopic_{"/hook/magnet/torque"};
+  std::atomic<bool> torqueEnabled_{false};   // VARSAYILAN KAPALI
 
   gz::sim::Entity ownModelEntity_{gz::sim::kNullEntity};
   gz::sim::Entity hookLinkEntity_{gz::sim::kNullEntity};
