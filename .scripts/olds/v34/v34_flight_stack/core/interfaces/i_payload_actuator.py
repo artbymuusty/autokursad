@@ -20,8 +20,19 @@ class IPayloadActuator(ABC):
         
     @abstractmethod
     async def activate_pickup_mechanism(self, altitude_m=None,
-                                        deck_height_m=None, on_retry=None) -> bool:
+                                        deck_height_m=None, on_retry=None,
+                                        on_attract=None) -> bool:
         """Yuku kancayla al.
+
+        on_attract (GOREV K / D, 2026-09-04): MIKNATIS CEKIMI geri cagrisi.
+        Aktuator, miknatis yuvanin agzina MAGNET_ATTRACT_RANGE_M (5 cm)
+        kadar yaklastigi VE kilitlenme kapilari henuz acilmadigi surece
+        periyodik olarak `await on_attract(d_n, d_e, distance_m)` cagirir;
+        (d_n, d_e) kancayi agiza getirmek icin aski noktasinin otelenmesi
+        gereken NED farkidir. GERCEK DONANIMDA GEREKSIZDIR -- orada
+        miknatis kancayi kendi ceker; bu yalnizca Gazebo'da kancaya kuvvet
+        uygulayacak bir eklenti olmadigi icin var. on_retry gibi bu da
+        OPSIYONEL: yok sayan bir aktuator hala gecerlidir.
 
         altitude_m / deck_height_m (2026-08-31): vinc salimi artik sabit
         degil, irtifadan turetiliyor (gz_payload_actuator.hook_payout_m).

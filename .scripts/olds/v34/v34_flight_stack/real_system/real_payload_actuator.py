@@ -9,8 +9,15 @@ DÖRT SERVO NOKTASI (denetim B8, 2026-09-02 -- hepsi aynı ayrıntıya eşitlend
   |----------------------|----------------------------------|--------------------------|-----------------------------------|
   | FIRST MISSION SERVO  | release_payload_at_mavi_altigen  | Görev 2, 1. bırakma      | actuator.mavi_altigen_release_channel |
   | SECOND MISSION SERVO | release_payload_at_kirmizi_ucgen | Görev 2, 2. bırakma      | actuator.kirmizi_ucgen_release_channel |
-  | THIRD MISSION SERVO  | activate_pickup_mechanism        | Görev 3 Faz 1 (alma)     | actuator.pickup_channel           |
-  | GRAB SERVO           | activate_drop_mechanism          | Görev 3 Faz 3 (bırakma)  | actuator.drop_channel             |
+  | SERVO2 (VİNÇ)        | activate_pickup_mechanism (1/2)  | Görev 3 Faz 1, indirme   | actuator.winch_channel            |
+  | SERVO3 (KAVRAMA)     | activate_pickup_mechanism (2/2)  | Görev 3 Faz 1, kavrama   | actuator.grip_channel             |
+  | SERVO3 (KAVRAMA)     | activate_drop_mechanism          | Görev 3 Faz 3, açma      | actuator.grip_channel             |
+
+GÖREV K / C (2026-09-04): eski THIRD MISSION SERVO tek noktası ikiye bölündü.
+Operatör tarifi kancayı indiren mekanizmayı (servo2) ile kanca içindeki
+kavrama kollarını (servo3) ayrı servolar olarak tanımlıyor. Eski
+`pickup_channel` / `drop_channel` anahtarları yaml'da ESKİ olarak duruyor;
+kod hiçbir zaman okumadığı için bölme davranışı kırmadı.
 
 MANUEL AYAR İÇİN: her metodun içindeki `# AYAR:` bloğu açıyı, süreyi ve kanalı
 tek yerde toplar. Bir noktayı ayarlamak için yalnızca o bloğa bakman yeterli.
@@ -80,7 +87,8 @@ class RealPayloadActuator(IPayloadActuator):
             self._pickup_color = color
 
     async def activate_pickup_mechanism(self, altitude_m=None,
-                                        deck_height_m=None, on_retry=None) -> bool:
+                                        deck_height_m=None, on_retry=None,
+                                        on_attract=None) -> bool:
         """Görev 3 Rapor Bölüm 5, Adım 6: Yük alma mekanizmasını aktifleştirir.
 
         İMZA DÜZELTMESİ (denetim B2, 2026-09-02): bu metot `(self)` idi, ama
@@ -92,16 +100,25 @@ class RealPayloadActuator(IPayloadActuator):
         GzPayloadActuator kullanılıyor."""
         logger.info("activate_pickup_mechanism cagrildi (altitude_m=%s deck_height_m=%s)",
                     altitude_m, deck_height_m)
-        # THIRD MISSION SERVO
+        # SERVO2 (VİNÇ) -- 1/2: kancayı aşağı bırak
         # TODO[DONANIM]: Gerçek servo entegrasyonu
         # AYAR:
-        #   Beklenen davranış : Operatör tarifi (2026-08-21) -- kanca yükün hizasına
-        #                       iner, ucundaki MIKNATIS yuvaya oturur, SONRA kanca
-        #                       içindeki servo DÖNÜP KİLİTLER. Yani bu bir kilitleme
-        #                       dönüşüdür, 1./2. noktadaki aç-kapa değildir.
-        #   Açı               : TODO -- kilit açısı (kanca CAD'inden ya da bankoda ölçülecek)
-        #   Süre              : TODO -- kilidin oturması için gereken süre
-        #   Kanal             : real_system.yaml -> actuator.pickup_channel
+        #   Beklenen davranış : 30 cm irtifaya inildiğinde kancayı yükün hizasına
+        #                       kadar SARKIT; alma bitince yukarı ÇEK. GZ karşılığı
+        #                       gz_payload_actuator.extend_winch_for / set_winch.
+        #   Açı/tur           : TODO -- salım uzunluğu (m) <-> servo turu dönüşümü
+        #   Süre              : TODO -- tam salım süresi (GZ'de eklem hız sınırı 0.5 m/s)
+        #   Kanal             : real_system.yaml -> actuator.winch_channel
+        #
+        # SERVO3 (KAVRAMA) -- 2/2: mıknatıs oturunca kolları KAPAT
+        # AYAR:
+        #   Beklenen davranış : Mıknatıs (GÖREV K / D) kancayı yuvanın ağzına çeker;
+        #                       kilitlenme kapıları + dwell geçilince kanca içindeki
+        #                       kollar KAPANIR ve yükü İÇERİDEN kavrar. Manyetik
+        #                       tutuş konumlandırır, mekanik tutuşu bu servo sağlar.
+        #   Açı               : TODO -- kolların tam kapanma açısı
+        #   Süre              : TODO -- kolların kapanma süresi
+        #   Kanal             : real_system.yaml -> actuator.grip_channel
         #   Önerilen kütüphane: pigpio / RPi.GPIO / PX4 AUX kanalı (MAVSDK Actuator Control)
         #
         #   ARGÜMANLAR (gz_payload_actuator.hook_payout_m ile aynı sözleşme):
@@ -118,17 +135,15 @@ class RealPayloadActuator(IPayloadActuator):
     async def activate_drop_mechanism(self) -> bool:
         """Görev 3 Rapor Bölüm 7, Adım 5: Taşınan yükü bırakır."""
         logger.info("activate_drop_mechanism cagrildi")
-        # GRAB SERVO
+        # SERVO3 (KAVRAMA) -- AÇMA yönü
         # TODO[DONANIM]: Gerçek servo entegrasyonu
         # AYAR:
-        #   Beklenen davranış : 3. noktanın TERSİ -- kanca servosu GERİ DÖNER ve
-        #                       kilidi açar, yük düşer ("servo aciliyor -- yuk
-        #                       birakiliyor", gz_payload_actuator.py:1330).
-        #   Açı               : TODO -- 3. noktadaki kilit açısının tersi
-        #   Süre              : TODO -- kilidin tam açılması için gereken süre
-        #   Kanal             : real_system.yaml -> actuator.drop_channel
-        #                       (3. nokta ile AYNI fiziksel servo olabilir; öyleyse
-        #                        iki alana da aynı numara yazılır)
+        #   Beklenen davranış : Almanın TERSİ -- kavrama kolları AÇILIR ve yük
+        #                       bırakılır ("servo aciliyor -- yuk birakiliyor").
+        #                       ALMADAKİ İLE AYNI FİZİKSEL SERVO, ters yön.
+        #   Açı               : TODO -- kapanma açısının tersi
+        #   Süre              : TODO -- kolların tam açılma süresi
+        #   Kanal             : real_system.yaml -> actuator.grip_channel
         #   Önerilen kütüphane: pigpio / RPi.GPIO / PX4 AUX kanalı (MAVSDK Actuator Control)
         #
         #   DİKKAT (GZ tarafından öğrenilen, 2026-08-23): KOMUTUN döndüğünü değil

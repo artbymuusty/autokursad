@@ -10,11 +10,13 @@ from core.config.parameters import (
     PAYLOAD_DETACH_CONFIRM_TIMEOUT_S, PAYLOAD_DETACH_POLL_INTERVAL_S,
     PAYLOAD_DETACH_SEPARATION_M, PAYLOAD_EXPECTED_REST_Z_M,
     PAYLOAD_ON_TARGET_Z_TOLERANCE_M,
+    GOREV3_MAGNET_ATTRACT_PERIOD_S,
 )
 from gz_system.gz_pose_monitor import GzPoseMonitor
 from core.mission.hook_seating import (
     SeatState, SeatingEvaluator, compute_seating_geometry,
-    MAGNET_DWELL_S, MAGNET_CAPTURE_RADIUS_M, HOOK_POSE_MAX_AGE_S,
+    MAGNET_DWELL_S, MAGNET_CAPTURE_RADIUS_M, MAGNET_ATTRACT_RANGE_M,
+    HOOK_POSE_MAX_AGE_S,
 )
 
 logger = logging.getLogger(__name__)
@@ -1233,7 +1235,7 @@ class GzPayloadActuator(IPayloadActuator):
     def hook_seat_state(self):
         return getattr(self, "_seat_state", SeatState.APPROACHING)
 
-    async def _await_seating(self, color: str, timeout_s: float):
+    async def _await_seating(self, color: str, timeout_s: float, on_attract=None):
         """Wait until the hook is PHYSICALLY SEATED in the receiver.
 
         REPLACES `_await_capture`, which accepted a pickup on horizontal
@@ -1327,11 +1329,40 @@ class GzPayloadActuator(IPayloadActuator):
             winch0 = None
         last_log = 0.0
 
+        # GOREV K / D: MIKNATIS CEKIMI. Menzile girildigi ilk an bir kez
+        # loglanir; sonra kapilar acilana kadar periyodik olarak cagiran
+        # tarafa "sunu kadar yaklas" denir. Cekim KAPILARI DEGISTIRMEZ.
+        attract_engaged = False
+        attract_last = 0.0
+        attract_calls = 0
+        attract_first_dist_mm = None
         while asyncio.get_event_loop().time() < deadline:
             geom = self.seating_geometry(color)
             now = time.monotonic()
             state = evaluator.update(geom, now)
             self._seat_state = state
+
+            if geom is not None and geom.attraction_active():
+                if not attract_engaged:
+                    attract_engaged = True
+                    attract_first_dist_mm = geom.magnet_distance_m() * 1000.0
+                    logger.info("[HOOK] MIKNATIS CEKIM MENZILINDE: d=%.1f mm "
+                                "(<= %.1f mm) -- kanca agiza cekiliyor",
+                                attract_first_dist_mm, MAGNET_ATTRACT_RANGE_M * 1000.0)
+                if state is SeatState.APPROACHING:
+                    # Kapilar henuz acilmadi: cekim devam ediyor.
+                    self._seat_state = SeatState.ATTRACTING
+                    if on_attract is not None and (now - attract_last) >= GOREV3_MAGNET_ATTRACT_PERIOD_S:
+                        attract_last = now
+                        attract_calls += 1
+                        try:
+                            # Kancayi eksene getirmek icin aski noktasi
+                            # -perp kadar otelenmeli (isaret kurali:
+                            # SeatingGeometry.perp_n/perp_e docstring'i).
+                            await on_attract(-geom.perp_n, -geom.perp_e,
+                                             geom.magnet_distance_m())
+                        except Exception:  # noqa: BLE001 -- cekim modeli gorevi dusuremez
+                            logger.warning("[HOOK] cekim adimi uygulanamadi", exc_info=True)
 
             # SALT OLCUM: hicbir kosulda oturma kararini ya da gorevi
             # etkilememeli. Poz kaynagi eksikse (testlerdeki sahte monitor
@@ -1378,8 +1409,13 @@ class GzPayloadActuator(IPayloadActuator):
                 candidate_samples += 1
 
             if state is SeatState.SEATED:
-                logger.info("[HOOK] OTURDU (SEATED): %s -- dwell %.2f s",
-                            geom.describe(), evaluator.dwell_elapsed(now))
+                # GOREV K / D: kapilar dwell boyunca acik kaldi -- miknatis
+                # kilitlendi. Mekanik tutus SIRADAKI asama (servo3).
+                logger.info("[HOOK] MAGNET_LOCKED: %s -- dwell %.2f s "
+                            "(cekim %s, %d adim)",
+                            geom.describe(), evaluator.dwell_elapsed(now),
+                            "kullanildi" if attract_engaged else "gerekmedi",
+                            attract_calls)
                 self.last_seating_report = {
                     "seated": True, "samples": sample_count,
                     "lateral_dist": _lat_summary(lat_all, lat_gate_ok),
@@ -1392,6 +1428,14 @@ class GzPayloadActuator(IPayloadActuator):
                     "payout_sent_m": getattr(self, "_last_payout_m", None),
                     "capture_candidate_samples": candidate_samples,
                     "gate_rejections": dict(fail_counts),
+                    # GOREV K / D olcumleri: cekim gercekten devreye girdi mi,
+                    # kac adim uygulandi, menzile girildiginde mesafe neydi.
+                    "magnet_attract": {
+                        "engaged": attract_engaged,
+                        "steps": attract_calls,
+                        "first_distance_mm": (round(attract_first_dist_mm, 1)
+                                              if attract_first_dist_mm is not None else None),
+                        "range_mm": round(MAGNET_ATTRACT_RANGE_M * 1000.0, 1)},
                     "best_simultaneous": {
                         "lateral_mm": round(geom.lateral_m * 1000, 1),
                         "insertion_mm": round(geom.insertion_m * 1000, 1),
@@ -1633,7 +1677,7 @@ class GzPayloadActuator(IPayloadActuator):
 
     async def activate_pickup_mechanism(self, altitude_m=None,
                                         deck_height_m: float = HOOK_RECEIVER_DECK_HEIGHT_M,
-                                        on_retry=None) -> bool:
+                                        on_retry=None, on_attract=None) -> bool:
         """Görev 3 Faz 1, Adım 6: yükü kancayla al.
 
         Gercek sira (operator tarifi, 2026-08-21): kanca yukun hizasina
@@ -1642,15 +1686,24 @@ class GzPayloadActuator(IPayloadActuator):
         ikilisinin karsiligi tek sey: HookAttachSystem'in fixed joint'i.
         Temas once dogrulanir, cunku joint'i temassiz kurmak "havada
         kilitlendi" demek olurdu."""
-        # THIRD MISSION SERVO
+        # SERVO2 (VINC) + SERVO3 (KAVRAMA) -- eski adiyla THIRD MISSION SERVO.
+        # GOREV K / C (2026-09-04): tek nokta IKIYE ayrildi.
+        #   SERVO2 = kancayi indirip yukari ceken vinc  -> extend_winch_for /
+        #            set_winch cagrilari (real: actuator.winch_channel)
+        #   SERVO3 = kanca icindeki kavrama kollari     -> /hook/attach ile
+        #            simule edilen mekanik tutus (real: actuator.grip_channel)
+        # Sira: SERVO2 indir -> miknatis ceker (GOREV K / D) -> kapilar +
+        # dwell -> MAGNET_LOCKED -> SERVO3 kavrar.
         attempts_report = []
         for attempt in range(1, HOOK_PICKUP_ATTEMPTS + 1):
             logger.info("[HOOK] alma denemesi %d/%d", attempt, HOOK_PICKUP_ATTEMPTS)
+            # SERVO2: kancayi asagi sarkit (30 cm irtifada tetiklenir).
             await self.extend_winch_for(altitude_m, deck_height_m)
             payout = getattr(self, "_last_payout_m", None)
 
             color = self._pickup_color
-            seated = await self._await_seating(color, HOOK_CONTACT_TIMEOUT_S)
+            seated = await self._await_seating(color, HOOK_CONTACT_TIMEOUT_S,
+                                               on_attract=on_attract)
             if self.last_seating_report is not None:
                 attempts_report.append(dict(self.last_seating_report, attempt=attempt))
             self.last_pickup_report = {"payout_m": (round(payout, 4) if payout else None),
@@ -1710,7 +1763,10 @@ class GzPayloadActuator(IPayloadActuator):
             # that can be created without the hook being in the receiver is
             # exactly the Case 7 defect.
             self._seat_state = SeatState.LOCKING
-            logger.info("[HOOK] SEATED -> LOCKING: servo kilitleniyor")
+            # SERVO3 (KAVRAMA). GOREV K / D: miknatis kancayi konumda tutuyor,
+            # ASIL MEKANIK TUTUS bu asama. Gazebo'daki fixed joint bu servonun
+            # kollarinin kapanmasini temsil ediyor.
+            logger.info("[HOOK] SERVO3 KAVRAMA: kollar kapaniyor (kavrama joint'i)")
             model = PAYLOAD_MODEL % color
 
             async def _send_attach():
@@ -1741,6 +1797,7 @@ class GzPayloadActuator(IPayloadActuator):
             # toplanmazsa kanca yere iniş takimindan once deger.
             self._hook_attached = True
             self._seat_state = SeatState.LOCKED
+            logger.info("[HOOK] SERVO3_GRIP_ENGAGED -- kavrama kollari yuku tutuyor")
             geom = self.seating_geometry(color)
             logger.info("[HOOK] LOCKED (%s) -- vinc acik, yuk ipte%s", model,
                         f"; oturma: {geom.describe()}" if geom is not None else "")
@@ -1757,7 +1814,9 @@ class GzPayloadActuator(IPayloadActuator):
 
     async def activate_drop_mechanism(self) -> bool:
         """Görev 3 Faz 3, Adım 5: kancadaki yükü bırak (servo geri doner)."""
-        # GRAB SERVO
+        # SERVO3 (KAVRAMA) -- ACMA yonu. Eski adiyla GRAB SERVO.
+        # GOREV K / C: ayni servo hem kapatir (alma) hem acar (birakma);
+        # kanal real_system.yaml -> actuator.grip_channel.
         # GOREV I / O-A: birakilacak yuk, ALINAN yuktur -- rengi alma
         # hedefinden gelir, sabit kirmizi DEGIL.
         color = self._pickup_color

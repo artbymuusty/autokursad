@@ -233,6 +233,23 @@ SEAT_MAX_REL_SPEED_MPS: float = 0.05
 HOOK_POSE_MAX_AGE_S: float = 0.5
 
 
+#: MANYETIK CEKIM MENZILI (GOREV K / D, operator karari 2026-09-04 "secenek 2").
+#  SPEC: "yukun icindeki miknatisa acik delik YUZEYINDEN 5 cm yakinina,
+#  kancanin ucundaki miknatis girerse, manyetik cekim simule edilir."
+#
+#  REFERANS YUZEY: yuvanin AGIZ DUZLEMI, yani compute_seating_geometry'nin
+#  `deck` noktasi (payload origin + RECEIVER_DECK_OFFSET_M, yuva ekseni
+#  boyunca). Mesafe, miknatis yuzunun o agza olan UC BOYUTLU uzakligi:
+#      d = hypot(lateral_m, max(0, -insertion_m))
+#  Yani hem yandan hem yukaridan yaklasmayi ayni sayiyla olcuyor.
+#
+#  BU KAPILARI GEVSETMEZ. Cekim yalnizca "miknatis kancayi ceker" asamasini
+#  baslatir; KILITLENME hala MAGNET_CAPTURE_RADIUS_M / MAGNET_MAX_GAP_M /
+#  MAGNET_MAX_TILT_RAD / SEAT_MAX_REL_SPEED_MPS kapilarindan ve
+#  MAGNET_DWELL_S dwell'inden gecmek zorunda (operator, 2026-09-04).
+MAGNET_ATTRACT_RANGE_M: float = 0.05
+
+
 class SeatState(Enum):
     """Where the hook is in the capture sequence.
 
@@ -241,6 +258,7 @@ class SeatState(Enum):
     is precisely what the old gate could not express.
     """
     APPROACHING = "APPROACHING"              # geometry does not satisfy seating
+    ATTRACTING = "ATTRACTING"                # magnet in range (<= 5 cm), pulling in
     CAPTURE_CANDIDATE = "CAPTURE_CANDIDATE"  # geometry valid, dwell not yet met
     SEATED = "SEATED"                        # valid continuously for SEAT_DWELL_S
     LOCKING = "LOCKING"                      # /hook/attach sent, awaiting /hook/state
@@ -254,6 +272,21 @@ class SeatingGeometry(NamedTuple):
     tilt_rad: float           # hook axis vs receiver axis
     rel_speed_mps: float      # |d(hook - payload)/dt|
     pose_age_s: float
+    # Yanal hatanin YONU, NED bilesenleri (GOREV K / D). lateral_m yalnizca
+    # BUYUKLUK; cekimi uygulayacak taraf hangi yone cekecegini bilmeli.
+    # Isaret kurali: kanca = agiz + (perp_n, perp_e), yani kancayi eksene
+    # getirmek icin araci (-perp_n, -perp_e) kadar oteler.
+    # Varsayilanlari 0.0 -- eski cagrilar (ve testler) bozulmadan calisir.
+    perp_n: float = 0.0
+    perp_e: float = 0.0
+
+    def magnet_distance_m(self) -> float:
+        """Miknatis yuzunun yuva AGZINA uc boyutlu uzakligi (GOREV K / D)."""
+        return math.hypot(self.lateral_m, max(0.0, -self.insertion_m))
+
+    def attraction_active(self) -> bool:
+        """Cekim menzilinde mi? (kilitlenme kapilarindan BAGIMSIZ)"""
+        return self.magnet_distance_m() <= MAGNET_ATTRACT_RANGE_M
 
     def failures(self) -> list:
         """Every threshold this geometry violates. Empty == seatable."""
@@ -326,11 +359,17 @@ def compute_seating_geometry(hook_pos, hook_quat, payload_pos, payload_quat,
     hook_axis = _rotate(hook_quat, (0.0, 0.0, 1.0))
     dot = max(-1.0, min(1.0, sum(hook_axis[i] * axis[i] for i in range(3))))
 
+    # perp DUNYA cercevesinde ve Gazebo dunyasi ENU: x = Dogu, y = Kuzey.
+    # Gorev katmani NED konusuyor, bu yuzden burada cevriliyor -- bu proje
+    # 2026-08-13'te tam bu eksen karisikligindan bir hata yasadi
+    # (generate_competition_area.py basligindaki kanit metnine bakin).
     return SeatingGeometry(lateral_m=lateral,
                            insertion_m=-along,
                            tilt_rad=math.acos(dot),
                            rel_speed_mps=rel_speed_mps,
-                           pose_age_s=pose_age_s)
+                           pose_age_s=pose_age_s,
+                           perp_n=perp[1],
+                           perp_e=perp[0])
 
 
 class SeatingEvaluator:

@@ -152,6 +152,27 @@ GOREV3_PICKUP_ALIGN_MAX_ATTEMPTS: int = 80
 # tarif ettigi "deneme" tam olarak odur.
 GOREV3_PICKUP_MAX_ATTEMPTS: int = 3
 
+# --- GOREV K / D: MANYETIK CEKIM AYARI (2026-09-04) ----------------------
+# Operator karari "secenek 2": 5 cm, cekimin BASLADIGI mesafe (menzil
+# hook_seating.MAGNET_ATTRACT_RANGE_M). Kilitlenme kapilari gevsetilmedi.
+#
+# CEKIM NASIL MODELLENIYOR: Gazebo'da kancaya kuvvet uygulayacak bir
+# eklenti YOK (dunyada hic <plugin> blogu yok, kuvvet servisi kurulu degil).
+# Kancayi hareket ettirmenin tek yolu ASKI NOKTASINI, yani araci oynatmak.
+# Bu yuzden cekim, "tutma hedefini kancanin agiza denk gelecegi yere
+# kaydiran" sinirli bir kapanma dongusu olarak modelleniyor. Fizik degil
+# MODEL oldugu burada aciklikla yaziyor; gercek donanimda miknatis kancayi
+# kendi ceker ve bu dongu gereksizdir.
+#
+# BASLANGIC DEGERLERI OLCUMLE AYARLANACAK (operator, 2026-09-04): J
+# demosunda yanal hata 41-72 mm bandindaydi ve 17.5 mm kapisi hic acilmadi.
+# Kazanc 0.6 + adim tavani 20 mm ile 41 mm'lik bir hata ~3 adimda kapaniyor;
+# 0.4 s periyot, sarkacin 1.078 s'lik periyodunun ~%37'si, yani her adim
+# arasinda kanca kismen sonumleniyor.
+GOREV3_MAGNET_ATTRACT_GAIN: float = 0.6
+GOREV3_MAGNET_ATTRACT_MAX_STEP_M: float = 0.02
+GOREV3_MAGNET_ATTRACT_PERIOD_S: float = 0.4
+
 # ALMA SONRASI DOGRULAMA IRTIFASI (GOREV I / B madde 9).
 # Spec: "2 metreye yüksel, yük hala seklin ustunde mi bak". Eskiden
 # GOREV3_PICKUP_VERIFY_CLIMB_STEPS_M = [1, 2, 3] ile uc kademeye

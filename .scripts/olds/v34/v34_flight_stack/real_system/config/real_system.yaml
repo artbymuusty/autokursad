@@ -27,11 +27,29 @@ actuator:
   mavi_altigen_release_channel: null   # TODO: gerçek servo/AUX kanal numarası
   # Görev 2, 2. bırakma -- SECOND MISSION SERVO (Kırmızı Üçgen / BLUE payload)
   kirmizi_ucgen_release_channel: null  # TODO: gerçek servo/AUX kanal numarası
-  # Görev 3 Faz 1 (alma) -- THIRD MISSION SERVO (kanca kilitleme)
-  pickup_channel: null                 # TODO: gerçek servo/AUX kanal numarası
-  # Görev 3 Faz 3 (bırakma) -- GRAB SERVO (kanca kilidini açma).
-  # 3. nokta ile AYNI fiziksel servo olabilir; öyleyse aynı numarayı yaz.
-  drop_channel: null                   # TODO: gerçek servo/AUX kanal numarası
+  # --- GÖREV K / C (2026-09-04): 3. NOKTA İKİYE BÖLÜNDÜ ---
+  # Eskiden `pickup_channel` tek başına hem kancayı İNDİRMEYİ hem de
+  # KİLİTLEMEYİ anlatıyordu ("kanca iner, mıknatıs oturur, sonra kanca
+  # içindeki servo dönüp kilitler"). Operatör tarifi bunları ayrı iki
+  # servo olarak tanımlıyor:
+  #
+  #   servo2 = VİNÇ      -- kancayı aşağı bırakır / yukarı çeker
+  #   servo3 = KAVRAMA   -- kanca içindeki kolları KAPATIR (alma) ve
+  #                         AÇAR (bırakma); tek fiziksel servo, iki yön
+  #
+  # Görev 3 Faz 1 (alma), indirme -- SERVO2 (vinç)
+  winch_channel: null                  # TODO: gerçek servo/AUX kanal numarası
+  # Görev 3 Faz 1+3, kavrama kollarını kapat/aç -- SERVO3
+  grip_channel: null                   # TODO: gerçek servo/AUX kanal numarası
+  #
+  # ESKİ ADLAR (2026-09-02 denetiminden). Kod bu anahtarları OKUMUYOR
+  # (hiçbir yerde okunmadıkları grep ile doğrulandı, 2026-09-04) --
+  # dolayısıyla bölme hiçbir davranışı kırmadı. Donanım bağlanana kadar
+  # burada duruyorlar ki eski notlarla eşleşme kaybolmasın:
+  #   pickup_channel -> yerini winch_channel + grip_channel aldı
+  #   drop_channel   -> yerini grip_channel (açma yönü) aldı
+  pickup_channel: null                 # ESKİ: bkz. winch_channel / grip_channel
+  drop_channel: null                   # ESKİ: bkz. grip_channel
 
 # ADR-011 (2026-08-17): real payload mass, recorded here because the
 # SIMULATION deliberately does not use it.

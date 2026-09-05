@@ -13,6 +13,8 @@ from gz_system.gz_payload_actuator import HOOK_WINCH_EXTEND_M
 from core.mission.visual_alignment import VisualHookAligner
 from core.config.parameters import (
     HSV_MIN_AREA_RECT_BASE,
+    GOREV3_MAGNET_ATTRACT_GAIN,
+    GOREV3_MAGNET_ATTRACT_MAX_STEP_M,
     GOREV3_APPROACH_ALTITUDE_M,
     GOREV3_PICKUP_ATTEMPT_TIMEOUT_S,
     GOREV3_PICKUP_MAX_ATTEMPTS,
@@ -1128,7 +1130,13 @@ class Gorev3PickupPhase:
             # ayni anda setpoint yayinlarsa PX4 celiskili hedefler alir.
             _hold_ref = {}
 
+            # Cekim adimlarinin uzerine bindigi taban tutma noktasi
+            # (_start_hold her guncelledigi icin burada tanimlanir).
+            _attract = {"n": None, "e": None, "steps": 0}
+
             def _start_hold(n_, e_):
+                # GOREV K / D: cekim adimlari bu hedefin uzerine biner.
+                _attract["n"], _attract["e"] = n_, e_
                 _hold_ref["t"] = asyncio.create_task(self.flight.goto_position_ned_and_hold(
                     n_, e_, -GOREV3_DESCENT_ALTITUDE_M, aligned_yaw, PICKUP_HOLD_S))
 
@@ -1141,6 +1149,41 @@ class Gorev3PickupPhase:
                     await t
                 except (asyncio.CancelledError, Exception):  # noqa: BLE001
                     pass
+
+            # GOREV K / D: MIKNATIS CEKIMI (operator karari "secenek 2").
+            # Aktuator, miknatis yuvanin agzina 5 cm'den yakin oldugunda ve
+            # kilitlenme kapilari HENUZ acilmamisken burayi periyodik cagirir.
+            # Yapilan sey: tutma hedefini kancayi agiza getirecek yone,
+            # sinirli bir adimla kaydirmak. Kapilar gevsetilmiyor.
+            async def _on_attract(d_n: float, d_e: float, dist_m: float):
+                base_n = _attract["n"]
+                base_e = _attract["e"]
+                if base_n is None or base_e is None:
+                    return
+                step_n = d_n * GOREV3_MAGNET_ATTRACT_GAIN
+                step_e = d_e * GOREV3_MAGNET_ATTRACT_GAIN
+                mag = math.hypot(step_n, step_e)
+                if mag > GOREV3_MAGNET_ATTRACT_MAX_STEP_M and mag > 0:
+                    olcek = GOREV3_MAGNET_ATTRACT_MAX_STEP_M / mag
+                    step_n *= olcek
+                    step_e *= olcek
+                yeni_n = base_n + step_n
+                yeni_e = base_e + step_e
+                _attract["n"], _attract["e"] = yeni_n, yeni_e
+                _attract["steps"] += 1
+                await _stop_hold()
+                _start_hold(yeni_n, yeni_e)
+                logger.info("[MIKNATIS] cekim adimi %d: d=%.1f mm -> hedef "
+                            "(%+.3f, %+.3f) m, adim (%+.1f, %+.1f) mm",
+                            _attract["steps"], dist_m * 1000.0, yeni_n, yeni_e,
+                            step_n * 1000.0, step_e * 1000.0)
+                self._publish("MAGNET_ATTRACTION_STEP",
+                              f"{dist_m * 1000.0:.1f} mm",
+                              data={"step": _attract["steps"],
+                                    "distance_mm": round(dist_m * 1000.0, 1),
+                                    "step_n_mm": round(step_n * 1000.0, 1),
+                                    "step_e_mm": round(step_e * 1000.0, 1),
+                                    "hold_ned": [round(yeni_n, 4), round(yeni_e, 4)]})
 
             async def _on_retry(attempt: int):
                 """Vinc cekili (kanca havada) -- duzeltmeyi yeniden kos."""
@@ -1217,7 +1260,8 @@ class Gorev3PickupPhase:
                                 "payout_reference_alt_m": GOREV3_DESCENT_ALTITUDE_M})
             try:
                 picked = await self.actuator.activate_pickup_mechanism(
-                    altitude_m=GOREV3_DESCENT_ALTITUDE_M, on_retry=_on_retry)
+                    altitude_m=GOREV3_DESCENT_ALTITUDE_M, on_retry=_on_retry,
+                    on_attract=_on_attract)
             finally:
                 await _stop_hold()
             _trace.cancel()
