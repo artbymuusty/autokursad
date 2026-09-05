@@ -88,7 +88,8 @@ class RealPayloadActuator(IPayloadActuator):
 
     async def activate_pickup_mechanism(self, altitude_m=None,
                                         deck_height_m=None, on_retry=None,
-                                        on_attract=None) -> bool:
+                                        on_attract=None,
+                                        extend_winch: bool = True) -> bool:
         """Görev 3 Rapor Bölüm 5, Adım 6: Yük alma mekanizmasını aktifleştirir.
 
         İMZA DÜZELTMESİ (denetim B2, 2026-09-02): bu metot `(self)` idi, ama

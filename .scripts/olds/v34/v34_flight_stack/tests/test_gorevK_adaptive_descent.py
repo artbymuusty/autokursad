@@ -397,3 +397,30 @@ async def test_burun_guverteye_DAYANDIRILMIYOR():
 def test_son_bosluk_hedefi_kapinin_ICINDE_ve_temasin_USTUNDE():
     assert 0.0 < ADAPTIVE_DESCENT_TARGET_GAP_M < MAGNET_MAX_GAP_M
     assert ADAPTIVE_DESCENT_TARGET_GAP_M == MAGNET_MAX_GAP_M / 2.0
+
+
+# --------------------------------------------------------------------------
+# PENCERE VINCI TEKRAR SALMAZ (operator karari 2026-09-05)
+# --------------------------------------------------------------------------
+
+def test_yakalama_penceresi_vinci_TEKRAR_SALMIYOR():
+    """Adaptif inis burnu guvertenin 4.5 mm USTUNDE, dort kapinin da
+    gecilebildigi bir durumda birakiyor:
+        lat=16.0mm (<=17.5)  ins=-4.5mm (>=-5.0)  tilt=2.7deg (<=8)
+    Pencerede vincin tekrar salinmasi burnu guverteye indiriyor
+    (ins +1.1 -> +2.5 mm) ve miknatis onu temas noktasi etrafinda deviriyor:
+    olculdu 9.4 -> 15.4 -> 18.8 -> 21.4 -> 21.7 derece; bes ornegin BESI de
+    yalnizca egim kapisindan dondu (yanal ve eksenel 0 red).
+    Temas hic olusmazsa kaldirac da olusmaz."""
+    assert "extend_winch=False)" in SRC, \
+        "pencere hala vinci tekrar saliyor"
+
+
+def test_aktuator_salimi_atlayabiliyor():
+    """extend_winch parametresi gercekten var ve varsayilani ESKI davranis."""
+    import inspect as _i
+    from gz_system.gz_payload_actuator import GzPayloadActuator
+    sig = _i.signature(GzPayloadActuator.activate_pickup_mechanism)
+    assert "extend_winch" in sig.parameters
+    assert sig.parameters["extend_winch"].default is True, \
+        "varsayilan eski davranis olmali -- baska cagiranlar bozulmasin"

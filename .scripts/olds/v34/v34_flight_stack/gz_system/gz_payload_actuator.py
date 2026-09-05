@@ -1706,7 +1706,8 @@ class GzPayloadActuator(IPayloadActuator):
 
     async def activate_pickup_mechanism(self, altitude_m=None,
                                         deck_height_m: float = HOOK_RECEIVER_DECK_HEIGHT_M,
-                                        on_retry=None, on_attract=None) -> bool:
+                                        on_retry=None, on_attract=None,
+                                        extend_winch: bool = True) -> bool:
         """Görev 3 Faz 1, Adım 6: yükü kancayla al.
 
         Gercek sira (operator tarifi, 2026-08-21): kanca yukun hizasina
@@ -1726,8 +1727,30 @@ class GzPayloadActuator(IPayloadActuator):
         attempts_report = []
         for attempt in range(1, HOOK_PICKUP_ATTEMPTS + 1):
             logger.info("[HOOK] alma denemesi %d/%d", attempt, HOOK_PICKUP_ATTEMPTS)
-            # SERVO2: kancayi asagi sarkit (30 cm irtifada tetiklenir).
-            await self.extend_winch_for(altitude_m, deck_height_m)
+            if extend_winch:
+                # SERVO2: kancayi asagi sarkit (30 cm irtifada tetiklenir).
+                await self.extend_winch_for(altitude_m, deck_height_m)
+            else:
+                # GOREV K (operator karari 2026-09-05): SALIM ATLANDI.
+                #
+                # OLCULDU (demo_20260905_163213, deneme 1): adaptif inis
+                # burnu guvertenin 4.5 mm USTUNDE birakiyor ve o anda DORT
+                # KAPI DA gecilebilir durumda --
+                #     lat=16.0mm (<=17.5)  ins=-4.5mm (>=-5.0)  tilt=2.7deg (<=8)
+                # Ardindan bu satirdaki salim burnu guverteye INDIRIYOR
+                # (ins +1.1 -> +2.5 mm) ve miknatis onu temas noktasi
+                # etrafinda DEVIRIYOR: 9.4 -> 15.4 -> 18.8 -> 21.4 -> 21.7 derece.
+                # Pencerenin bes orneginin BESI de yalnizca egim kapisindan
+                # dondu; yanal ve eksenel kapilar 0 red verdi.
+                #
+                # Yani salim, zaten oturabilir bir durumu bozuyordu. Temas
+                # hic olusmazsa kaldirac da olusmaz.
+                #
+                # SALIM YOK OLMUYOR: inis oncesinde extend_winch_for zaten
+                # cagrildi (gorev3_pickup.py, "Vinc salinacak"); burada
+                # yalnizca TEKRARI atlaniyor ve _last_payout_m korunuyor.
+                logger.info("[HOOK] vinc salimi ATLANDI -- kanca inisin biraktigi "
+                            "yerde (guverte uzerinde, serbest asili) kaliyor.")
             payout = getattr(self, "_last_payout_m", None)
 
             color = self._pickup_color

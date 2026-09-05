@@ -63,7 +63,8 @@ class MockPayloadActuator(IPayloadActuator):
 
     async def activate_pickup_mechanism(self, altitude_m=None,
                                         deck_height_m=None, on_retry=None,
-                                        on_attract=None) -> bool:
+                                        on_attract=None,
+                                        extend_winch: bool = True) -> bool:
         self.calls.append(('activate_pickup_mechanism', {}))
         if self._pickup_succeeds:
             self._attached = True

@@ -1871,7 +1871,14 @@ class Gorev3PickupPhase:
             try:
                 picked = await self.actuator.activate_pickup_mechanism(
                     altitude_m=GOREV3_DESCENT_ALTITUDE_M, on_retry=_on_retry,
-                    on_attract=_on_attract)
+                    on_attract=_on_attract,
+                    # GOREV K (operator karari 2026-09-05): pencere vinci
+                    # TEKRAR SALMASIN. Adaptif inis burnu guvertenin 4.5 mm
+                    # ustunde, dort kapinin da gecilebildigi bir durumda
+                    # birakiyor; tekrar salim onu guverteye indirip miknatisin
+                    # devirmesine yol aciyordu (olculdu: 2.7 -> 21.7 derece,
+                    # bes orneğin besi de yalnizca egim kapisindan dondu).
+                    extend_winch=False)
             finally:
                 await _stop_hold()
             _trace.cancel()
