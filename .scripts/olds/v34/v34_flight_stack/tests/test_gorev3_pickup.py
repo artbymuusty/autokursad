@@ -15,7 +15,8 @@ from core.config.parameters import (
     GOREV3_CRUISE_ALTITUDE_M,
     GOREV3_TRANSIT_ALTITUDE_M,
 )
-from core.mission.gorev3_pickup import HOOK_ALIGN_ALTITUDE_M
+from core.mission.gorev3_pickup import (HOOK_ALIGN_ALTITUDE_M,
+                                        HOOK_BODY_OFFSET_FORWARD_M)
 
 
 class _RectangleUntilPickedUpDetector:
@@ -318,14 +319,29 @@ async def test_pickup_closes_the_loop_on_the_seen_receiver(tmp_path):
 
     holds = [c for c in flight.calls if c[0] == "goto_position_ned_and_hold"]
     assert len(holds) >= 4
-    # The vehicle ends up essentially on top of the latched payload, having
-    # started a measurable distance from it.
+    # OLCULEN SEY ARACIN DEGIL KANCANIN KONUMU (duzeltme, 2026-09-05).
+    #
+    # Bu iddia eskiden ARACI olcuyordu ve gecmesinin sebebi kismen
+    # _settle_hook_onto'nun araci alicinin uzerine geri surukmesiydi. O adim
+    # operator karariyla ana yoldan cikinca (yerini miknatis aldi) test
+    # 0.1749 m olcup dustu -- ve 0.1749 tam olarak
+    # HOOK_BODY_OFFSET_FORWARD_M = 0.175. Yani arac YANLIS yerde degil,
+    # DOGRU yerde: faz onu bilerek govde-ileri 0.175 m oteliyor ki KANCA
+    # yukun uzerine gelsin (kamera degil).
+    #
+    # Dolayisiyla dogru olcum kancanindir: kanca = arac - 0.175 * ileri.
     assert camera.payload_ned is not None
     final_n, final_e, _ = flight._ned_pos
-    residual = math.hypot(camera.payload_ned[0] - final_n,
-                          camera.payload_ned[1] - final_e)
+    yaw = math.radians(await flight.get_yaw_deg())
+    hook_n = final_n - HOOK_BODY_OFFSET_FORWARD_M * math.cos(yaw)
+    hook_e = final_e - HOOK_BODY_OFFSET_FORWARD_M * math.sin(yaw)
+    residual = math.hypot(camera.payload_ned[0] - hook_n,
+                          camera.payload_ned[1] - hook_e)
     start_offset = math.hypot(*camera.offset_ned)
-    assert residual < start_offset, "the loop did not reduce the offset it was given"
+    assert residual < start_offset, (
+        f"the loop did not reduce the offset it was given "
+        f"(kanca artigi {residual * 1000:.1f} mm, baslangic "
+        f"{start_offset * 1000:.1f} mm)")
 
 
 @pytest.mark.asyncio

@@ -323,6 +323,12 @@ ADAPTIVE_DESCENT_RIGHTING_S = 2.0
 #  dongu zaten vinci toplayip gorsel isi ve _settle_hook_onto'yu bastan
 #  kosuyor -- kancayi yeniden dikey astiran mekanizma odur.
 ADAPTIVE_DESCENT_RIGHTING_MAX = 1
+
+#: _settle_hook_onto ANA YOLDA KOSSUN MU (operator karari 2026-09-05).
+#  False: adim atlanir, yanal hatayi miknatis kapatir. Gerekcesi ve olculen
+#  sayilari cagri yerindeki notta. True yapmak eski davranisi aynen geri
+#  getirir -- fonksiyon SILINMEDI, _on_retry hala kullaniyor.
+GOREV3_SETTLE_HOOK_ONTO_ENABLED = False
 # Alma dogrulamasi: yuk en az bu kadar yukselmis olmali.
 # Tirmanis adimlari 1/2/3 m oldugu icin bu esik cok gevsek
 # secildi -- amac 'gercekten kalkti mi', 'ne kadar' degil.
@@ -1694,12 +1700,63 @@ class Gorev3PickupPhase:
                 await _extend(GOREV3_DESCENT_ALTITUDE_M)
                 await asyncio.sleep(HOOK_PAYOUT_SETTLE_S)
 
+            # ==============================================================
+            # _settle_hook_onto ANA YOLDAN CIKARILDI (operator karari 2026-09-05)
+            # ==============================================================
+            # OLCULDU (demo_20260905_180754, deneme 2 -- kilidin oldugu deneme).
+            # 60 s'lik butcenin dagilimi:
+            #     gorsel blok                 22.8 s
+            #     _settle_hook_onto           13.9 s  -> yanal 113.7 mm
+            #     adaptif inis                15.2 s
+            #     pencere -> MAGNET_LOCKED     5.6 s  -> yanal   9.5 mm
+            #     SERVO3 kavrama               1.5 s sonra BUTCE DOLDU
+            # Yani kanca GERCEKTEN kilitlendi (dwell 0.65 s, dort kapi da
+            # gecti) ve butce tam kavrama sirasinda kesti.
+            #
+            # NEDEN BU ADIM KALKIYOR: 13.9 s harcayip yanali 113.7 mm'de
+            # birakiyor; miknatis ayni hatayi yakalama penceresinde 5.6 s'de
+            # 9.5 mm'ye indiriyor (9 cekim adimi). Yani adim artik hem daha
+            # pahali hem daha kotu. Yerini alan mekanizma tesadufi degil:
+            # _settle_hook_onto araci oynatarak DINLENEN kancayi surukluyordu
+            # (surtunme rejimi); miknatis kancaya dogrudan kuvvet uyguluyor.
+            #
+            # NE KAYBEDIYORUZ (durustce): miknatisin menzili 5 cm. Yanal hata
+            # bu adimin girisinde 5 cm'den buyukse kapatacak kimse kalmiyor.
+            # Gorsel hizalama o hatayi kucuk birakiyor (ayni kosumda
+            # "yakinsadi: 7.8 mm") ama bu bir GARANTI degil -- bu yuzden
+            # atlanan noktadaki yanal OLCULMEYE DEVAM EDIYOR (asagida).
+            #
+            # GERI ALMAK TEK SATIR: GOREV3_SETTLE_HOOK_ONTO_ENABLED = True.
             if recv_ned is not None:
-                self._publish("GOREV3_PICKUP_STEP", "correction_airborne_start")
-                corrected = await self._settle_hook_onto(recv_ned, aligned_yaw,
-                                                         HOOK_VISUAL_ALIGN_ALTITUDE_M)
-                if corrected is not None:
-                    final_lateral = corrected
+                _lat_now = None
+                try:
+                    _g = self._seating_geometry()
+                    _lat_now = _g.lateral_m if _g is not None else None
+                except Exception:  # noqa: BLE001 -- salt olcum
+                    pass
+                if GOREV3_SETTLE_HOOK_ONTO_ENABLED:
+                    self._publish("GOREV3_PICKUP_STEP", "correction_airborne_start")
+                    corrected = await self._settle_hook_onto(
+                        recv_ned, aligned_yaw, HOOK_VISUAL_ALIGN_ALTITUDE_M)
+                    if corrected is not None:
+                        final_lateral = corrected
+                else:
+                    logger.info("[SON_DUZELTME] ATLANDI (operator karari): yanal "
+                                "hatayi miknatis kapatiyor. Bu noktadaki yanal: %s "
+                                "(miknatis menzili %.0f mm).",
+                                f"{_lat_now * 1000:.1f} mm" if _lat_now is not None
+                                else "olculemedi", MAGNET_ATTRACT_RANGE_M * 1000)
+                    self._publish("GOREV3_SETTLE_SKIPPED",
+                                  f"{_lat_now * 1000:.1f} mm" if _lat_now is not None
+                                  else "olculemedi",
+                                  data={"lateral_mm": (round(_lat_now * 1000, 1)
+                                                       if _lat_now is not None else None),
+                                        "magnet_range_mm": MAGNET_ATTRACT_RANGE_M * 1000,
+                                        "in_magnet_range": bool(
+                                            _lat_now is not None
+                                            and _lat_now <= MAGNET_ATTRACT_RANGE_M)})
+                    if _lat_now is not None:
+                        final_lateral = _lat_now
 
             _hn, _he, _ = await self.flight.get_position_ned()
             # KANCA DENGE KONUMU: INIS ONCESI. Mekanizma 2b olcumu (2026-08-31).
