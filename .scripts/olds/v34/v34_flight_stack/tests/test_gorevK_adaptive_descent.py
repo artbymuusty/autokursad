@@ -499,9 +499,7 @@ def test_settle_miknatis_yetisemiyorsa_KOSAR():
 # --------------------------------------------------------------------------
 # GOREV O -- baslangic irtifasi OLCULUR, sakul OLCULEREK beklenir
 # --------------------------------------------------------------------------
-from core.mission.gorev3_pickup import (HOOK_MOUNT_BODY_X_M,
-                                        HOOK_PLUMB_SETTLE_MAX_S,
-                                        HOOK_PLUMB_TOLERANCE_M)
+from core.mission.gorev3_pickup import HOOK_SETTLE_WAIT_MAX_S
 
 
 def test_inis_baslangic_irtifasi_OLCULUYOR_varsayilmiyor():
@@ -527,29 +525,45 @@ def test_irtifa_okunamazsa_SESSIZCE_dusmuyor():
     assert "OLCULEMEDI" in blok and "TIRMANIS" in blok
 
 
-def test_sakul_beklemesi_SABIT_UYKU_DEGIL():
+def test_bekleme_SABIT_UYKU_DEGIL():
     """Payout sonrasi kosulsuz sleep(HOOK_PAYOUT_SETTLE_S) '4 s'de sarkac
-    soner' VARSAYIMIYDI. Olculdu: atlanan denemelerde kanca 142-151 mm
-    sarkmis kaliyordu (sakul -0.090, olculen -0.2318/-0.2412)."""
-    assert "await self._wait_hook_plumb(aligned_yaw)" in SRC
-    i = SRC.index("async def _wait_hook_plumb")
-    blok = SRC[i:i + 2200]
-    assert "hook_nose_ned_offset_m" in blok, "sakul OLCULMUYOR"
-    assert "HOOK_PLUMB_SETTLE_MAX_S" in blok, "tavan yok -- sonsuz bekleyebilir"
+    soner' VARSAYIMIYDI. Olculdu: kanca 142-151 mm sarkmis kalabiliyordu."""
+    assert "await self._wait_hook_over_receiver()" in SRC
+    i = SRC.index("async def _wait_hook_over_receiver")
+    blok = SRC[i:i + 1800]
+    assert "self._seating_geometry()" in blok, "durum OLCULMUYOR"
+    assert "HOOK_SETTLE_WAIT_MAX_S" in blok, "tavan yok -- sonsuz bekleyebilir"
     assert "break" in blok, "erken cikis yok"
 
 
-def test_sakul_sabitleri_turetilmis():
-    from core.mission.hook_seating import MAGNET_CAPTURE_RADIUS_M
-    # Sakul noktasi SDF'den: hook_mount govde x = -0.090
-    assert HOOK_MOUNT_BODY_X_M == -0.090
-    # Tolerans SECILMEDI: kapinin kendi yakalama yaricapi
-    assert HOOK_PLUMB_TOLERANCE_M == MAGNET_CAPTURE_RADIUS_M
-    # Tavan: ILK deger 8.0 idi ve _settle_hook_onto'nun harcadigi 7.5 s'ye
-    # gore secilmisti; olcum onu curuttu (bir denemede doldu, 152.2 mm
-    # sarkma kaldi). Yeni tavan kendi TURETMESINDEN geliyor -- ayrintili
-    # kontrol test_sakul_tavani_kendi_turetmesiyle_TUTARLI'da.
-    assert HOOK_PLUMB_SETTLE_MAX_S >= 11.9
+def test_bekleme_olcutu_YUVAYA_gore_askiya_gore_DEGIL():
+    """ESKI OLCUT TERSTI ve bu test onu kilitliyor.
+
+    ADIM 5 araci KASITLI olarak HOOK_BODY_OFFSET_FORWARD_M = 0.175 m
+    govde-ileri oteliyor ki KANCA yukun ustune gelsin. Dolayisiyla kancanin
+    aski noktasinin ALTINDA sakul durmasi o noktadan sonra YANLIS olan
+    durumdur. OLCULDU (11 ornek, dort kosum, tam anti-korelasyon):
+        sakul_sarkma 2.4-13.2 mm  -> settle_yanal 144.7-226.9 mm  (KOTU)
+        sakul_sarkma 152-169 mm   -> settle_yanal   1.1-15.8 mm   (IYI)
+    her satirda toplam ~175 mm = HOOK_BODY_OFFSET_FORWARD_M.
+    Eski olcut, kanca YUVANIN USTUNDEYKEN 12 s tavani bosa yakiyor,
+    ASKI ALTINDA sakuldeyken hemen cikiyordu."""
+    i = SRC.index("async def _wait_hook_over_receiver")
+    blok = SRC[i:i + 1800]
+    assert "MAGNET_ATTRACT_RANGE_M" in blok, "yuvaya gore yanal kullanilmiyor"
+    assert "SEAT_MAX_REL_SPEED_MPS" in blok, "durmusluk olcutu yok"
+    # Aski noktasina gore sakul olcutu GERI GELMEMELI.
+    assert "HOOK_MOUNT_BODY_X_M" not in SRC, "ters (aski-altinda) olcut geri gelmis"
+    assert "_wait_hook_plumb" not in SRC
+
+
+def test_bekleme_olcutleri_SECILMEDI_turetildi():
+    """Iki esik de baska bir gerekceyle turetilmis proje sabiti; bu is icin
+    yeni bir sayi UYDURULMADI."""
+    from core.mission.hook_seating import (MAGNET_ATTRACT_RANGE_M,
+                                           SEAT_MAX_REL_SPEED_MPS)
+    assert MAGNET_ATTRACT_RANGE_M == 0.05
+    assert SEAT_MAX_REL_SPEED_MPS == 0.05
 
 
 def test_align_irtifasinin_KOMUT_oldugu_belgeli():
@@ -599,7 +613,7 @@ def test_aktuator_sonumlemeyi_atlayabiliyor_varsayilan_ESKI():
         "varsayilan eski davranis olmali -- baska cagiranlar bozulmasin"
 
 
-def test_sakul_tavani_kendi_turetmesiyle_TUTARLI():
+def test_bekleme_tavani_kendi_turetmesiyle_TUTARLI():
     """Ilk tavan (8.0 s) kendi gerekcesinin ALTINDAYDI: zeta ~0.03 ve
     periyot 1.078 s ile 142 mm -> 17.5 mm icin
         ln(142/17.5) / (0.03 * 5.83) ~= 11.9 s
@@ -607,6 +621,6 @@ def test_sakul_tavani_kendi_turetmesiyle_TUTARLI():
     kaldi; egim 37.6 dereceye cikti."""
     import math
     gereken = math.log(142.0 / 17.5) / (0.03 * (2 * math.pi / 1.078))
-    assert HOOK_PLUMB_SETTLE_MAX_S >= gereken, (
-        f"tavan {HOOK_PLUMB_SETTLE_MAX_S} s, kendi turetmesinin "
+    assert HOOK_SETTLE_WAIT_MAX_S >= gereken, (
+        f"tavan {HOOK_SETTLE_WAIT_MAX_S} s, kendi turetmesinin "
         f"({gereken:.1f} s) altinda")

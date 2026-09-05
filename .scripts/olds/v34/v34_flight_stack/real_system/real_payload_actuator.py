@@ -135,6 +135,36 @@ class RealPayloadActuator(IPayloadActuator):
         #                       ve o pencerede kapılar örneklenmeye DEVAM eder
         #                       (GÖREV N/A). Kapılar bozulursa kavrama YAPILMAZ.
         #   Süre              : TODO -- kolların kapanma süresi (bankoda ölçülecek)
+        #
+        # ============================================================
+        # TODO[DONANIM] -- KRİTİK GÜVENLİK İLKESİ (GÖREV P/B, 2026-09-05)
+        # ============================================================
+        # SERVO3'ün fiziksel kavrama GERİ BİLDİRİMİ YOKTUR. Hobi servoları
+        # pozisyon komutu alır, pozisyon RAPORLAMAZ; kolların gerçekten
+        # kapandığını ve YÜKÜ TUTTUĞUNU söyleyecek bir sensör bu tasarımda
+        # bulunmuyor.
+        #
+        # SITL'de bu boşluğu HookAttachSystem'in fixed joint'i kapatıyor
+        # (actuator.is_hook_attached()) -- ama o bir SİMÜLASYON GERÇEĞİDİR,
+        # gerçek donanımda KARŞILIĞI YOKTUR. Aynı şekilde
+        # payload_altitude_m() yer-gerçeği de yalnızca Gazebo'da vardır.
+        #
+        # DOLAYISIYLA GERÇEK DONANIMDA TEK DOĞRULAMA KAYNAĞI GÖRÜNTÜ
+        # İŞLEMEDİR (2 m'ye tırmanıp yükün şeklin üstünde OLMADIĞINI /
+        # araçla birlikte yükseldiğini görmek).
+        #
+        # ASLA "komut gönderildi" ya da "şu kadar saniye bekledim" bilgisine
+        # dayanarak "yük alındı" DENMEYECEK. Doğrulanamayan her senaryoda
+        # varsayım "ALINMADI"dır.
+        #   grip_engaged    = servo3 tetiklendi   -> "deneme yapıldı"
+        #   pickup_verified = bağımsız kanıt var  -> "alındı"
+        # İkisi AYRI bayraktır ve biri diğerinin yerine geçemez
+        # (core/mission/gorev3_pickup.py, _verify_lift).
+        #
+        # Bir kavrama geri bildirimi eklenecekse (mikroşalter, akım
+        # algılama, kol üzerinde Hall sensörü) buraya bağlanmalı ve
+        # pickup_verified'ın ÜÇÜNCÜ kanalı olmalı -- görüntü işlemenin
+        # YERİNE değil, YANINA.
         #   Kanal             : real_system.yaml -> actuator.grip_channel
         #   Önerilen kütüphane: pigpio / RPi.GPIO / PX4 AUX kanalı (MAVSDK Actuator Control)
         #

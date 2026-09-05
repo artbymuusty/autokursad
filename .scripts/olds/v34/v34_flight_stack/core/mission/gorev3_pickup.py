@@ -123,48 +123,41 @@ HOOK_VISION_ALIGN_TOLERANCE_M = 0.05
 # uzamasinin sonumleme butcesine etkisi J'de olculur.
 HOOK_PAYOUT_SETTLE_S = 4.0
 # ==========================================================================
-# KANCANIN SAKULE DONMESI -- VARSAYIM DEGIL OLCUM (GOREV O, 2026-09-05)
+# KANCA YUVANIN USTUNDE VE DURMUS MU -- VARSAYIM DEGIL OLCUM (GOREV O)
 # ==========================================================================
-# ONCEKI HAL: payout sonrasi KOSULSUZ asyncio.sleep(HOOK_PAYOUT_SETTLE_S).
-# Bu "4 saniyede sarkac soner" VARSAYIMIYDI ve OLCUM onu curuttu:
-#   settle adimi ATLANAN uc denemede, inisten hemen once kanca ofseti
-#       -0.2318 / -0.2412 / -0.0513   (sakul: -0.090)
-#   yani kanca 142-151 mm SARKMIS haldeydi ve ilk inis yanali
-#       179.2 / 207.7 mm cikti.
-#   Adim KOSAN yedi denemede ofset -0.089..-0.092 (sakul) ve ilk inis
-#   yanali 8-60 mm. Fark, _settle_hook_onto'nun 3 x 2.5 s = 7.5 s'lik
-#   sonumleme beklemesiydi -- sonumlemeyi yapan sey o adimdi, sabit uyku
-#   degil.
-# Olculen sarkac periyodu 1.078 s (GOREV J); 4 s ~= 3.7 periyot ve zeta
-# ~0.03 ile (arac SDF'inin kendi olcumu) bu, 142 mm'yi 17.5 mm'ye indirmeye
-# YETMIYOR -- gereken sure ln(142/17.5)/(0.03*5.83) ~= 11.9 s.
-# Cozum sabiti buyutmek DEGIL, DURUMU OLCMEK.
+# ONCEKI HAL (iki kez yanlis):
+#   1) Kosulsuz asyncio.sleep(HOOK_PAYOUT_SETTLE_S) -- "4 s'de sarkac soner"
+#      VARSAYIMI. Olcum curuttu.
+#   2) "Kanca ASKININ ALTINDA sakulde mi" olcutu -- BU DA YANLISTI, hatta
+#      TERSTI. ADIM 5 araci KASITLI olarak govde-ileri
+#      HOOK_BODY_OFFSET_FORWARD_M = 0.175 m oteliyor ki KANCA yukun ustune
+#      gelsin (kamera degil). Dolayisiyla o noktadan sonra kancanin aski
+#      noktasinin altinda sakul durmasi YANLIS olan durumdur.
+#      OLCULDU (11 ornek, dort kosum, TAM ANTI-KORELASYON):
+#          sakul_sarkma   settle_yanal   toplam
+#             2.4-13.2 mm   144.7-226.9   ~175 mm
+#           152.2-168.8 mm    1.1-15.8    ~175 mm
+#      Toplam her satirda ~175 mm = HOOK_BODY_OFFSET_FORWARD_M. Yani eski
+#      olcut, kanca YUVANIN USTUNDEYKEN (yanal 1.1 mm!) 12 s tavani bosa
+#      yakiyor, kanca ASKI ALTINDA sakuldeyken (yanal 227 mm!) hemen
+#      cikiyordu.
+#
+# DOGRU OLCUT (operator karari 2026-09-05): "kanca YUVANIN USTUNDE VE
+# DURMUS mu". Ikisi de zaten olculuyor ve ikisi de proje sabiti:
+#   * lateral_m   <= MAGNET_ATTRACT_RANGE_M  -- buradan sonrasini miknatis
+#                                               bitirebilir
+#   * rel_speed   <= SEAT_MAX_REL_SPEED_MPS  -- oturma kapisinin KENDI hiz
+#                                               esigi; hala salinan bir
+#                                               kanca bunu gecemez
+# Hicbiri bu is icin SECILMEDI; ikisi de baska bir gerekceyle turetilmis
+# ve burada aynen kullaniliyor.
 
-#: Kanca askisinin govde-x'i. KAYNAK: arac SDF'i,
-#  <frame name="hook_mount"><pose relative_to="base_link">-0.090 0 0.05 ...
-#  Sakuldeki burun, aracin bu noktasinin TAM ALTINDA olmali.
-HOOK_MOUNT_BODY_X_M = -0.090
-#: "Sakule dondu" toleransi. SECILMEDI: miknatisin yakalama yaricapi
-#  (MAGNET_CAPTURE_RADIUS_M = 17.5 mm). Altinda kanca, kapinin kendi
-#  toleransi kadar nominal yerindedir; daha fazla beklemek sonucu
-#  degistiremez.
-HOOK_PLUMB_TOLERANCE_M = MAGNET_CAPTURE_RADIUS_M
-#: Sakul beklemesinin TAVANI.
-#  8.0 -> 12.0 (operator karari 2026-09-05, OLCUME dayali). Ilk deger
-#  _settle_hook_onto'nun fiilen harcadigi 7.5 s'ye gore secilmisti ve uc
-#  kosumun sekiz denemesinin YEDISINDE fazlasiyla yetti (sarkma 2.5-13.2 mm,
-#  bekleme 0.00-7.52 s). AMA bir denemede (demo_20260905_203631/3) tavan
-#  doldu ve sarkma 152.2 mm kaldi; inis o salinan kancayi gordu, egim
-#  37.6 dereceye cikti, tork dogrultmasi da tutmadi ve deneme dustu.
-#  12.0 s, bu dosyanin kendi turetmesinden geliyor: zeta ~0.03 ve periyot
-#  1.078 s ile 142 mm'yi 17.5 mm'ye indirmek
-#      ln(142/17.5) / (0.03 * 5.83) ~= 11.9 s
-#  ister. 8 s o hesabin ALTINDAYDI -- yani ilk tavan, kendi gerekcesiyle
-#  tutarsizdi.
-#  Tavan dolarsa faz yine DUSMEZ: sarkma loglanip devam edilir, son sozu
-#  oturma kapisi soyler.
-HOOK_PLUMB_SETTLE_MAX_S = 12.0
-HOOK_PLUMB_POLL_S = 0.25
+#: Bekleme TAVANI. zeta ~0.03 ve periyot 1.078 s ile 142 mm -> 17.5 mm
+#  ln(142/17.5)/(0.03*5.83) ~= 11.9 s ister; 12.0 s onu kapsar.
+#  Tavan dolarsa faz DUSMEZ: durum loglanip devam edilir, son sozu oturma
+#  kapisi soyler.
+HOOK_SETTLE_WAIT_MAX_S = 12.0
+HOOK_SETTLE_WAIT_POLL_S = 0.25
 # GORSEL HIZALAMA IRTIFASI. Hizalama alma irtifasinda (0.30 m) YAPILAMAZ, ve
 # bu bir ayar meselesi degil, kadraj geometrisi:
 #
@@ -684,64 +677,57 @@ class Gorev3PickupPhase:
                        f"{last * 1000:.1f} mm" if last is not None else "olculemedi")
         return last
 
-    async def _wait_hook_plumb(self, yaw_deg: float):
-        """Kancanin SAKULE donmesini OLCEREK bekle (GOREV O, madde 2).
+    async def _wait_hook_over_receiver(self):
+        """Kanca YUVANIN USTUNDE ve DURMUS olana kadar bekle (GOREV O).
 
-        Sakul noktasi arac SDF'inden geliyor: kanca askisi govde
-        (-0.090, 0)'da, yani sakuldeki burun aracin o noktasinin tam
-        altinda. Sapma ona gore hesaplaniyor -- yaw'a bagimli, cunku govde
-        ofseti NED'de yaw ile doner.
+        Gerekce ve olculen anti-korelasyon HOOK_SETTLE_WAIT_* sabitlerinin
+        basinda. Ozet: eski olcut "kanca aski noktasinin altinda sakulde mi"
+        idi ve ADIM 5'in 0.175 m'lik kasitli otelemesi yuzunden TERSTI.
 
-        Donen: (sarkma_m, beklenen_s, sakulde_mi). Tavan dolarsa faz DUSMEZ;
-        sarkma loglanip devam edilir, son sozu oturma kapisi soyler.
+        Donen: (yanal_m, hiz_mps, beklenen_s, hazir_mi). Tavan dolarsa faz
+        DUSMEZ; durum loglanip devam edilir, son sozu oturma kapisi soyler.
         """
-        _c = math.cos(math.radians(yaw_deg))
-        _s = math.sin(math.radians(yaw_deg))
-        plumb_n = HOOK_MOUNT_BODY_X_M * _c
-        plumb_e = HOOK_MOUNT_BODY_X_M * _s
-
-        get_off = getattr(self.actuator, "hook_nose_ned_offset_m", None)
-        if get_off is None:
-            await asyncio.sleep(HOOK_PAYOUT_SETTLE_S)
-            return (None, HOOK_PAYOUT_SETTLE_S, False)
-
         t0 = time.monotonic()
-        sway = None
+        lat = spd = None
         while True:
-            try:
-                off = get_off()
-            except Exception:  # noqa: BLE001 -- salt olcum
-                off = None
-            if off is not None:
-                sway = math.hypot(off[0] - plumb_n, off[1] - plumb_e)
-                if sway <= HOOK_PLUMB_TOLERANCE_M:
+            g = self._seating_geometry()
+            if g is not None:
+                lat, spd = g.lateral_m, g.rel_speed_mps
+                if (lat <= MAGNET_ATTRACT_RANGE_M
+                        and spd <= SEAT_MAX_REL_SPEED_MPS):
                     break
-            if (time.monotonic() - t0) >= HOOK_PLUMB_SETTLE_MAX_S:
+            if (time.monotonic() - t0) >= HOOK_SETTLE_WAIT_MAX_S:
                 break
-            await asyncio.sleep(HOOK_PLUMB_POLL_S)
+            await asyncio.sleep(HOOK_SETTLE_WAIT_POLL_S)
 
         waited = time.monotonic() - t0
-        ok = sway is not None and sway <= HOOK_PLUMB_TOLERANCE_M
+        ok = (lat is not None and spd is not None
+              and lat <= MAGNET_ATTRACT_RANGE_M
+              and spd <= SEAT_MAX_REL_SPEED_MPS)
+        _l = f"{lat * 1000:.1f} mm" if lat is not None else "olculemedi"
+        _v = f"{spd:.3f} m/s" if (spd is not None and spd != float("inf")) else "olculemedi"
         if ok:
-            logger.info("[SAKUL] kanca sakule dondu: sarkma %.1f mm "
-                        "(tol %.1f mm), %.2f s.",
-                        sway * 1000, HOOK_PLUMB_TOLERANCE_M * 1000, waited)
+            logger.info("[KANCA_HAZIR] yuvanin ustunde ve durmus: yanal %s "
+                        "(<= %.0f mm), hiz %s (<= %.2f m/s), %.2f s.",
+                        _l, MAGNET_ATTRACT_RANGE_M * 1000, _v,
+                        SEAT_MAX_REL_SPEED_MPS, waited)
         else:
-            logger.warning("[SAKUL] tavan (%.1f s) doldu -- sarkma %s "
-                           "(tol %.1f mm). Faz DURDURULMUYOR: son sozu oturma "
-                           "kapisi soyluyor, ama ilk inis yanali BUYUK "
-                           "cikabilir.", HOOK_PLUMB_SETTLE_MAX_S,
-                           f"{sway * 1000:.1f} mm" if sway is not None else "olculemedi",
-                           HOOK_PLUMB_TOLERANCE_M * 1000)
-        self._publish("GOREV3_HOOK_PLUMB",
-                      f"{sway * 1000:.1f} mm" if sway is not None else "olculemedi",
-                      data={"sway_mm": (round(sway * 1000, 1)
-                                        if sway is not None else None),
-                            "tolerance_mm": round(HOOK_PLUMB_TOLERANCE_M * 1000, 1),
+            logger.warning("[KANCA_HAZIR] tavan (%.1f s) doldu -- yanal %s, "
+                           "hiz %s. Faz DURDURULMUYOR: son sozu oturma kapisi "
+                           "soyluyor, ama inis salinan bir kancayla baslayabilir.",
+                           HOOK_SETTLE_WAIT_MAX_S, _l, _v)
+        self._publish("GOREV3_HOOK_READY", _l,
+                      data={"lateral_mm": (round(lat * 1000, 1)
+                                           if lat is not None else None),
+                            "rel_speed_mps": (round(spd, 3)
+                                              if (spd is not None
+                                                  and spd != float("inf")) else None),
+                            "lateral_gate_mm": round(MAGNET_ATTRACT_RANGE_M * 1000, 1),
+                            "speed_gate_mps": SEAT_MAX_REL_SPEED_MPS,
                             "waited_s": round(waited, 2),
-                            "ceiling_s": HOOK_PLUMB_SETTLE_MAX_S,
-                            "plumb": bool(ok)})
-        return (sway, waited, ok)
+                            "ceiling_s": HOOK_SETTLE_WAIT_MAX_S,
+                            "ready": bool(ok)})
+        return (lat, spd, waited, ok)
 
     def _hook_nose_z_m(self):
         """Kanca burnunun DUNYA z'si (metre), yoksa None.
@@ -1848,8 +1834,8 @@ class Gorev3PickupPhase:
                             _payout_alt if _payout_alt is not None else float("nan"))
                 await _extend(GOREV3_DESCENT_ALTITUDE_M)
                 # GOREV O madde 2: sabit uyku yerine SAKULE DONUSU OLC.
-                # Gerekce HOOK_PLUMB_* sabitlerinin basinda.
-                await self._wait_hook_plumb(aligned_yaw)
+                # Gerekce HOOK_SETTLE_WAIT_* sabitlerinin basinda.
+                await self._wait_hook_over_receiver()
 
             # ==============================================================
             # _settle_hook_onto ANA YOLDAN CIKARILDI (operator karari 2026-09-05)
@@ -2280,6 +2266,32 @@ class Gorev3PickupPhase:
             # Eski gozlem SILINMEDI, yalnizca hukum olmaktan cikarilip log'a
             # dusuruldu -- yuk yerde kalsaydi gorunmemesi hala anlamli bir
             # isaret, ama tek basina karar verdirmiyor.
+            # ==============================================================
+            # GOREV P/B -- DOGRULANAMAYAN DURUMDA "ALINMADI" VARSAYILIR
+            # ==============================================================
+            # IKI AYRI BAYRAK, BIRBIRININ YERINE GECMEZ:
+            #   grip_engaged     = SERVO3 tetiklendi ve /hook/state onayladi.
+            #                      "DENEME YAPILDI" demektir, "BASARILI" DEGIL.
+            #   pickup_verified  = yukun GERCEKTEN alindigi BAGIMSIZ kanitla
+            #                      dogrulandi.
+            # Mission ASLA pickup_verified=False iken "yuk alindi" demez.
+            #
+            # DUZELTILEN KUSUR (2026-09-05): onceki kod
+            #     if lifted_m is not None and lifted_m < PICKUP_LIFT_CONFIRM_M:
+            #         return False
+            #     return True
+            # diyordu. lifted_m OLCULEMEDIGINDE (None) kontrol ATLANIYOR ve
+            # fonksiyon True donuyordu -- yani "olcemedim, o halde almisimdir".
+            # Bu tam olarak yasaklanan iyimser varsayimdir. Artik kanit
+            # YOKLUGU basarisizliktir.
+            #
+            # NEDEN SERVO3 OLAYI TEK BASINA YETMEZ: servo bir POZISYON
+            # komutudur; kollarin gercekten kapandigini ve YUKU TUTTUGUNU
+            # soylemez. GZ'de bunun karsiligi HookAttachSystem'in fixed
+            # joint'i (is_hook_attached) -- o bir SIMULASYON gercegidir,
+            # gercek donanimda karsiligi YOKTUR. Bkz.
+            # docs/gorevP-dogrulama-kanallari.md
+            grip_engaged = True          # buraya gelindiyse servo3 tetiklendi
             attached = self.actuator.is_hook_attached()
             lifted_m = None
             if payload_z_before is not None:
@@ -2287,22 +2299,48 @@ class Gorev3PickupPhase:
                 if z_now is not None:
                     lifted_m = z_now - payload_z_before
 
-            logger.info("[ALMA_DOGRULAMA] kanca_kilitli=%s  yuk_yukseldi=%s  "
-                        "dikdortgen_goruntude=%s (bu sonuncusu artik yalnizca gozlem)",
-                        attached,
-                        f"{lifted_m:+.2f} m" if lifted_m is not None else "olculemedi",
-                        still_visible)
+            # KANIT YOKLUGU = BASARISIZLIK. lifted_m None ise (yuk irtifasi
+            # okunamadi) kaldirma DOGRULANMAMISTIR.
+            lift_ok = (lifted_m is not None
+                       and lifted_m >= PICKUP_LIFT_CONFIRM_M)
+            pickup_verified = bool(attached and lift_ok)
 
-            if not attached:
-                logger.warning("Kanca kilitli degil -- Alma başarısız.")
-                return False
-            if lifted_m is not None and lifted_m < PICKUP_LIFT_CONFIRM_M:
-                logger.warning("Yuk aracla birlikte yukselmedi (%.2f m < %.2f m) -- "
-                               "Alma başarısız.", lifted_m, PICKUP_LIFT_CONFIRM_M)
+            logger.info("[ALMA_DOGRULAMA] grip_engaged=%s  kanca_kilitli=%s  "
+                        "yuk_yukseldi=%s  ->  pickup_verified=%s   "
+                        "(dikdortgen_goruntude=%s, yalnizca gozlem)",
+                        grip_engaged, attached,
+                        f"{lifted_m:+.2f} m" if lifted_m is not None
+                        else "OLCULEMEDI",
+                        pickup_verified, still_visible)
+            self._publish("GOREV3_PICKUP_VERIFIED" if pickup_verified
+                          else "GOREV3_PICKUP_NOT_VERIFIED",
+                          "dogrulandi" if pickup_verified else "dogrulanamadi",
+                          data={"grip_engaged": grip_engaged,
+                                "hook_attached": bool(attached),
+                                "lifted_m": (round(lifted_m, 3)
+                                             if lifted_m is not None else None),
+                                "lift_gate_m": PICKUP_LIFT_CONFIRM_M,
+                                "lift_verified": bool(lift_ok),
+                                "pickup_verified": pickup_verified,
+                                "still_visible": bool(still_visible)},
+                          severity=None if pickup_verified else _WARN())
+
+            if not pickup_verified:
+                if not attached:
+                    logger.warning("Kanca kilitli DEGIL -- Alma basarisiz "
+                                   "(grip_engaged=True olsa bile).")
+                elif lifted_m is None:
+                    logger.warning("Yuk irtifasi OLCULEMEDI -- kaldirma "
+                                   "DOGRULANAMADI. GUVENLI VARSAYIM: yuk "
+                                   "ALINMADI. (Kanit yoklugu, kanit degildir.)")
+                else:
+                    logger.warning("Yuk aracla birlikte yukselmedi (%.2f m < "
+                                   "%.2f m) -- Alma basarisiz.",
+                                   lifted_m, PICKUP_LIFT_CONFIRM_M)
                 return False
 
-            logger.info("Yük Alma Başarılı (kanca kilitli%s).",
-                        f", yuk {lifted_m:+.2f} m yukseldi" if lifted_m is not None else "")
+            logger.info("Yük Alma Başarılı -- DOGRULANDI (kanca kilitli, yuk "
+                        "%+.2f m yukseldi).", lifted_m)
             return True
 
         for attempt in range(1, GOREV3_PICKUP_MAX_ATTEMPTS + 1):
