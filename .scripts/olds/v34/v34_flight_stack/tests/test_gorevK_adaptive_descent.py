@@ -1,0 +1,246 @@
+"""GOREV K -- adaptif alcalma (madde 6) ve zemin guvenlik siniri (madde 7).
+
+Bu testler `_adaptive_descend()`'i DOGRUDAN cagirir: tam bir gorev kosumu
+kurmadan, durma kosullarinin her birini ayri ayri sinar.
+
+Neden bu davranislar korunmali: sabit bir iniş irtifasinin isabet etmesi
+gereken pencere yalnizca 70 mm genisliginde, PX4'un irtifa hatasi ise
+90-290 mm (docs/gorevK-adaptif-alcalma-faz1.md). Yani asagidaki her kural
+olculmus bir arizanin karsiligidir, stil tercihi degil.
+"""
+import math
+
+import pytest
+
+from core.mission.gorev3_pickup import (
+    Gorev3PickupPhase,
+    ADAPTIVE_DESCENT_GAIN,
+    ADAPTIVE_DESCENT_MAX_STEP_M,
+    ADAPTIVE_DESCENT_MIN_STEP_M,
+    ADAPTIVE_DESCENT_NOSE_FLOOR_M,
+    HOOK_VISUAL_ALIGN_ALTITUDE_M,
+)
+from core.mission.hook_seating import (
+    MAGNET_MAX_GAP_M,
+    SeatingGeometry,
+)
+
+
+class _Flight:
+    """Komut edilen irtifalari kaydeder; baska hicbir sey yapmaz."""
+    def __init__(self):
+        self.commands = []
+
+    async def goto_position_ned_and_hold(self, n, e, d, yaw, dur):
+        self.commands.append({"n": n, "e": e, "alt": -d, "yaw": yaw, "dur": dur})
+
+
+class _Actuator:
+    """Geometriyi ve burun z'sini SENARYODAN uretir.
+
+    `descend(step_m)` cagrisi, aracin inisini burun z'sine ve eksenel
+    bosluga birebir yansitir -- gercek kinematik bagintinin ta kendisi:
+        nose_z = A + 0.04235 - P     (P inis boyunca sabit)
+    yani irtifa dusunce burun da ayni kadar duser.
+    """
+    def __init__(self, gap_m, nose_z, lateral_m=0.008, tilt_rad=0.0,
+                 rel_speed=0.0, geometry_none=False):
+        self.gap_m = gap_m
+        self.nose_z = nose_z
+        self.lateral_m = lateral_m
+        self.tilt_rad = tilt_rad
+        self.rel_speed = rel_speed
+        self.geometry_none = geometry_none
+        self.reads = 0
+
+    def descend(self, step_m):
+        self.gap_m -= step_m
+        self.nose_z -= step_m
+
+    def seating_geometry(self, color):
+        self.reads += 1
+        if self.geometry_none:
+            return None
+        return SeatingGeometry(lateral_m=self.lateral_m,
+                               insertion_m=-self.gap_m,
+                               tilt_rad=self.tilt_rad,
+                               rel_speed_mps=self.rel_speed,
+                               pose_age_s=0.0)
+
+    def get_hook_world_pose(self):
+        if self.geometry_none:
+            return None
+        return ((0.0, 0.0, self.nose_z + 0.06465), (0.0, 0.0, 0.0, 1.0), 0.0)
+
+
+def _phase(flight, actuator):
+    p = Gorev3PickupPhase.__new__(Gorev3PickupPhase)
+    p.flight = flight
+    p.actuator = actuator
+    p.publisher = None
+    p._color = "red"
+    return p
+
+
+async def _run(phase, flight, actuator, start_alt=HOOK_VISUAL_ALIGN_ALTITUDE_M):
+    """Ucus komutlarini aktuatorun durumuna geri besleyerek kos."""
+    real_goto = flight.goto_position_ned_and_hold
+    last = {"alt": start_alt}
+
+    async def goto(n, e, d, yaw, dur):
+        await real_goto(n, e, d, yaw, dur)
+        actuator.descend(last["alt"] - (-d))
+        last["alt"] = -d
+
+    flight.goto_position_ned_and_hold = goto
+    return await phase._adaptive_descend(1.0, 2.0, 90.0, start_alt)
+
+
+# --------------------------------------------------------------------------
+
+@pytest.mark.asyncio
+async def test_kapi_zaten_gecilmisse_hic_alcalmaz():
+    """Eksenel kapi baslangicta saglaniyorsa TEK BIR ADIM bile komut edilmez.
+
+    Fazladan inis = ipte gevseklik = zincirin bukulmesi = tilt kapisi olur
+    (P3'un ariza modu). 'Zaten yeterli' durumunda hareket etmemek, bu
+    mekanizmanin en onemli davranisi."""
+    flight, act = _Flight(), _Actuator(gap_m=0.002, nose_z=0.072)
+    alt = await _run(_phase(flight, act), flight, act)
+    assert flight.commands == []
+    assert alt == pytest.approx(HOOK_VISUAL_ALIGN_ALTITUDE_M)
+
+
+@pytest.mark.asyncio
+async def test_oransal_adim_kapiya_yakinsar():
+    """420 mm'lik bosluk kazanc 0.7 ile birkac adimda 5 mm kapisina girer."""
+    flight, act = _Flight(), _Actuator(gap_m=0.420, nose_z=0.490)
+    alt = await _run(_phase(flight, act), flight, act)
+    assert flight.commands, "hic adim komut edilmedi"
+    # Ilk adim tam olarak oransal olmali (tavan ve zemin bu senaryoda bagli degil).
+    ilk = flight.commands[0]
+    beklenen = HOOK_VISUAL_ALIGN_ALTITUDE_M - min(0.420 * ADAPTIVE_DESCENT_GAIN,
+                                                  ADAPTIVE_DESCENT_MAX_STEP_M)
+    assert ilk["alt"] == pytest.approx(beklenen, abs=1e-9)
+    # Sonunda eksenel kapi gecilmis olmali.
+    assert act.gap_m <= MAGNET_MAX_GAP_M + 1e-9
+    assert alt < HOOK_VISUAL_ALIGN_ALTITUDE_M
+
+
+@pytest.mark.asyncio
+async def test_adimlar_kuculerek_gider_asim_yok():
+    """Her adim bir oncekinden kucuk olmali; kazanc<1'in tum amaci bu."""
+    flight, act = _Flight(), _Actuator(gap_m=0.420, nose_z=0.490)
+    await _run(_phase(flight, act), flight, act)
+    alts = [HOOK_VISUAL_ALIGN_ALTITUDE_M] + [c["alt"] for c in flight.commands]
+    adimlar = [alts[i] - alts[i + 1] for i in range(len(alts) - 1)]
+    assert all(a > 0 for a in adimlar), f"asagi olmayan adim var: {adimlar}"
+    assert adimlar == sorted(adimlar, reverse=True), f"adimlar kuculmuyor: {adimlar}"
+    # Burun HICBIR ZAMAN zeminin altina inmemeli.
+    assert act.nose_z >= ADAPTIVE_DESCENT_NOSE_FLOOR_M - 1e-9
+
+
+@pytest.mark.asyncio
+async def test_zemin_siniri_yanal_hata_buyukken_durdurur():
+    """Yanal hata burnu guverteden YANA dusurmusse eksenel bosluk hic
+    kapanmaz; tek koruma zemindir ve burun onun ALTINA inmemelidir.
+
+    Bu tam olarak P3'un olculen arizasi: nose_z = -0.0987 m."""
+    # Burun guverteden yana: bosluk 200 mm ama burun zemine yalnizca 30 mm.
+    flight, act = _Flight(), _Actuator(gap_m=0.200, nose_z=0.030,
+                                       lateral_m=0.064)
+    await _run(_phase(flight, act), flight, act)
+    assert act.nose_z >= ADAPTIVE_DESCENT_NOSE_FLOOR_M - 1e-9, \
+        f"burun zeminin altina indi: {act.nose_z}"
+    # Toplam inis, mevcut boslugun degil, ZEMIN PAYININ kadari olmali.
+    toplam = HOOK_VISUAL_ALIGN_ALTITUDE_M - flight.commands[-1]["alt"]
+    assert toplam <= 0.030 + 1e-9
+
+
+@pytest.mark.asyncio
+async def test_poz_okunamazsa_kor_alcalma_yok():
+    """Geometri/poz yoksa hicbir sey komut edilmez. Yokluk 'guvenli' demek
+    degildir -- oturma kapisinin kendi kurali da budur."""
+    flight, act = _Flight(), _Actuator(gap_m=0.420, nose_z=0.490,
+                                       geometry_none=True)
+    alt = await _run(_phase(flight, act), flight, act)
+    assert flight.commands == []
+    assert alt == pytest.approx(HOOK_VISUAL_ALIGN_ALTITUDE_M)
+
+
+@pytest.mark.asyncio
+async def test_kapinin_toleransindan_kucuk_adim_komut_edilmez():
+    """Adim MAGNET_MAX_GAP_M'in altina duserse durulur: daha kucuk bir
+    hareket kapinin hukmunu degistiremez, yalnizca butce harcar."""
+    # bosluk * 0.7 < 5 mm  =>  bosluk < 7.14 mm; ama kapi 5 mm'de zaten
+    # gecildigi icin araligi 5-7.1 mm'ye kuruyoruz.
+    flight, act = _Flight(), _Actuator(gap_m=0.006, nose_z=0.076)
+    assert 0.006 * ADAPTIVE_DESCENT_GAIN < ADAPTIVE_DESCENT_MIN_STEP_M
+    await _run(_phase(flight, act), flight, act)
+    assert flight.commands == []
+
+
+@pytest.mark.asyncio
+async def test_adim_tavani_bozuk_okumayi_sinirlar():
+    """Sacma buyuklukte bir bosluk okunursa adim tavani devreye girer."""
+    flight, act = _Flight(), _Actuator(gap_m=5.0, nose_z=6.0)
+    await _run(_phase(flight, act), flight, act)
+    ilk_adim = HOOK_VISUAL_ALIGN_ALTITUDE_M - flight.commands[0]["alt"]
+    assert ilk_adim == pytest.approx(ADAPTIVE_DESCENT_MAX_STEP_M)
+
+
+def test_kazanc_birin_altinda():
+    """Kazanc 1'e cikarsa olcum gurultusu dogrudan asima donusur ve asim
+    P3'un ariza moduna (gevseklik -> bukulme -> tilt kapisi) yol acar."""
+    assert 0.0 < ADAPTIVE_DESCENT_GAIN < 1.0
+
+
+def test_zemin_siniri_secilmis_bir_sayi_degil():
+    """Alt sinir zeminin kendisi; bir 'ayar degeri' haline getirilmemeli."""
+    assert ADAPTIVE_DESCENT_NOSE_FLOOR_M == 0.0
+
+
+def test_min_adim_kapinin_kendi_toleransi():
+    assert ADAPTIVE_DESCENT_MIN_STEP_M == MAGNET_MAX_GAP_M
+
+
+# --------------------------------------------------------------------------
+# BAGLANTI TESTLERI -- adaptif inisin ULASTIGI irtifanin fiilen kullanildigini
+# ve SALIM REFERANSININ degismedigini kaynak duzeyinde kilitler.
+# --------------------------------------------------------------------------
+import inspect
+import core.mission.gorev3_pickup as _g3
+
+SRC = inspect.getsource(_g3)
+
+
+def test_tutma_ulasilan_irtifayi_kullaniyor():
+    """_start_hold sabit -GOREV3_DESCENT_ALTITUDE_M'i degil, adaptif inisin
+    ulastigi irtifayi tutmali. Aksi halde arac inisin hemen ardindan geri
+    0.30 m'ye ucar ve tum kademeli is bosa gider."""
+    assert "n_, e_, -pickup_alt, aligned_yaw, PICKUP_HOLD_S" in SRC, \
+        "_start_hold hala sabit irtifayi tutuyor"
+
+
+def test_denemeler_arasi_hizalama_ulasilan_irtifada():
+    """_on_retry'nin yeniden hizalamasi da ulasilan irtifada kosmali."""
+    assert "self._settle_hook_onto(recv_ned, aligned_yaw,\n" \
+           "                                                         pickup_alt)" in SRC
+
+
+def test_salim_referansi_DEGISMEDI():
+    """extend_winch_for ve activate_pickup_mechanism hala nominal
+    GOREV3_DESCENT_ALTITUDE_M ile cagrilmali.
+
+    NEDEN: adaptif inisin turetmesi 'salim inis boyunca SABIT' on kabulune
+    dayaniyor (nose_z = A + 0.04235 - P). Salim ulasilan irtifadan yeniden
+    hesaplanirsa fazladan salim komut edilir, O1 kurali geregi buyur, ve
+    fazladan salim tam olarak kapiyi bozan gevsekligi uretir."""
+    assert "await _extend(GOREV3_DESCENT_ALTITUDE_M)" in SRC
+    assert "altitude_m=GOREV3_DESCENT_ALTITUDE_M, on_retry=_on_retry" in SRC
+
+
+def test_tek_atis_inis_KALDIRILDI():
+    """Eski sabit hedefli inis geri gelmemeli."""
+    assert "-GOREV3_DESCENT_ALTITUDE_M, aligned_yaw, 6.0" not in SRC
+    assert "await self._adaptive_descend(" in SRC

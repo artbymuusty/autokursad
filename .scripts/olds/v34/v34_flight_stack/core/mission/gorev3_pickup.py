@@ -1,5 +1,6 @@
 import asyncio
 import math
+import time
 import logging
 from core.interfaces.i_flight_backend import IFlightBackend
 from core.interfaces.i_camera_source import ICameraSource
@@ -11,6 +12,12 @@ from core.position_log.position_store import PositionStore
 from core.detection.camera_intrinsics import default_camera_intrinsics
 from gz_system.gz_payload_actuator import HOOK_WINCH_EXTEND_M
 from core.mission.visual_alignment import VisualHookAligner
+from core.mission.hook_seating import (
+    HOOK_NOSE_OFFSET_M,
+    MAGNET_MAX_GAP_M,
+    SEAT_MAX_REL_SPEED_MPS,
+    _rotate as _quat_rotate,
+)
 from core.config.parameters import (
     HSV_MIN_AREA_RECT_BASE,
     GOREV3_MAGNET_ATTRACT_GAIN,
@@ -183,6 +190,78 @@ HOOK_SETTLE_MAX_SPEED_MPS = 0.03
 # periyodu GOREV J / 31 cm: 1.078 s (25 cm'de 0.831 s); 1.7 s artik ~1.6
 # periyot, eskiden ~2 periyottu. Sabit DEGISTIRILMEDI.
 HOOK_ALIGN_SETTLE_S = 1.7
+
+# ==========================================================================
+# ADAPTIF ALCALMA (GOREV K, operator karari 2026-09-05)
+# ==========================================================================
+# NEDEN SABIT BIR IRTIFA CALISAMAZ -- OLCULDU, turetme:
+# docs/gorevK-adaptif-alcalma-faz1.md.
+#
+#   Tools/simulation/gz/models/x500_mono_cam_down/model.sdf:200-206
+#       burun, vinc CEKILIYKEN base_link'in 0.19765 m altinda
+#       base_link, arac yerdeyken 0.240 m yukarida
+#   Zincir GERGIN iken:      nose_z = A + 0.04235 - P
+#   CAPRAZ DOGRULAMA: SDF'nin kendi hesabi (model.sdf:753-756) "0.30 m iniş
+#   irtifasindan guverteye ulasmak 0.272 m salim ister" diyor; formul
+#   0.30 + 0.04235 - 0.070 = 0.272. BIREBIR.
+#
+#   Gorevin salimi P = hook_payout_m(0.30) = 0.330 ve inis boyunca SABIT
+#   (extend_winch_for 0.90 m'de bir kez cagrilir, O1 kurali geregi bir daha
+#   buyumez), yani:
+#       burun GUVERTEYE deger (insertion=0)  ->  A = 0.358 m
+#       burun ZEMINE   deger (nose_z=0)      ->  A = 0.288 m
+#       KULLANILABILIR PENCERE               ->  70 mm
+#   Pencerenin GENISLIGI = guverte yuksekligi; salim/pay/CHAIN_OFFSET onu
+#   KAYDIRIR, GENISLETMEZ. O5'te olculen irtifa hatasi 90-290 mm, yani
+#   pencerenin 1.3-4.1 KATI. Hangi sabit secilirse secilsin kosumlarin bir
+#   kismi pencerenin USTUNDE, bir kismi ALTINDA biter -- ve ikisi de
+#   olculdu: C1 eksenel +61..+152 mm (ustunde), P3 ins=+46 mm /
+#   nose_z=-0.0987 (altinda). Ayni kod, ayni sabit, iki zit ariza.
+#
+# COZUM: irtifayi KOMUT ETME, EKSENEL BOSLUGU KAPAT. Karar olcusu
+# seating_geometry().insertion_m, yani yuvanin KENDI cercevesinde olculen
+# derinlik -- EKF irtifa hatasi denklemden tamamen cikiyor.
+
+#: Oransal adim kazanci (operator karari 2026-09-05).
+#  NEDEN 1'IN ALTINDA: asim = fazladan inis = ipte gevseklik = zincirin
+#  bukulmesi = kanca yan yatar = TILT KAPISI OLUR. Bu tam olarak P3'un
+#  ariza modu (span 0.235 -> 0.094, fold 68 deg, tilt 493/493 red).
+#  Olculen en buyuk baslangic boslugundan (420 mm) 0.7 ile:
+#      420 -> 126 -> 38 -> 11 -> 3.4 mm, yani 4 adimda 5 mm'lik kapinin
+#  icine giriyor. Kazanc 1.0 bunu 2-3 adima indirirdi ama olcum gurultusunu
+#  dogrudan asima cevirirdi.
+ADAPTIVE_DESCENT_GAIN = 0.7
+#: Alcalma hizi. YENI BIR HIZ DEGIL: mevcut tek atis inis 0.90 -> 0.30 m'yi
+#  (0.60 m) 6.0 s'de komut ediyordu = 0.10 m/s. Adim suresi buradan cikar.
+ADAPTIVE_DESCENT_RATE_MPS = 0.10
+#: Bundan kucuk bir adim komut edilmez -- kapinin KENDI toleransindan
+#  (MAGNET_MAX_GAP_M = 5 mm) kucuk bir hareket hukmu degistiremez.
+ADAPTIVE_DESCENT_MIN_STEP_M = MAGNET_MAX_GAP_M
+#: Tek adim tavani. FIZIKSEL sinir zemin kirpmasidir; bu yalnizca bozuk bir
+#  geometri okumasina karsi akil sagligi kapisi ve mevcut tek atis inisin
+#  (0.60 m) yarisi.
+ADAPTIVE_DESCENT_MAX_STEP_M = 0.30
+#: Adim tavani. Kazanc 0.7 ile olculen en kotu boslugu 4 adimda kapatiyor;
+#  6 pay birakir. Asil sinir zaman butcesi.
+ADAPTIVE_DESCENT_MAX_STEPS = 6
+#: SERT ZAMAN BUTCESI. Olculen adim maliyeti (4 adim): hold
+#  2.94+0.9+1.0+1.0 = 5.8 s + sonumleme 4 x 1.2 = 4.8 s ~= 10.6 s.
+#  14 s bunu pay ile kapsar. Bu +6 s'lik artis icin yer B1 ile acildi
+#  (reacquire 3->1, son duzeltme 6->3).
+ADAPTIVE_DESCENT_BUDGET_S = 14.0
+#: Her adimdan sonra kancanin sonumlenmesi icin TAVAN (erken cikilir).
+#  Olculen sarkac periyodu GOREV J / 31 cm: 1.078 s; 1.2 s ~= 1.1 periyot.
+#  _settle_hook_onto'nun 2.5 s'inden kisa, cunku oradaki uyarim YATAY
+#  oteleme; burada hareket SAF DIKEY ve bu dosyanin kendi olcumu dikey
+#  inisin sarkaci cok daha az uyardigini kaydediyor.
+ADAPTIVE_DESCENT_SETTLE_S = 1.2
+#: Cok kucuk adimlarda bile setpoint akisinin oturmasi icin en az sure.
+ADAPTIVE_DESCENT_MIN_HOLD_S = 1.0
+#: GUVENLIK ALT SINIRI -- kanca burnunun dunya z'si. SECILMIS BIR SAYI
+#  DEGIL: zeminin kendisi. Yanal hata buyukse burun guverteden yana duser,
+#  eksenel bosluk hic kapanmaz ve tek koruma budur. Adim, burun bu sinirin
+#  ALTINA inecek sekilde HIC komut edilmez -- yani asim payi gerekmez.
+ADAPTIVE_DESCENT_NOSE_FLOOR_M = 0.0
 # Alma dogrulamasi: yuk en az bu kadar yukselmis olmali.
 # Tirmanis adimlari 1/2/3 m oldugu icin bu esik cok gevsek
 # secildi -- amac 'gercekten kalkti mi', 'ne kadar' degil.
@@ -485,6 +564,172 @@ class Gorev3PickupPhase:
         logger.warning("[SON_DUZELTME] butce doldu; son yanal %s",
                        f"{last * 1000:.1f} mm" if last is not None else "olculemedi")
         return last
+
+    def _hook_nose_z_m(self):
+        """Kanca burnunun DUNYA z'si (metre), yoksa None.
+
+        Guvenlik alt sinirinin olcusu. Yanal hata buyukse burun guverteden
+        YANA duser ve seating_geometry().insertion_m hic kapanmaz; o durumda
+        alcalmayi durduracak tek sey zemindir. Zincir buruldugunde
+        (P3: span 0.235 -> 0.094) kinematik bagintiyla HESAPLANAN burun
+        konumu artik gecerli degildir, bu yuzden deger GERCEK Gazebo pozundan
+        okunuyor -- ayni poz, oturma kapisinin da guvendigi poz.
+        """
+        get_pose = getattr(self.actuator, "get_hook_world_pose", None)
+        if get_pose is None:
+            return None
+        try:
+            pose = get_pose()
+        except Exception:  # noqa: BLE001 -- salt olcum, fazi dusuremez
+            return None
+        if pose is None:
+            return None
+        pos, quat, _age = pose
+        off = _quat_rotate(quat, (0.0, 0.0, HOOK_NOSE_OFFSET_M))
+        return pos[2] + off[2]
+
+    def _seating_geometry(self):
+        """Oturma geometrisi (aktuator yoksa/okuyamazsa None)."""
+        fn = getattr(self.actuator, "seating_geometry", None)
+        if fn is None:
+            return None
+        try:
+            return fn(self._color)
+        except Exception:  # noqa: BLE001
+            return None
+
+    async def _adaptive_descend(self, n_ned: float, e_ned: float,
+                                yaw_deg: float, start_alt_m: float):
+        """KADEMELI al: sabit hedef irtifa yok, EKSENEL BOSLUK kapatilir.
+
+        Neden bu var ve neden sabit bir irtifa calisamaz: yukaridaki
+        ADAPTIF ALCALMA sabitler blokuna bakin (pencere 70 mm, EKF hatasi
+        90-290 mm, yani pencerenin 1.3-4.1 kati).
+
+        DURMA KOSULU eksenel kapidir (insertion_m >= -MAGNET_MAX_GAP_M),
+        cunku alcalmanin KONTROL ETTIGI buyukluk odur. Yanal hatayi inis
+        kapatmaz -- onu gorsel hizalama, _settle_hook_onto ve yakalama
+        penceresindeki miknatis cekimi kapatir. Bu yuzden burasi yanal
+        kapiyi BEKLEMEZ; yalnizca olcup raporlar.
+
+        NEDEN ADIM ADIM, SUREKLI DEGIL: kapi rel_speed <= 0.05 m/s ve 0.60 s
+        dwell istiyor. Alcalirken kanca da araçla birlikte iniyor, yani
+        alcalma SIRASINDA kapi yapisal olarak saglanamaz. In -> dur -> olc
+        zorunlu; bu bir tercih degil.
+
+        Donen deger: fiilen KOMUT EDILEN son irtifa (m). Cagiran taraf tutma
+        ve yeniden hizalamayi bu irtifada surdurmeli, GOREV3_DESCENT_
+        ALTITUDE_M'de degil.
+        """
+        alt = start_alt_m
+        t0 = time.monotonic()
+        reason = "adim_tavani"
+        steps = []
+        for step in range(1, ADAPTIVE_DESCENT_MAX_STEPS + 1):
+            geom = self._seating_geometry()
+            if geom is None:
+                # POZ YOKSA KOR ALCALMA YOK. Yokluk, "guvenli" demek degil.
+                reason = "poz_yok"
+                break
+            gap_m = -geom.insertion_m          # >0 => burun guverteden YUKARIDA
+            if geom.insertion_m >= -MAGNET_MAX_GAP_M:
+                reason = "eksenel_kapi_gecti"
+                steps.append({"step": step, "gap_mm": round(gap_m * 1000, 1),
+                              "action": "dur"})
+                logger.info("[ADAPTIF_INIS] %d: eksenel bosluk %.1f mm -- KAPI "
+                            "GECILDI (sinir %.1f mm), inis burada duruyor "
+                            "(irtifa %.3f m).", step, gap_m * 1000,
+                            MAGNET_MAX_GAP_M * 1000, alt)
+                break
+
+            nose_z = self._hook_nose_z_m()
+            if nose_z is None:
+                reason = "burun_z_yok"
+                break
+            room_m = nose_z - ADAPTIVE_DESCENT_NOSE_FLOOR_M
+            if room_m <= 0.0:
+                reason = "zemin_siniri"
+                logger.warning("[ADAPTIF_INIS] %d: burun zemin sinirinda "
+                               "(nose_z=%.4f m) -- eksenel bosluk %.1f mm hala "
+                               "acik ama ALCALMA DURDURULUYOR. Bu, yanal hatanin "
+                               "burnu guverteden yana dusurdugu anlamina gelir.",
+                               step, nose_z, gap_m * 1000)
+                break
+
+            step_m = min(gap_m * ADAPTIVE_DESCENT_GAIN,
+                         ADAPTIVE_DESCENT_MAX_STEP_M,
+                         room_m)
+            if step_m < ADAPTIVE_DESCENT_MIN_STEP_M:
+                reason = "adim_cok_kucuk"
+                logger.info("[ADAPTIF_INIS] %d: adim %.1f mm < %.1f mm -- daha "
+                            "kucugu kapinin hukmunu degistiremez, duruluyor.",
+                            step, step_m * 1000, ADAPTIVE_DESCENT_MIN_STEP_M * 1000)
+                break
+
+            hold_s = max(ADAPTIVE_DESCENT_MIN_HOLD_S,
+                         step_m / ADAPTIVE_DESCENT_RATE_MPS)
+            elapsed = time.monotonic() - t0
+            if elapsed + hold_s + ADAPTIVE_DESCENT_SETTLE_S > ADAPTIVE_DESCENT_BUDGET_S:
+                reason = "butce"
+                logger.warning("[ADAPTIF_INIS] %d: butce (%.0f s) dolmak uzere "
+                               "(%.1f s harcandi, adim %.1f s + %.1f s isterdi) "
+                               "-- inis burada birakiliyor, bosluk %.1f mm acik.",
+                               step, ADAPTIVE_DESCENT_BUDGET_S, elapsed, hold_s,
+                               ADAPTIVE_DESCENT_SETTLE_S, gap_m * 1000)
+                break
+
+            alt = alt - step_m
+            logger.info("[ADAPTIF_INIS] %d/%d: bosluk=%.1f mm burun_z=%.4f m "
+                        "-> adim %.1f mm (hold %.1f s), yeni irtifa %.3f m "
+                        "| yanal=%.1f mm tilt=%.1f deg",
+                        step, ADAPTIVE_DESCENT_MAX_STEPS, gap_m * 1000, nose_z,
+                        step_m * 1000, hold_s, alt, geom.lateral_m * 1000,
+                        math.degrees(geom.tilt_rad))
+            self._publish("GOREV3_ADAPTIVE_DESCENT_STEP", f"{step}",
+                          data={"step": step,
+                                "gap_mm": round(gap_m * 1000, 1),
+                                "nose_z_m": round(nose_z, 4),
+                                "step_mm": round(step_m * 1000, 1),
+                                "alt_after_m": round(alt, 3),
+                                "lateral_mm": round(geom.lateral_m * 1000, 1),
+                                "tilt_deg": round(math.degrees(geom.tilt_rad), 1),
+                                "rel_speed_mps": round(geom.rel_speed_mps, 3)
+                                if geom.rel_speed_mps != float("inf") else None,
+                                "clamped_by_floor": bool(step_m >= room_m - 1e-9)})
+            steps.append({"step": step, "gap_mm": round(gap_m * 1000, 1),
+                          "step_mm": round(step_m * 1000, 1),
+                          "alt_after_m": round(alt, 3)})
+            await self.flight.goto_position_ned_and_hold(
+                n_ned, e_ned, -alt, yaw_deg, hold_s)
+
+            # SONUMLEME. Hareket halinde olcmek, hareketi hata sanmaktir --
+            # ve kapinin kendi hiz esigi (SEAT_MAX_REL_SPEED_MPS) zaten bu.
+            waited = 0.0
+            while waited < ADAPTIVE_DESCENT_SETTLE_S:
+                g = self._seating_geometry()
+                if g is None or g.rel_speed_mps <= SEAT_MAX_REL_SPEED_MPS:
+                    break
+                await asyncio.sleep(0.2)
+                waited += 0.2
+
+        final = self._seating_geometry()
+        spent = time.monotonic() - t0
+        logger.info("[ADAPTIF_INIS] BITTI (%s): %d adim, %.1f s, son irtifa "
+                    "%.3f m (baslangic %.3f m). Son geometri: %s",
+                    reason, len(steps), spent, alt, start_alt_m,
+                    final.describe() if final is not None else "okunamadi")
+        self._publish("GOREV3_ADAPTIVE_DESCENT_RESULT", reason,
+                      data={"reason": reason, "steps": steps,
+                            "elapsed_s": round(spent, 2),
+                            "start_alt_m": round(start_alt_m, 3),
+                            "reached_alt_m": round(alt, 3),
+                            "final_gap_mm": (round(-final.insertion_m * 1000, 1)
+                                             if final is not None else None),
+                            "final_lateral_mm": (round(final.lateral_m * 1000, 1)
+                                                 if final is not None else None),
+                            "final_failures": (final.failures()
+                                               if final is not None else None)})
+        return alt
 
     async def _hook_trace(self, duration_s: float, hz: float = 10.0):
         """Kanca izini ~hz Hz orneklet (SALT OLCUM, Y1 turu 2026-08-31).
@@ -1126,15 +1371,32 @@ class Gorev3PickupPhase:
             # kadar kesintisiz akar ki uc an (inis / temas / sonrasi) tek bir
             # zaman ekseninde ayirt edilebilsin.
             _trace = asyncio.create_task(self._hook_trace(45.0))
-            logger.info("Hizalandi -- %.2f m alma irtifasina SAF DIKEY iniliyor "
-                        "(yanal hareket yok).", GOREV3_DESCENT_ALTITUDE_M)
+            logger.info("Hizalandi -- SAF DIKEY, KADEMELI iniliyor (yanal "
+                        "hareket yok). Sabit hedef irtifa YOK: eksenel bosluk "
+                        "kapanana kadar inilir.")
             self._publish("GOREV3_PICKUP_STEP", "vertical_descent_start",
                           data={"from_m": HOOK_VISUAL_ALIGN_ALTITUDE_M,
-                                "to_m": GOREV3_DESCENT_ALTITUDE_M,
+                                "mode": "adaptive",
                                 "lateral_before_mm": (round(final_lateral * 1000, 1)
                                                       if final_lateral is not None else None)})
-            await self.flight.goto_position_ned_and_hold(
-                _hn, _he, -GOREV3_DESCENT_ALTITUDE_M, aligned_yaw, 6.0)
+            # GOREV K (2026-09-05): SABIT IRTIFA KALDIRILDI.
+            #
+            # Buraya kadar tek atis vardi: goto(..., -GOREV3_DESCENT_ALTITUDE_M,
+            # 6.0). Olculdu ki o sabitin isabet etmesi gereken pencere yalnizca
+            # 70 mm genisliginde (burun guverteye A=0.358 m'de, zemine
+            # A=0.288 m'de deger) ve PX4'un irtifa hatasi 90-290 mm, yani
+            # pencerenin 1.3-4.1 KATI. Sonuc iki zit ariza olarak olculdu:
+            # C1 eksenel +61..+152 mm (kanca yetismedi), P3 ins=+46 mm /
+            # nose_z=-0.0987 (burun zemine gomuldu). Turetme:
+            # docs/gorevK-adaptif-alcalma-faz1.md.
+            #
+            # ULASILAN IRTIFA ARTIK BIR DEGISKEN: tutma, yeniden hizalama ve
+            # olay kayitlari bunu kullanmali. SALIM REFERANSI DEGISMEDI --
+            # extend_winch_for hala GOREV3_DESCENT_ALTITUDE_M ile cagriliyor,
+            # cunku inis boyunca salimin SABIT kalmasi bu hesabin on kabulu;
+            # yeniden hesaplanirsa fazladan salim kapiyi bozar.
+            pickup_alt = await self._adaptive_descend(
+                _hn, _he, aligned_yaw, HOOK_VISUAL_ALIGN_ALTITUDE_M)
             # Hizalama araci otelemis olabilir; tutma noktasi tazelenmeli.
             _hn, _he, _ = await self.flight.get_position_ned()
 
@@ -1162,7 +1424,7 @@ class Gorev3PickupPhase:
                 # GOREV K / D: cekim adimlari bu hedefin uzerine biner.
                 _attract["n"], _attract["e"] = n_, e_
                 _hold_ref["t"] = asyncio.create_task(self.flight.goto_position_ned_and_hold(
-                    n_, e_, -GOREV3_DESCENT_ALTITUDE_M, aligned_yaw, PICKUP_HOLD_S))
+                    n_, e_, -pickup_alt, aligned_yaw, PICKUP_HOLD_S))
 
             async def _stop_hold():
                 t = _hold_ref.pop("t", None)
@@ -1217,7 +1479,7 @@ class Gorev3PickupPhase:
                 logger.info("[YENIDEN_HIZA] deneme %d oncesi, kanca havada -- "
                             "duzeltme yeniden kosuluyor", attempt + 1)
                 corrected = await self._settle_hook_onto(recv_ned, aligned_yaw,
-                                                         GOREV3_DESCENT_ALTITUDE_M)
+                                                         pickup_alt)
                 logger.info("[YENIDEN_HIZA] deneme %d icin yeni yanal: %s",
                             attempt + 1,
                             f"{corrected * 1000:.1f} mm" if corrected is not None else "olculemedi")
@@ -1281,6 +1543,11 @@ class Gorev3PickupPhase:
             self._publish("GOREV3_PICKUP_STEP", "pickup_attempt_start",
                           data={"altitude_m": (round(_pick_alt, 3)
                                                if _pick_alt is not None else None),
+                                # Adaptif inisin ULASTIGI komut irtifasi. Tutma
+                                # bunu kullaniyor; kosumdan kosuma DEGISMESI
+                                # beklenen ve istenen sonuctur -- EKF hatasinin
+                                # telafi edildiginin kaniti odur.
+                                "commanded_alt_m": round(pickup_alt, 3),
                                 "payout_reference_alt_m": GOREV3_DESCENT_ALTITUDE_M})
             try:
                 picked = await self.actuator.activate_pickup_mechanism(
