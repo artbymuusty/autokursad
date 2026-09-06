@@ -7,7 +7,7 @@
 
 ## 0 · SIRADAKİ İŞ (yeni oturum buradan başlasın)
 
-> **GÖREV P/C — dashboard'lu izleme turu. HENÜZ YAPILMADI.**
+> **GÖREV P/C — dashboard'lu izleme turu. ✅ TAMAMLANDI (aşağıda).**
 >
 > Operatör, gerçekleşen uçtan uca başarılarda kilidin **gerçekten SERVO3
 > kavramasıyla** oluştuğunu **görsel olarak** teyit etmek istiyor: mission
@@ -23,6 +23,32 @@
 > GATE olayları, `MAGNET_LOCKED`, `SERVO3_GRIP_ENGAGED` zamanlaması,
 > `pickup_verified` sonucu, uçtan uca başarı/başarısızlık.
 >
+### ✅ TAMAMLANDI — 2026-09-06, `demo_20260906_155405`
+
+**Görev P/C yapıldı, tekrar gerekmiyor.** Kullanıcı dashboard'da SERVO3'ün
+**`ACIK` → `KAVRADI`** geçişini gördü. Panel, olay akışıyla senkron ve doğru
+durumu gösterdi (kaynak: `HOOK_SEATING_RESULT`).
+
+Kilidin **gerçekten servo3 kavramasıyla** oluştuğu, kör zamanlamayla değil
+**bağımsız fiziksel kanıtla** doğrulandı:
+
+```
+16:01:34,862  KILIT SONRASI 2.0 s dogrulama penceresi TEMIZ -- servo3 tetikleniyor
+16:01:34,863  MAGNET_LOCKED  lat=14.3mm ins=+0.1mm tilt=2.2deg v=0.001m/s  dwell 0.63 s
+16:01:36,743  SERVO3_GRIP_ENGAGED -- kavrama kollari yuku tutuyor
+16:01:41,801  ALMA_DOGRULAMA  grip_engaged=True  kanca_kilitli=True
+              yuk_yukseldi=+1.40 m  ->  pickup_verified=True
+16:01:41,801  Yük Alma Başarılı -- DOGRULANDI
+```
+
+**2.0 s doğrulama penceresi (Görev N/A) gerçek bir kontrol olduğunu kanıtladı** —
+aynı koşumda iki kez haklı sebeple kavramayı reddetti:
+`tilt(8.1deg>8.0deg)` ve `rel_speed(0.057>0.05m/s)`, üçüncüde temiz geçti.
+
+Görev tamamlandı: **11 adımın 11'i, `MISSION COMPLETE`.**
+
+---
+
 > ⚠️ **Koşumdan önce YÜK KAPISI:** yük yüksekken (iOS Simulator / Spotify
 > vb.) alınan sonuçlar geçersiz — "telemetri bayat / detector hata veriyor"
 > ile düşüyor. Eşik: 1 dk yük ≤ 10. Bugün 4 koşum bu yüzden atıldı.
@@ -74,7 +100,7 @@ sicrama:      -11.0 ... +44.3 mm, ortanca +27.4   (Q oncesi +201.9)
 
 ## 4 · AÇIK KALANLAR
 
-1. **Görev P/C — dashboard'lu izleme** (§0). Operatörün öncelikli isteği.
+1. ~~Görev P/C — dashboard'lu izleme~~ ✅ **TAMAMLANDI** 2026-09-06 (§0).
 2. **Değişkenlik:** iyi denemeler `inis_lat` 3.0 mm, kötüler 105.6 mm.
    `yanal_menzil_disi` ve `devrilmis_kanca` hâlâ deneme kaybettiriyor.
    13 denemenin 9'u bütçeden kesildi.
