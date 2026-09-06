@@ -83,14 +83,27 @@ gz sim --version && python3 --version && git --version
 ## 2. Faz 1 — Klon ve submodule'ler
 
 ```bash
-git clone --recursive https://github.com/artbymuusty/KURSAD40_WorkSpace.git
+git clone https://github.com/artbymuusty/KURSAD40_WorkSpace.git
 cd KURSAD40_WorkSpace
 ```
 
-`--recursive` unutulduysa:
-```bash
-git submodule update --init --recursive
-```
+> **`--recursive` KULLANMA — `git submodule` komutlarını da çalıştırma.**
+> Yukarı akış PX4'ün `.gitmodules` içinde sayılan **29 submodule'ünün tamamı**
+> bu repoda normal takipli dosya olarak vendor'lanmıştır (NuttX 16.777 dosya,
+> mavlink 337, GPSDrivers 30, ...). Düz `git clone` hepsini getirir; ağdan ek
+> bir şey çekilmez. Submodule adımı ne gereklidir ne de zararsızdır:
+>
+> - Depo kökünde, `.gitmodules`'de **kaydı olmayan** boş bir `gz-msgs`
+>   gitlink'i duruyor (ilk commit `bf264231`'den kalma). Bu yüzden **her**
+>   `git submodule` komutu fatal ile düşer:
+>   `fatal: no submodule mapping found in .gitmodules for path 'gz-msgs'`
+>   `git clone --recursive` de tam olarak bunu verir: checkout tamamlanır ama
+>   komut hata koduyla biter ve kurulum bozuk sanılır.
+> - `gz-msgs` dizini **derlemede kullanılmaz.** `find_package(gz-msgs REQUIRED)`
+>   Homebrew'un `gz-msgs10` paketini arar, bu dizini değil. Boş kalması
+>   normaldir, silmen gerekmez.
+> - Submodule'leri zorla init etmeye çalışırsan vendor'lanmış PX4 içeriğinin
+>   yukarı akış sürümleriyle ezilmesi riski doğar.
 
 > **Not:** `Tools/simulation/gz` bu repoda **submodule değildir** — KURSAD40'a
 > özel dünya/model dosyaları (`x500_mono_cam_down`, `blue_hexagon`,
@@ -99,11 +112,13 @@ git submodule update --init --recursive
 > içindeki kayıt bilinçli olarak kaldırılmıştır. **Geri eklemeyin** — eklerseniz
 > KURSAD40 modelleri yukarı akış modelleriyle ezilir.
 
-**Doğrulama:**
+**Doğrulama:** (`git submodule status` **kullanma** — yukarıdaki nedenle fatal verir)
 ```bash
-test -f Tools/simulation/gz/models/x500_mono_cam_down/model.sdf && echo "KURSAD40 modelleri OK"
-git submodule status | head -5
+test -f Tools/simulation/gz/models/x500_mono_cam_down/model.sdf && echo "modeller OK"
+test -s src/modules/simulation/gz_plugins/hook_attach/HookAttachSystem.cc && echo "kanca/miknatis eklenti kaynagi OK"
+test -d platforms/nuttx/NuttX/nuttx && echo "vendor'lanmis submodule icerigi OK"
 ```
+Üçü birden OK vermiyorsa klon eksiktir — tekrar klonla.
 
 ---
 
@@ -114,9 +129,15 @@ Launcher'lar interpreter'ı `.scripts/olds/v34/resolve_python.sh` üzerinden
 
 1. `$VIRTUAL_ENV/bin/python` — aktif venv her zaman kazanır
 2. `$KURSAD40_VENV/bin/python` — açık override
-3. `~/Projects/kursad40-venv/bin/python` — kanonik macOS yolu
+3. `<workspace>/.venv/bin/python` — deponun **bir üstü** (`~/KURSAD40/autokursad`
+   yerleşimi için `~/KURSAD40/.venv`)
 4. `<repo>/.scripts/.venv/bin/python` — orijinal Ubuntu repo-içi yolu
-5. `python3` (PATH) — son çare
+5. `~/Projects/kursad40-venv/bin/python` — daha eski macOS konumu
+6. `python3` (PATH) — son çare, **uyarı basar** (büyük olasılıkla yanlış Python)
+
+> 3. ve 4. adaylar deponun **bulunduğu yere** çapalıdır. Depoyu alışılmadık bir
+> dizine klonlarsan ikisi de tutmaz ve arama 6. adaya kadar düşer. Bu yüzden
+> aşağıdaki `KURSAD40_VENV` override'ı yerleşimden bağımsız tek güvenli yoldur.
 
 **Yani hiçbir dosyayı düzenlemene gerek yok** — sadece `KURSAD40_VENV`
 değişkenini ayarla:
@@ -206,6 +227,20 @@ olarak şunları da yapar (her biri yaşanmış bir hataya karşılık gelir):
 5. `make px4_sitl gz_x500_mono_cam_down` ile başlatır
 6. Sonrasında takılı kalan LAND modunu `clear_land_mode.py` ile temizler
 
+> **`make px4_sitl_default` Gazebo sistem eklentilerini de derler.**
+> `src/modules/simulation/gz_plugins/CMakeLists.txt` içindeki `px4_gz_plugins`
+> hedefi `ALL` olduğu için ayrı bir komut gerekmez. Görev 3 alma zincirini
+> ayakta tutan **`HookAttachSystem`** de buradan çıkar; bu tek kütüphane
+> **iki** eklenti barındırır:
+> - `hook_attach::HookAttachSystem` — DetachableJoint ile kanca kilidi
+> - `hook_attach::MagnetForceSystem` — gerçek mıknatıs kuvveti (Görev K) ve
+>   hizalama torku (Görev M)
+>
+> **Dikkat — sessiz tuzak:** model SDF'i **kaynak ağacından** okunur, eklenti
+> ise **`build/` içindeki derlenmiş** kütüphanedir. `git pull` sonrası yeniden
+> derlemezsen SDF olmayan bir eklenti adını ister ve mıknatıs hiç çalışmaz;
+> görev günlüğünde hata görünmez. Belirti ve teşhis: §13.9.
+
 > **Make hedefi `gz_x500_mono_cam_down`'dır, `_payload` değildir.** Payload
 > bırakma mekanizması (`PayloadDropSystem` eklentisi + `payload_blue`/
 > `payload_red` link'leri) baz modelin içine konsolide edildi. Ayrı bir
@@ -269,12 +304,29 @@ Ortam değişkenleriyle ezilebilir:
 - `KURSAD40_LEGACY_DASHBOARD=0/1` — in-process dashboard'ı her iki yönde de ezer
 - `KURSAD40_UNIFIED_DASHBOARD=0` — GZ'de ayrı process'i kapatır
 
+**SERVO DURUM paneli (Görev N/C).** Unified dashboard'da minimap ile Current
+Status arasında bir servo paneli vardır; SERVO1 (yön) ve SERVO3 (kavrama)
+durumunu ve her satırın hangi olay kodundan geldiğini gösterir. Kilidin
+gerçekten SERVO3 kavramasıyla oluştuğunu gözle doğrulamak için budur.
+**Ek bağımlılık gerektirmez** — panel `cv2`/`numpy`/`zmq` ile çizilir, üçü de
+§3'teki mevcut listede. Panel yüksekliğini **minimap'ten** alır, Current
+Status kısaltılmaz; bu yüzden ~780 px'ten alçak bir pencerede minimap küçülür
+(hata vermez, sadece daralır).
+
 ---
 
 ## 7. Faz 6 — Gerçek uçuş donanımı
 
 `real_system.yaml` içindeki `TODO` işaretli her satır **senin donanımına**
 göre doldurulmalıdır. Simülasyon değerlerini kopyalama.
+
+> **CAD uyarısı — bu depo gerçek kanca geometrisini İÇERMEZ.** Görev K–S
+> zinciri boyunca kullanılan 31 cm'lik kanca ve Ø35 mm mıknatıs yalnızca
+> simülasyon SDF'inde modellenmiştir; üretilebilir CAD dosyası repoda yoktur.
+> Açık kalemler ve hangi ölçünün nereden doğrulanması gerektiği:
+> [`docs/TODO-CAD-guncelleme.md`](.scripts/olds/v34/v34_flight_stack/docs/TODO-CAD-guncelleme.md).
+> Gerçek uçuşa geçmeden önce §12.7'deki K1–K7 ölçülerini **gerçek parçadan**
+> doğrula — SDF'ten kopyalama.
 
 ### 7.1 Uçuş kontrolcüsü seri portu
 [real_system.yaml:2](.scripts/olds/v34/v34_flight_stack/real_system/config/real_system.yaml#L2) — varsayılan `serial:///dev/ttyUSB0:57600`
@@ -629,6 +681,33 @@ zorunlu), `CENTERING_TOLERANCE_X/Y_NORM=0.01` (operatör kararı),
 `NORMAL_MISSION_SPEED_M_S=None` **TODO — ekip dolduracak**,
 `PAYLOAD_APPROACH_ALTITUDES_M=[10.0, 5.0, 0.45]`.
 
+### 12.7 Görev 3 alma zinciri — kanca / mıknatıs / servo (Görev K–S)
+
+Bu değerler **YAML'da değildir**, Python sabitidir; simülasyon için hiçbirini
+düzenlemene gerek yok (fresh clone kutudan çalışır). **Gerçek uçuşta ise
+hepsi donanıma özeldir** — K1–K7 fiziksel ölçüdür, N1–N3 servo montajına
+bağlıdır. Ölçüleri gerçek parçadan doğrula (§7 CAD uyarısı).
+
+| # | Değer | Yer | Varsayılan | Nasıl tespit edilir |
+|---|---|---|---|---|
+| K1 | Mıknatıs yakalama yarıçapı | [hook_seating.py:167](.scripts/olds/v34/v34_flight_stack/core/mission/hook_seating.py#L167) | `0.0175` m | Gerçek mıknatıs yarıçapı (Ø35 mm) |
+| K2 | İzin verilen eksenel boşluk | [hook_seating.py:174](.scripts/olds/v34/v34_flight_stack/core/mission/hook_seating.py#L174) | `0.005` m | Mıknatıs yüzeyi ile yuva teması |
+| K3 | İzin verilen eğim | [hook_seating.py:182](.scripts/olds/v34/v34_flight_stack/core/mission/hook_seating.py#L182) | `8°` | Yuva konisinin toleransı |
+| K4 | Oturma bekleme (dwell) | [hook_seating.py:208](.scripts/olds/v34/v34_flight_stack/core/mission/hook_seating.py#L208) | `0.60` s | Kapıların kesintisiz sağlanma süresi |
+| K5 | Bağıl hız tavanı | [hook_seating.py:227](.scripts/olds/v34/v34_flight_stack/core/mission/hook_seating.py#L227) | `0.05` m/s | Sarkaç sönümlenmeden kilitleme |
+| K6 | Mıknatıs çekim menzili | [hook_seating.py:250](.scripts/olds/v34/v34_flight_stack/core/mission/hook_seating.py#L250) | `0.05` m | Gerçek mıknatısın 3–5 cm etki bandı |
+| K7 | Kanca gövde ofseti (ileri) | [gorev3_pickup.py:47](.scripts/olds/v34/v34_flight_stack/core/mission/gorev3_pickup.py#L47) | `0.175` m | CAD'den ölç — görsel hizalama bunu kullanır |
+| K8 | Görüş marjı | [gorev3_pickup.py:88](.scripts/olds/v34/v34_flight_stack/core/mission/gorev3_pickup.py#L88) | `0.08` m | Yaklaşma irtifası = `low_alt_vision_limit(sekil) + marj` = **0.58 m** |
+| K9 | Kanca durma beklemesi (min/maks) | [gorev3_pickup.py:233](.scripts/olds/v34/v34_flight_stack/core/mission/gorev3_pickup.py#L233) / [:201](.scripts/olds/v34/v34_flight_stack/core/mission/gorev3_pickup.py#L201) | `1.25` s / `12.0` s | Ölçülen sarkaç periyodu 1.078 s, ζ≈0.03 |
+| K10 | Adaptif alçalma | [gorev3_pickup.py:344–434](.scripts/olds/v34/v34_flight_stack/core/mission/gorev3_pickup.py#L344) | kazanç `0.7`, maks adım `0.30` m, `8` adım, `20` s bütçe | EKF↔gerçek irtifa hatası 0.09–0.29 m olduğu için sabit irtifa çalışmaz |
+| N1 | SERVO1 açıları | [parameters.py:226](.scripts/olds/v34/v34_flight_stack/core/config/parameters.py#L226) | sol `-90`, orta `0`, sağ `+90` | Gerçek servo montaj yönü — **hardcode etme** |
+| N2 | SERVO3 süpürme / kapalı / açık | [parameters.py:231–233](.scripts/olds/v34/v34_flight_stack/core/config/parameters.py#L231) | `180` / `0` / `180` derece | Kavrama kollarının fiziksel limiti |
+| N3 | SERVO3 kilit sonrası bekleme | [parameters.py:221](.scripts/olds/v34/v34_flight_stack/core/config/parameters.py#L221) | `2.0` s | Kavrama teyit penceresi; kapılar bu sürede yeniden örneklenir |
+
+> `GOREV3_APPROACH_ALTITUDE_M = 0.30` ([parameters.py:184](.scripts/olds/v34/v34_flight_stack/core/config/parameters.py#L184))
+> hâlâ dosyada duruyor ama **artık kullanılmıyor** — Görev S'te yerini K8'den
+> türetilen 0.58 m aldı. Yaklaşma irtifasını buradan okuma.
+
 ---
 
 ## 13. Bilinen tuzaklar — "çalışmıyor" debug'ına başlamadan önce oku
@@ -730,6 +809,32 @@ zorlar.
 **Neden:** Eski launcher'lar `../../.venv/bin/python`'u doğrudan çağırıyordu —
 Ubuntu repo-içi venv yolu, macOS'ta yok.
 **Çözüm:** `resolve_python.sh`. §3.
+
+### 13.9 Mıknatıs hiç çekmiyor / kanca yuvaya bir türlü oturmuyor
+**Belirti:** Görev 3 alma denemeleri `lateral(...)` / `too_high(...)`
+kapılarında takılıp bütçe doluyor. Kanca mıknatıs bandına girse bile hiçbir
+çekim gözlenmiyor, görev günlüğünde **hata yok**. Gazebo'nun kendi açılış
+çıktısında eklenti adının bulunamadığına dair bir uyarı vardır.
+
+**Neden:** Model SDF'i ile eklenti **farklı yerlerden** yüklenir —
+SDF `GZ_SIM_RESOURCE_PATH` ile **kaynak ağacından**
+(`Tools/simulation/gz/models`), eklenti ise `GZ_SIM_SYSTEM_PLUGIN_PATH` ile
+**derlenmiş** kütüphaneden (`build/px4_sitl_default/.../gz_plugins`).
+`git pull` SDF'i anında günceller, `.dylib`'i güncellemez. SDF
+`hook_attach::MagnetForceSystem`'i ister, eski kütüphanede bu ad yoktur,
+Gazebo eklentiyi **sessizce atlar** ve mıknatıs kuvveti hiç uygulanmaz.
+
+**Çözüm:**
+```bash
+make px4_sitl_default        # veya: ninja -C build/px4_sitl_default HookAttachSystem
+```
+
+**Doğrula:** (0'dan büyük bir sayı görmelisin — `nm` bu eklentide iş görmez,
+semboller dışa açılmaz)
+```bash
+strings build/px4_sitl_default/src/modules/simulation/gz_plugins/libHookAttachSystem.dylib \
+  | grep -c MagnetForceSystem
+```
 
 ---
 
