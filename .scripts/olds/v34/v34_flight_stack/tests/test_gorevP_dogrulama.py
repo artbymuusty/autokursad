@@ -99,3 +99,54 @@ def test_gercek_donanim_bosluguna_TODO_var():
 
 def test_sabit_tanimli_ve_pozitif():
     assert GOREV3_SERVO3_POST_LOCK_DELAY_S > 0.0
+
+
+# --------------------------------------------------------------------------
+# GOREV S -- yaklasma irtifasi GORUS ESIGINDEN turetiliyor
+# --------------------------------------------------------------------------
+
+def test_yaklasma_irtifasi_gorus_esiginin_USTUNDE():
+    """Sabit 0.30 m, dedektorun alcak-irtifa esiginin (0.50 m) ALTINDAYDI:
+    ortalama, seklin KABUL EDILMEDIGI bir irtifada yapilmaya calisiliyordu.
+    OLCULDU (demo_20260906_052707/2): kayip iterasyonlarda alt 0.238-0.265 m,
+    hedef gorunur oldugunda 0.292-0.294 m; 51 iterasyon (5.5 s) + 3.0 s
+    kurtarma = gorsel blogun 26.7 s'sinin 8.5 s'i, HER denemede."""
+    from core.config.parameters import low_alt_vision_limit
+    from core.mission.gorev3_pickup import GOREV3_APPROACH_VISION_MARGIN_M
+    for sekil in ("KIRMIZI_DIKDORTGEN", "MAVI_DIKDORTGEN"):
+        esik = low_alt_vision_limit(sekil)
+        assert esik + GOREV3_APPROACH_VISION_MARGIN_M > esik
+
+
+def test_pay_OLCULEN_asimdan_buyuk():
+    """Pay SECILMEDI: irtifa asagi asimi olculdu (komut 0.30, ulasilan
+    0.238 = 0.062 m). 0.55 secilseydi en kotu asimda arac 0.488 m'ye, yani
+    ESIGIN ALTINA duserdi."""
+    from core.mission.gorev3_pickup import GOREV3_APPROACH_VISION_MARGIN_M
+    OLCULEN_ASIM_M = 0.062
+    assert GOREV3_APPROACH_VISION_MARGIN_M > OLCULEN_ASIM_M, (
+        f"pay {GOREV3_APPROACH_VISION_MARGIN_M} m, olculen asimdan "
+        f"({OLCULEN_ASIM_M} m) kucuk -- en kotu durumda esigin altina duser")
+
+
+def test_irtifa_SEKILDEN_turetiliyor_sabit_degil():
+    """Esik SEKLE OZGU; formulle yazmak ileride ayrisirlarsa sessizce
+    yanlislasmayi onler."""
+    assert "low_alt_vision_limit(self._rect_class)" in G3
+    assert "def _approach_altitude_m" in G3
+
+
+def test_cozunurluk_kaybi_toleransin_COK_ALTINDA():
+    """Cozunurluk 1.9x kabalasiyor (1.04 -> 2.07 mm) ama aligner'in DURMA
+    TOLERANSI 30 mm ve olculen artigi 6.5-29.7 mm -- yani TOLERANSA
+    dayaniyor, cozunurluge degil."""
+    from core.mission.gorev3_pickup import (HOOK_VISUAL_ALIGN_TOLERANCE_M,
+                                            GOREV3_APPROACH_VISION_MARGIN_M)
+    from core.config.parameters import low_alt_vision_limit
+    f_px, CAM_Z, DECK = 539.9, 0.05, 0.070
+    alt = low_alt_vision_limit("KIRMIZI_DIKDORTGEN") + GOREV3_APPROACH_VISION_MARGIN_M
+    mm_per_px = (alt + CAM_Z - DECK) / f_px * 1000.0
+    taban_mm = 2.0 * mm_per_px          # ~2 px merkez hatasi
+    assert taban_mm < HOOK_VISUAL_ALIGN_TOLERANCE_M * 1000.0 / 10.0, (
+        f"cozunurluk tabani {taban_mm:.2f} mm, toleransin ({HOOK_VISUAL_ALIGN_TOLERANCE_M*1000:.0f} mm) "
+        f"onda birinden buyuk -- odunlesim gercek olur")

@@ -35,7 +35,7 @@ OFFSET = r'"after_visual_work": True'
 # Ofsetten SONRA gorunmemesi gereken gorsel adimlar.
 GORSEL = {
     "ilk ortalama (1.2 m)":      r"go_to_and_center\(\s*\n?\s*self\._rect_class, altitude_m=HOOK_ALIGN_ALTITUDE_M",
-    "ikinci ortalama (0.30 m)":  r"go_to_and_center\(\s*\n?\s*self\._rect_class, altitude_m=GOREV3_APPROACH_ALTITUDE_M",
+    "ikinci ortalama (yaklasma irtifasi)": r"go_to_and_center\(\s*\n?\s*self\._rect_class, altitude_m=_approach_alt",
     "piksel sapma olcumu":       r"_rect_pixel_offset\(\)",
     "gorsel kanca hizalamasi":   r"aligner\.align\(",
 }
@@ -81,8 +81,12 @@ def test_gorsel_hizalama_YAKLASMA_irtifasinda_kosar():
     """0.90 m'lik telafi irtifasi, ofsetin erken uygulanmasinin
     SEMPTOMUNU bastirmak icindi. Ofset artik sonda oldugu icin gorsel is
     dogrudan yaklasma irtifasinda yapilir."""
-    assert "aligner.align(GOREV3_APPROACH_ALTITUDE_M" in SRC, \
-        "gorsel hizalama hala eski telafi irtifasinda kosuyor"
+    # GOREV S (2026-09-06): irtifa artik SABIT degil, seklin gorus esiginden
+    # turetiliyor (_approach_altitude_m). Sabit 0.30, dedektorun 0.50 m'lik
+    # esiginin ALTINDAYDI ve ortalama goremedigi bir irtifada yapiliyordu.
+    assert "aligner.align(_approach_alt" in SRC, \
+        "gorsel hizalama yaklasma irtifasinda kosmuyor"
+    assert "_approach_alt = self._approach_altitude_m()" in SRC
 
 
 def test_501px_aritmetigi_yeni_irtifada_da_gecerli():

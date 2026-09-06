@@ -15,6 +15,8 @@ from core.config.parameters import (
     GOREV3_CRUISE_ALTITUDE_M,
     GOREV3_TRANSIT_ALTITUDE_M,
 )
+from core.config.parameters import low_alt_vision_limit
+from core.mission.gorev3_pickup import GOREV3_APPROACH_VISION_MARGIN_M
 from core.mission.gorev3_pickup import (HOOK_ALIGN_ALTITUDE_M,
                                         HOOK_BODY_OFFSET_FORWARD_M)
 
@@ -249,7 +251,11 @@ async def test_pickup_full_sequence_succeeds_and_confirms_shape_gone(tmp_path):
     assert centering.center_calls == [
         ("MAVI_ALTIGEN", GOREV3_CRUISE_ALTITUDE_M),         # adim 2: ARENA SEKLI
         ("KIRMIZI_DIKDORTGEN", HOOK_ALIGN_ALTITUDE_M),      # adim 5: gorus dostu
-        ("KIRMIZI_DIKDORTGEN", GOREV3_APPROACH_ALTITUDE_M), # adim 7: hassas
+        # GOREV S: yaklasma irtifasi artik SEKLIN gorus esiginden turetiliyor
+        # (0.50 + 0.08 = 0.58), sabit 0.30 degil. Sabit deger dedektorun
+        # alcak-irtifa esiginin ALTINDAYDI.
+        ("KIRMIZI_DIKDORTGEN", low_alt_vision_limit("KIRMIZI_DIKDORTGEN")
+                               + GOREV3_APPROACH_VISION_MARGIN_M),  # adim 7: hassas
     ], centering.center_calls
     hold_calls = [c for c in flight.calls if c[0] == 'goto_position_ned_and_hold']
     assert len(hold_calls) >= 3  # align, translate, descend (+ climb steps)

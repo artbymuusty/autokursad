@@ -23,6 +23,7 @@ from core.mission.hook_seating import (
 )
 from core.config.parameters import (
     HSV_MIN_AREA_RECT_BASE,
+    low_alt_vision_limit,
     GOREV3_APPROACH_ALTITUDE_M,
     GOREV3_PICKUP_ATTEMPT_TIMEOUT_S,
     GOREV3_PICKUP_VERIFY_TIMEOUT_S,
@@ -44,6 +45,47 @@ from core.config.parameters import (
 # kamera ile kanca arasi 0.175 m; eskiden 0.70 m idi ve o korlemesine
 # kayma temasin en buyuk hata kaynagiydi.
 HOOK_BODY_OFFSET_FORWARD_M = 0.175
+
+# ==========================================================================
+# YAKLASMA IRTIFASI -- GORUS ESIGINDEN TURETILIYOR (GOREV S, 2026-09-06)
+# ==========================================================================
+# ONCEKI HAL sabit GOREV3_APPROACH_ALTITUDE_M = 0.30 idi ve gerekcesi
+# yalnizca PIKSEL COZUNURLUGUYDU (bkz. ADIM 4 yorumu: "kadraj burada
+# 0.71 x 0.53 m oldugu icin ayni piksel hatasi cok daha kucuk bir metre
+# hatasi demek"). O gerekce, dedektorun ALCAK IRTIFA GORUS ESIGINI
+# HIC ANMIYOR -- ve iki karar dogrudan celisiyordu:
+#     low_alt_vision_limit("KIRMIZI_DIKDORTGEN") = 0.50 m
+#     yaklasma irtifasi                          = 0.30 m
+# Yani ortalama, dedektorun sekli KABUL ETMEDIGI bir irtifada yapilmaya
+# calisiliyordu. OLCULDU (demo_20260906_052707, deneme 2):
+#     kayip iterasyonlar sirasinda alt = 0.238 - 0.265 m
+#     hedef gorunur oldugunda      alt = 0.292 - 0.294 m
+#     51 iterasyon (5.5 s) "hedef kayboldu" + 3.0 s acik-cevrim kurtarma
+# = gorsel blogun 26.7 s'sinin 8.5 s'i, HER denemede.
+# Bu dosya olguyu zaten alintiliyordu ("[LOW_ALT_OPEN_LOOP_DESCENT]
+# goruntu 0.38m'de kayboldu") ama baska bir kusurun kaniti olarak; baglanti
+# kurulmamisti.
+#
+# HANGISI ONCE GELIR: gorus esigi. Cozunurluk argumani hedefin GORULEBILDIGI
+# varsayimina dayanir; gorulemiyorsa cozunurlugun anlami yoktur.
+#
+# HASSASIYET KAYBI HESAPLANDI, ihmal edilebilir:
+#     irtifa  derinlik  yuk uzun   mm/px   ~2px hata
+#      0.30    0.280 m    270 px   0.519    1.04 mm
+#      0.58    0.560 m    135 px   1.037    2.07 mm
+# Cozunurluk 1.9x kabalasiyor AMA aligner'in DURMA TOLERANSI 30 mm
+# (HOOK_VISUAL_ALIGN_TOLERANCE_M) ve olculen artigi 6.5-29.7 mm -- yani
+# TOLERANSA dayaniyor, cozunurluge degil. 2 mm'lik taban, toleransin 14 kati
+# altinda. Ayrica aligner derinligi irtifadan degil gorunen agiz
+# yaricapindan turetiyor (visual_alignment.py:184) ve yukun uzun kenari
+# 0.58 m'de hala 135 px.
+#
+# PAY 0.08 m SECILMEDI, OLCULDU: irtifa asagi asimi komut 0.30'a karsi
+# ulasilan 0.238 = 0.062 m. 0.55 secilseydi en kotu asimda arac 0.488 m'ye,
+# yani ESIGIN ALTINA duserdi -- duzeltmenin onlemek istedigi durumun ta
+# kendisi. 0.08 pay en kotu durumda 0.518 m birakiyor (~%30 marj).
+#: Gorus esigine eklenecek pay. Olculen irtifa asiminden turetildi.
+GOREV3_APPROACH_VISION_MARGIN_M = 0.08
 # Alma denemeleri boyunca konumu tutmak icin ayrilan sure:
 # 3 deneme x (12 s yakalama penceresi + vinc/geri cekme) icin pay.
 PICKUP_HOLD_S = 70.0
@@ -786,6 +828,21 @@ class Gorev3PickupPhase:
                             "ceiling_s": HOOK_SETTLE_WAIT_MAX_S,
                             "ready": bool(ok)})
         return (lat, spd, waited, ok)
+
+    def _approach_altitude_m(self) -> float:
+        """Gorsel isin yapilacagi irtifa -- SEKLIN gorus esiginden turetilir.
+
+        Gerekce ve olculen sayilar GOREV3_APPROACH_VISION_MARGIN_M'in
+        basinda. Ozetle: sabit 0.30 m, dedektorun 0.50 m'lik alcak-irtifa
+        esiginin ALTINDAYDI ve ortalama goremedigi bir irtifada yapilmaya
+        calisiliyordu.
+
+        Esik SEKLE OZGU (LOW_ALT_VISION_LIMIT_BY_SHAPE): bugun her iki
+        dikdortgen de 0.50 m, ama formulle yazmak ileride ayrisirlarsa
+        sessizce yanlislasmayi onler.
+        """
+        return (low_alt_vision_limit(self._rect_class)
+                + GOREV3_APPROACH_VISION_MARGIN_M)
 
     def _hook_nose_z_m(self):
         """Kanca burnunun DUNYA z'si (metre), yoksa None.
@@ -1635,22 +1692,27 @@ class Gorev3PickupPhase:
             # inis), yani onlarsiz UnboundLocalError olur.
             nonlocal n0, e0, _c, _s, _hn, _he
             # ADIM 3 -- YAKLASMA IRTIFASINA DIKEY IN (kanca ofseti YOK).
-            logger.info("%.2f m yaklasma irtifasina dikey iniliyor (ofsetsiz)...",
-                        GOREV3_APPROACH_ALTITUDE_M)
+            _approach_alt = self._approach_altitude_m()
+            logger.info("%.2f m yaklasma irtifasina dikey iniliyor (ofsetsiz) -- "
+                        "%s gorus esigi %.2f m + %.2f m pay.", _approach_alt,
+                        self._rect_class, low_alt_vision_limit(self._rect_class),
+                        GOREV3_APPROACH_VISION_MARGIN_M)
             await self.flight.goto_position_ned_and_hold(
-                _hn, _he, -GOREV3_APPROACH_ALTITUDE_M, aligned_yaw, 5.0)
+                _hn, _he, -_approach_alt, aligned_yaw, 5.0)
 
             # ADIM 4 -- YAKLASMA IRTIFASINDA IKINCI, HASSAS ORTALAMA.
             # Hala KAMERA eksenine gore; kadraj burada 0.71 x 0.53 m oldugu
             # icin ayni piksel hatasi cok daha kucuk bir metre hatasi demek --
             # hassas gecis tam da bu yuzden burada yapiliyor.
             self._publish("GOREV3_PICKUP_STEP", "approach_altitude_reached",
-                          data={"altitude_m": GOREV3_APPROACH_ALTITUDE_M})
+                          data={"altitude_m": round(_approach_alt, 3),
+                                "vision_limit_m": low_alt_vision_limit(self._rect_class),
+                                "margin_m": GOREV3_APPROACH_VISION_MARGIN_M})
             recentered = await self.centering.go_to_and_center(
-                self._rect_class, altitude_m=GOREV3_APPROACH_ALTITUDE_M)
+                self._rect_class, altitude_m=_approach_alt)
             if not recentered:
                 logger.warning("%.2f m'de ikinci ortalama yakinsamadi -- devam "
-                               "ediliyor (best-effort).", GOREV3_APPROACH_ALTITUDE_M)
+                               "ediliyor (best-effort).", _approach_alt)
             self._publish("GOREV3_PICKUP_STEP", "approach_recentered",
                           data={"converged": bool(recentered)})
 
@@ -1792,7 +1854,7 @@ class Gorev3PickupPhase:
             # ILK ARGUMAN KOMUT IRTIFASIDIR, bir etiket degil: align() her
             # duzeltmede goto_ned_and_hold(..., altitude_m, ...) cagirir.
             # Burada 0.30 verildigi icin gorsel hizalama 0.30 m'de kosar.
-            vis = await aligner.align(GOREV3_APPROACH_ALTITUDE_M, aligned_yaw,
+            vis = await aligner.align(_approach_alt, aligned_yaw,
                                       tolerance_m=HOOK_VISUAL_ALIGN_TOLERANCE_M)
             logger.info("[GORSEL_HIZA] %s: son hata=%s, %d iterasyon, %d tespit, "
                         "%.3f m hareket", vis.reason,
