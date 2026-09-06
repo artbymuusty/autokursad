@@ -554,7 +554,11 @@ def test_bekleme_olcutu_YALNIZCA_DURMUSLUK():
     cagiran taraf cevapliyor (settle koşsun/atlansin secimi)."""
     i = SRC.index("async def _wait_hook_stopped")
     blok = SRC[i:SRC.index("    def _hook_nose_z_m(self):", i)]
-    assert "if spd <= SEAT_MAX_REL_SPEED_MPS:" in blok,         "karar hiza dayanmiyor"
+    assert "spd <= SEAT_MAX_REL_SPEED_MPS" in blok, "karar hiza dayanmiyor"
+    # 2026-09-06: hiza EK OLARAK minimum bekleme geldi (veriden
+    # turetildi); hiz TEK BASINA ayirt etmiyordu. Yanal HALA karara
+    # girmiyor.
+    assert "HOOK_SETTLE_WAIT_MIN_S" in blok
     # Yanal, KARARA girmemeli (yalnizca raporlanmali).
     assert "lat <= MAGNET_ATTRACT_RANGE_M" not in blok,         "yanal hala karara giriyor -- 12 s bosa yanar"
     # Ters (aski-altinda) olcut geri gelmemeli.
@@ -648,3 +652,45 @@ def test_ADIM5_irtifayi_DUSURMUYOR():
     assert "HOOK_VISUAL_ALIGN_ALTITUDE_M" in SRC[i:i + 300]
     # ADIM 5 artik YATAY hareket etmiyor.
     assert "_hn, _he = n0, e0" in SRC
+
+
+# --------------------------------------------------------------------------
+# MINIMUM BEKLEME (operator karari 2026-09-06, VERIDEN turetildi)
+# --------------------------------------------------------------------------
+from core.mission.gorev3_pickup import HOOK_SETTLE_WAIT_MIN_S
+
+
+def test_minimum_bekleme_uygulaniyor():
+    """Hiz esigi tek basina yetmiyordu: denemelerin cogu ILK YOKLAMADA
+    (0.25 s) cikiyor ve kanca yanlis yerde kaliyordu."""
+    i = SRC.index("async def _wait_hook_stopped")
+    blok = SRC[i:SRC.index("    def _hook_nose_z_m(self):", i)]
+    assert "HOOK_SETTLE_WAIT_MIN_S" in blok, "minimum bekleme yok"
+    assert ">= HOOK_SETTLE_WAIT_MIN_S" in blok, "cikis kosuluna baglanmamis"
+
+
+def test_HIZ_esigi_DUSURULMEDI():
+    """Veri hiz sikilastirmasina KARSI cikiyor: dokuz denemenin cikis
+    hizlari ile sonraki settle yanallari arasinda kullanilabilir bir
+    siralama yok --
+        0.043 m/s -> 28.3 mm  (EN YUKSEK hiz, IYI sonuc)
+        0.007 m/s -> 44.9 mm  (EN DUSUK hiz, KOTU sonuc)
+    Esigi 0.05'ten dusurmek iyi sonuc veren denemeleri elerdi."""
+    from core.mission.hook_seating import SEAT_MAX_REL_SPEED_MPS
+    assert SEAT_MAX_REL_SPEED_MPS == 0.05
+
+
+def test_minimum_bekleme_SARKAC_PERIYODUNDAN_buyuk():
+    """1.25 s iki bagimsiz kaynaktan: (a) dokuz orneklik veride iki sinifi
+    tam ayiran esik (>=1.25 s -> 4.2/13.0/12.0 mm; <=1.03 s -> 30-79.6 mm),
+    (b) olculen sarkac periyodu 1.078 s (GOREV J) -- en az BIR TAM CEVRIM.
+    Tek periyot YETMIYOR: 1.03 s'de (0.96 T) cikan deneme en kotu sonucu
+    (79.6 mm) verdi."""
+    PERIYOT_S = 1.078
+    assert HOOK_SETTLE_WAIT_MIN_S > PERIYOT_S, \
+        f"{HOOK_SETTLE_WAIT_MIN_S} s, olculen periyodun ({PERIYOT_S} s) altinda"
+    assert HOOK_SETTLE_WAIT_MIN_S <= 1.25, "veri ayiricisindan buyuk -- bedel gereksiz"
+
+
+def test_minimum_bekleme_TAVANIN_altinda():
+    assert HOOK_SETTLE_WAIT_MIN_S < HOOK_SETTLE_WAIT_MAX_S

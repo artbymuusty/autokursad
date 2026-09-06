@@ -158,6 +158,37 @@ HOOK_PAYOUT_SETTLE_S = 4.0
 #  kapisi soyler.
 HOOK_SETTLE_WAIT_MAX_S = 12.0
 HOOK_SETTLE_WAIT_POLL_S = 0.25
+#: MINIMUM BEKLEME (operator karari 2026-09-06, VERIDEN turetildi).
+#
+#  SORUN: hiz esigi (SEAT_MAX_REL_SPEED_MPS) tek basina yetmiyor --
+#  denemelerin cogu ILK YOKLAMADA (0.25 s) cikiyor ve kanca hala yanlis
+#  yerde kaliyor.
+#
+#  NEDEN HIZ ESIGI DUSURULMEDI: veri buna KARSI cikiyor. Dokuz denemenin
+#  cikis hizlari ve sonraki settle yanallari:
+#      0.043 m/s -> 28.3 mm   (EN YUKSEK hiz, IYI sonuc)
+#      0.007 m/s -> 44.9 mm   (EN DUSUK hiz, KOTU sonuc)
+#      0.020 m/s -> 28.6 mm     0.030 m/s -> 48.8 mm
+#      0.026 m/s -> 23.7 mm     0.040 m/s -> 61.6 mm
+#  Hiz ile sonuc arasinda kullanilabilir bir siralama YOK; esigi 0.05'ten
+#  dusurmek iyi sonuc veren denemeleri elerdi.
+#
+#  ZAMAN ISE TEMIZ AYIRIYOR (ayni dokuz deneme):
+#      >= 1.25 s bekleyen 3/3 -> sicrama  4.2 / 13.0 / 12.0 mm  (<20 mm)
+#      <= 1.03 s bekleyen 6/6 -> sicrama 30.0 - 79.6 mm
+#  Pearson r = -0.499, Spearman rho = -0.617 (uzun bekleyen = kucuk sicrama).
+#
+#  1.25 s SECILMEDI, IKI BAGIMSIZ KAYNAKTAN GELIYOR:
+#    (a) olculen ayirici: dokuz orneklik veride iki sinifi tam ayiran esik,
+#    (b) fiziksel capa: olculen sarkac periyodu 1.078 s (GOREV J); 1.25 s
+#        onun 1.16 kati, yani EN AZ BIR TAM SALINIM CEVRIMI gozlenmis olur.
+#        Tek periyodun kendisi YETMIYOR -- 1.03 s'de cikan deneme (0.96 T)
+#        en kotu sonucu (79.6 mm) verdi; bir cevrimin hemen ALTINDA cikmak,
+#        salinimin donus noktasinda ornekleme riskini tasiyor.
+#
+#  BEDEL: deneme basina ~1.0 s (mevcut 0.25 s cikislar 1.25 s'ye taşınır),
+#  uc denemede ~3 s. OLCULECEK.
+HOOK_SETTLE_WAIT_MIN_S = 1.25
 # GORSEL HIZALAMA IRTIFASI. Hizalama alma irtifasinda (0.30 m) YAPILAMAZ, ve
 # bu bir ayar meselesi degil, kadraj geometrisi:
 #
@@ -712,15 +743,20 @@ class Gorev3PickupPhase:
                 # BESTE BIRI hicbir seyi degistirmeyen bir beklemeye
                 # gidiyordu ve o seride MAGNET_LOCKED 0/15 cikti (onceki uc
                 # kosumda 2 kilit vardi).
-                if spd <= SEAT_MAX_REL_SPEED_MPS:
+                # HIZ ESIGI + MINIMUM BEKLEME. Ikisi birden: hiz tek basina
+                # ayirt etmiyor (gerekce HOOK_SETTLE_WAIT_MIN_S'in basinda).
+                if (spd <= SEAT_MAX_REL_SPEED_MPS
+                        and (time.monotonic() - t0) >= HOOK_SETTLE_WAIT_MIN_S):
                     break
             if (time.monotonic() - t0) >= HOOK_SETTLE_WAIT_MAX_S:
                 break
             await asyncio.sleep(HOOK_SETTLE_WAIT_POLL_S)
 
         waited = time.monotonic() - t0
+        waited_ok = waited >= HOOK_SETTLE_WAIT_MIN_S
         # "hazir" = DURDU. Yanal ayrica raporlaniyor ama karara girmiyor.
-        ok = spd is not None and spd <= SEAT_MAX_REL_SPEED_MPS
+        ok = (spd is not None and spd <= SEAT_MAX_REL_SPEED_MPS
+              and waited_ok)
         _l = f"{lat * 1000:.1f} mm" if lat is not None else "olculemedi"
         _v = f"{spd:.3f} m/s" if (spd is not None and spd != float("inf")) else "olculemedi"
         if ok:
@@ -743,6 +779,7 @@ class Gorev3PickupPhase:
                                                   and spd != float("inf")) else None),
                             "lateral_range_mm": round(MAGNET_ATTRACT_RANGE_M * 1000, 1),
                             "speed_gate_mps": SEAT_MAX_REL_SPEED_MPS,
+                            "min_wait_s": HOOK_SETTLE_WAIT_MIN_S,
                             # Karar YALNIZCA hiza bakiyor; yanal bilgi amacli.
                             "decided_on": "rel_speed",
                             "waited_s": round(waited, 2),
